@@ -2,6 +2,12 @@ name: Build downloadable Windows VST3
 
 on:
   workflow_dispatch:
+  pull_request:
+    paths:
+      - "CMakeLists.txt"
+      - "CMakePresets.json"
+      - "plugins/loop-surgeon/**"
+      - ".github/workflows/build-windows-release.yml"
   push:
     branches: [main]
     paths:
@@ -48,6 +54,7 @@ jobs:
           retention-days: 30
 
       - name: Upload Windows package to alpha release
+        if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
