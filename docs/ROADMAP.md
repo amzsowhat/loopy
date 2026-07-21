@@ -12,7 +12,7 @@
 - seam crossfade, smoothed wet/dry mix, and automatic playback
 - host parameter and gzip-compressed captured-audio state round trip
 - deterministic engine tests and Windows CI
-- universal macOS CMake presets for Reaper testing
+- Apple Silicon macOS CMake presets for Reaper testing
 
 ### Prototype 0.3
 

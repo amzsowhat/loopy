@@ -13,8 +13,8 @@ cmake --build --preset build-macos-debug
 ctest --preset test-macos-debug
 ```
 
-The preset requests a universal `arm64;x86_64` binary. On an Apple Silicon Mac, the native arm64
-slice is used; Intel Reaper can use the x86_64 slice.
+The preset builds a native Apple Silicon `arm64` binary for M-series Macs. Use the Apple Silicon
+build of Reaper rather than launching Reaper through Rosetta.
 
 ## Install for the current user
 

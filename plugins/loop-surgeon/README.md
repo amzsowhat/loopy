@@ -42,4 +42,4 @@ form a musically convincing loop.
 - The spectral signature uses eight deterministic analysis bands, not a full perceptual model.
 - There is no file import/export or waveform editor yet.
 - State restore uses linear sample-rate conversion when a project changes sample rate.
-- macOS/Reaper is configured for a universal build but awaits physical-machine verification.
+- macOS/Reaper is configured for an Apple Silicon build but awaits physical-machine verification.

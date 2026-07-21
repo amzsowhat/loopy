@@ -1,0 +1,64 @@
+name: Build downloadable macOS VST3
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - "CMakeLists.txt"
+      - "CMakePresets.json"
+      - "plugins/loop-surgeon/**"
+      - ".github/workflows/build-macos-release.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  build-macos-arm64:
+    runs-on: macos-14
+    timeout-minutes: 45
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure Apple Silicon Release
+        run: cmake --preset macos-release
+
+      - name: Build VST3 and Standalone
+        run: cmake --build --preset build-macos-release --parallel
+
+      - name: Run engine tests
+        run: ctest --preset test-macos-release --output-on-failure
+
+      - name: Ad-hoc sign and package VST3
+        shell: bash
+        run: |
+          set -euo pipefail
+          plugin="build/macos/plugins/loop-surgeon/LoopSurgeon_artefacts/Release/VST3/Loop Surgeon.vst3"
+          codesign --force --deep --sign - "$plugin"
+          ditto -c -k --sequesterRsrc --keepParent "$plugin" "Loop-Surgeon-macOS-arm64-VST3.zip"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Loop-Surgeon-macOS-arm64-VST3
+          path: Loop-Surgeon-macOS-arm64-VST3.zip
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Publish alpha release download
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: v0.2.0-alpha
+        shell: bash
+        run: |
+          set -euo pipefail
+          if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
+            gh release create "$RELEASE_TAG" \
+              --target "$GITHUB_SHA" \
+              --title "Loop Surgeon 0.2 Alpha" \
+              --notes "Ad-hoc signed development build for private Apple Silicon macOS/Reaper testing." \
+              --prerelease
+          fi
+          gh release upload "$RELEASE_TAG" "Loop-Surgeon-macOS-arm64-VST3.zip" --clobber

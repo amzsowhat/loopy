@@ -43,7 +43,7 @@ cmake --build --preset build-macos-debug
 ctest --preset test-macos-debug
 ```
 
-The universal VST3 contains both Apple Silicon and Intel code. Copy `Loop Surgeon.vst3` to
+The macOS VST3 targets Apple Silicon (`arm64`, including M1/M2/M3/M4). Copy `Loop Surgeon.vst3` to
 `~/Library/Audio/Plug-Ins/VST3/`, open Reaper, and run **Preferences > Plug-ins > VST > Re-scan**.
 The macOS target is configured but must still be verified on physical Mac/Reaper hardware.
 See [`docs/MAC_REAPER_TEST.md`](docs/MAC_REAPER_TEST.md) for the full test checklist and
