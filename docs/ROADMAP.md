@@ -2,7 +2,7 @@
 
 ## P2 Loop Surgeon
 
-### Prototype 0.2 – implemented
+### Prototype 0.2 鈥?implemented
 
 - VST3 and Standalone targets
 - mono/stereo host layouts
