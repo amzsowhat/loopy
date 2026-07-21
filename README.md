@@ -35,6 +35,23 @@ Release builds use `vs2022-release` and `build-release`.
 
 ## Build on macOS for Reaper
 
+### Download the M-series Mac build
+
+Download the current private alpha package:
+
+- [Loop Surgeon 0.2 Alpha - macOS arm64 VST3](https://github.com/amzsowhat/sound-VST-project/releases/download/v0.2.0-alpha/Loop-Surgeon-macOS-arm64-VST3.zip)
+
+Unzip it and copy `Loop Surgeon.vst3` to `~/Library/Audio/Plug-Ins/VST3/`. If macOS blocks
+the private ad-hoc-signed test build, run:
+
+```bash
+xattr -dr com.apple.quarantine "$HOME/Library/Audio/Plug-Ins/VST3/Loop Surgeon.vst3"
+```
+
+Open the native Apple Silicon build of Reaper and use **Preferences > Plug-ins > VST > Re-scan**.
+
+### Build from source
+
 Install Xcode command-line tools, CMake, and Git, then run:
 
 ```bash
