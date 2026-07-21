@@ -33,6 +33,20 @@ ctest --preset test-debug -C Debug --output-on-failure
 
 Release builds use `vs2022-release` and `build-release`.
 
+## Download for Windows / Reaper
+
+- [Loop Surgeon 0.2 Alpha - Windows x64 VST3](https://github.com/amzsowhat/sound-VST-project/releases/download/v0.2.0-alpha/Loop-Surgeon-Windows-x64-VST3.zip)
+
+Unzip the package and copy the complete `Loop Surgeon.vst3` folder to:
+
+```text
+C:\Program Files\Common Files\VST3\
+```
+
+Open 64-bit Reaper and use **Options > Preferences > Plug-ins > VST > Clear cache/re-scan**.
+See [`plugins/loop-surgeon/WINDOWS_REAPER_TEST.md`](plugins/loop-surgeon/WINDOWS_REAPER_TEST.md)
+for the smoke-test checklist.
+
 ## Build on macOS for Reaper
 
 ### Download the M-series Mac build
