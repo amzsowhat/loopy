@@ -13,6 +13,7 @@ LoopSurgeonAudioProcessor::LoopSurgeonAudioProcessor()
 void LoopSurgeonAudioProcessor::prepareToPlay(const double newSampleRate,
                                                const int samplesPerBlock)
 {
+    currentSampleRate = newSampleRate;
     loopEngine.prepare(newSampleRate,
                        samplesPerBlock,
                        juce::jmax(getTotalNumInputChannels(), getTotalNumOutputChannels()));
@@ -41,9 +42,52 @@ void LoopSurgeonAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     for (auto channel = getTotalNumInputChannels(); channel < getTotalNumOutputChannels(); ++channel)
         buffer.clear(channel, 0, buffer.getNumSamples());
 
-    loopEngine.setLoopLengthSeconds(parameters.getRawParameterValue("loopLength")->load());
+    auto captureLength = parameters.getRawParameterValue("loopLength")->load();
+    auto captureDelaySamples = 0;
+    if (captureRequested.exchange(false, std::memory_order_acq_rel))
+    {
+        const auto syncToHost = parameters.getRawParameterValue("syncToHost")->load() >= 0.5f;
+        if (syncToHost)
+        {
+            if (auto position = getPlayHead() != nullptr ? getPlayHead()->getPosition() : std::nullopt)
+            {
+                const auto bpm = position->getBpm().orFallback(120.0);
+                const auto signature = position->getTimeSignature().orFallback(
+                    juce::AudioPlayHead::TimeSignature { 4, 4 });
+                const int barOptions[] { 1, 2, 4, 8 };
+                const auto barIndex = juce::jlimit(0, 3,
+                    juce::roundToInt(parameters.getRawParameterValue("bars")->load()));
+                const auto quarterNotesPerBar = static_cast<double>(signature.numerator) * 4.0
+                                                / static_cast<double>(signature.denominator);
+                captureLength = static_cast<float>(barOptions[barIndex] * quarterNotesPerBar
+                                                   * 60.0 / juce::jmax(1.0, bpm));
+
+                if (const auto ppq = position->getPpqPosition())
+                {
+                    const auto currentBar = std::floor(*ppq / quarterNotesPerBar);
+                    auto nextBarPpq = (currentBar + 1.0) * quarterNotesPerBar;
+                    if (std::abs(*ppq - currentBar * quarterNotesPerBar) < 1.0e-6)
+                        nextBarPpq = *ppq;
+                    captureDelaySamples = juce::jmax(0, juce::roundToInt(
+                        (nextBarPpq - *ppq) * 60.0 / juce::jmax(1.0, bpm) * currentSampleRate));
+                }
+            }
+        }
+
+        loopEngine.setLoopLengthSeconds(juce::jlimit(0.25f, 16.0f, captureLength));
+        loopEngine.beginCapture(captureDelaySamples);
+    }
+    else
+    {
+        loopEngine.setLoopLengthSeconds(juce::jlimit(0.25f, 16.0f, captureLength));
+    }
     loopEngine.setCrossfadeMilliseconds(parameters.getRawParameterValue("crossfadeMs")->load());
     loopEngine.process(buffer, parameters.getRawParameterValue("mix")->load());
+}
+
+void LoopSurgeonAudioProcessor::beginCapture() noexcept
+{
+    captureRequested.store(true, std::memory_order_release);
 }
 
 juce::AudioProcessorEditor* LoopSurgeonAudioProcessor::createEditor()
@@ -53,17 +97,28 @@ juce::AudioProcessorEditor* LoopSurgeonAudioProcessor::createEditor()
 
 void LoopSurgeonAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
+    auto state = parameters.copyState();
+    const auto loopState = loopEngine.createLoopState();
+    state.setProperty("stateVersion", 1, nullptr);
+    if (!loopState.isEmpty())
+        state.setProperty("capturedLoop", juce::var(loopState), nullptr);
+
     juce::MemoryOutputStream stream(destData, false);
-    parameters.copyState().writeToStream(stream);
+    state.writeToStream(stream);
 }
 
 void LoopSurgeonAudioProcessor::setStateInformation(const void* data, const int sizeInBytes)
 {
-    const auto state = juce::ValueTree::readFromData(data, static_cast<size_t>(sizeInBytes));
+    auto state = juce::ValueTree::readFromData(data, static_cast<size_t>(sizeInBytes));
     if (state.isValid())
-        parameters.replaceState(state);
+    {
+        if (const auto* loopData = state.getProperty("capturedLoop").getBinaryData())
+            loopEngine.restoreLoopState(loopData->getData(), loopData->getSize());
 
-    loopEngine.clear();
+        state.removeProperty("capturedLoop", nullptr);
+        state.removeProperty("stateVersion", nullptr);
+        parameters.replaceState(state);
+    }
 }
 
 juce::AudioProcessorValueTreeState::ParameterLayout
@@ -77,6 +132,17 @@ LoopSurgeonAudioProcessor::createParameterLayout()
         juce::NormalisableRange<float> { 0.25f, 16.0f, 0.01f, 0.45f },
         4.0f,
         juce::AudioParameterFloatAttributes().withLabel("s")));
+
+    layout.push_back(std::make_unique<juce::AudioParameterBool>(
+        juce::ParameterID { "syncToHost", 1 },
+        "Sync Capture to Host",
+        true));
+
+    layout.push_back(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "bars", 1 },
+        "Loop Bars",
+        juce::StringArray { "1 bar", "2 bars", "4 bars", "8 bars" },
+        0));
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "crossfadeMs", 1 },
@@ -100,4 +166,3 @@ juce::AudioProcessor* JUCE_CALLTYPE createPluginFilter()
 {
     return new LoopSurgeonAudioProcessor();
 }
-

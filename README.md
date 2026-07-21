@@ -12,9 +12,10 @@ keeps Codex sessions and CI consistent across machines.
 
 ## Demo capabilities
 
-Loop Surgeon currently builds as both a VST3 effect and a Standalone application. It can capture a
-configurable amount of incoming mono/stereo audio, play the captured region as a loop, apply a
-click-reducing seam crossfade, report a basic seam-quality score, and restore parameter state.
+Loop Surgeon builds as both a VST3 effect and a Standalone application. One capture automatically
+searches around the requested duration for the strongest loop boundary using level, slope,
+spectrum, phase, and stereo-continuity measurements. The selected audio and parameters are stored
+in the DAW project, and a click-reducing seam crossfade is applied during playback.
 
 ## Build on Windows
 
@@ -32,6 +33,22 @@ ctest --preset test-debug -C Debug --output-on-failure
 
 Release builds use `vs2022-release` and `build-release`.
 
+## Build on macOS for Reaper
+
+Install Xcode command-line tools, CMake, and Git, then run:
+
+```bash
+cmake --preset macos-debug
+cmake --build --preset build-macos-debug
+ctest --preset test-macos-debug
+```
+
+The universal VST3 contains both Apple Silicon and Intel code. Copy `Loop Surgeon.vst3` to
+`~/Library/Audio/Plug-Ins/VST3/`, open Reaper, and run **Preferences > Plug-ins > VST > Re-scan**.
+The macOS target is configured but must still be verified on physical Mac/Reaper hardware.
+See [`docs/MAC_REAPER_TEST.md`](docs/MAC_REAPER_TEST.md) for the full test checklist and
+[`docs/LOOP_ALGORITHM.md`](docs/LOOP_ALGORITHM.md) for the automatic-boundary algorithm.
+
 ## Repository layout
 
 ```text
@@ -46,4 +63,3 @@ AGENTS.md                Handoff context for future Codex sessions
 
 The project uses JUCE. JUCE is dual-licensed, and proprietary distribution may require a commercial
 JUCE licence. Review the current JUCE terms before selling or distributing binaries.
-

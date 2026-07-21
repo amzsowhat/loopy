@@ -14,15 +14,19 @@ the same tested contract.
 
 ```text
 Host input -> dry path -----------------------> output mixer
-          -> capture buffer -> seam crossfade -> loop wet path
+          -> preallocated capture workspace
+          -> background automatic boundary search
+          -> exact-size published loop -> seam crossfade -> loop wet path
 ```
 
-The audio thread owns all loop-buffer mutation. UI requests are represented by atomics and applied
-at the beginning of an audio block. The demo performs no file I/O or heap allocation in `process()`.
+The audio thread only writes the preallocated capture workspace. A worker analyzes that immutable
+capture and publishes an exact-size loop while playback is paused in the `analysing` state. UI
+requests are represented by atomics and applied at the beginning of an audio block. The engine
+performs no file I/O, full-buffer clearing, analysis pass, lock wait, or heap allocation in
+`process()`.
 
 ## State boundary
 
-Version 0 stores automatable parameters in the host project. Captured audio is deliberately not
-serialized yet. A production design should persist captures as managed assets with hashes and
-relink support instead of silently embedding unbounded audio in plug-in state.
-
+Version 1 stores automatable parameters and gzip-compressed 32-bit float loop audio in the host
+project. A later production design may additionally persist captures as managed assets with hashes
+and relink support instead of embedding larger audio assets in plug-in state.

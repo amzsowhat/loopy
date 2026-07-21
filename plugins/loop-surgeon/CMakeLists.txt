@@ -19,6 +19,8 @@ target_sources(LoopSurgeon
     PRIVATE
         Source/LoopEngine.cpp
         Source/LoopEngine.h
+        Source/LoopAnalyzer.cpp
+        Source/LoopAnalyzer.h
         Source/PluginEditor.cpp
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
@@ -49,6 +51,8 @@ if(SOUND_VST_BUILD_TESTS)
         PRIVATE
             Source/LoopEngine.cpp
             Source/LoopEngine.h
+            Source/LoopAnalyzer.cpp
+            Source/LoopAnalyzer.h
             Tests/LoopEngineTests.cpp
     )
 
@@ -64,4 +68,3 @@ if(SOUND_VST_BUILD_TESTS)
 
     add_test(NAME LoopSurgeon.Engine COMMAND LoopSurgeonTests)
 endif()
-

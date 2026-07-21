@@ -16,6 +16,8 @@ public:
 
 private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+    using ButtonAttachment = juce::AudioProcessorValueTreeState::ButtonAttachment;
+    using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
 
     void timerCallback() override;
     void configureSlider(juce::Slider& slider, juce::Label& label, const juce::String& text);
@@ -26,6 +28,9 @@ private:
     juce::Label statusLabel;
     juce::TextButton captureButton { "Capture Input" };
     juce::TextButton clearButton { "Clear Loop" };
+    juce::ToggleButton syncButton { "Sync capture to next bar" };
+    juce::ComboBox barsBox;
+    juce::Label barsLabel;
     juce::Slider loopLengthSlider;
     juce::Slider crossfadeSlider;
     juce::Slider mixSlider;
@@ -35,7 +40,8 @@ private:
     std::unique_ptr<SliderAttachment> loopLengthAttachment;
     std::unique_ptr<SliderAttachment> crossfadeAttachment;
     std::unique_ptr<SliderAttachment> mixAttachment;
+    std::unique_ptr<ButtonAttachment> syncAttachment;
+    std::unique_ptr<ComboBoxAttachment> barsAttachment;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LoopSurgeonAudioProcessorEditor)
 };
-

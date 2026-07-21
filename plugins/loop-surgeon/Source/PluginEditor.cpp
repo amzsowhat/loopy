@@ -9,7 +9,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(0xfff2f2f2));
     addAndMakeVisible(titleLabel);
 
-    descriptionLabel.setText("Capture a region, audition the seam, and keep the DAW playing.",
+    descriptionLabel.setText("Capture once; smart analysis finds and preserves the strongest loop.",
                              juce::dontSendNotification);
     descriptionLabel.setColour(juce::Label::textColourId, juce::Colour(0xffaeb7c2));
     addAndMakeVisible(descriptionLabel);
@@ -26,6 +26,14 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     clearButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff4a5260));
     addAndMakeVisible(clearButton);
 
+    syncButton.setColour(juce::ToggleButton::textColourId, juce::Colour(0xffd6dbe2));
+    addAndMakeVisible(syncButton);
+    barsLabel.setText("Loop size", juce::dontSendNotification);
+    barsLabel.setColour(juce::Label::textColourId, juce::Colour(0xffaeb7c2));
+    addAndMakeVisible(barsLabel);
+    barsBox.addItemList({ "1 bar", "2 bars", "4 bars", "8 bars" }, 1);
+    addAndMakeVisible(barsBox);
+
     configureSlider(loopLengthSlider, loopLengthLabel, "Capture Length");
     configureSlider(crossfadeSlider, crossfadeLabel, "Seam Crossfade");
     configureSlider(mixSlider, mixLabel, "Loop Mix");
@@ -34,10 +42,12 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     loopLengthAttachment = std::make_unique<SliderAttachment>(state, "loopLength", loopLengthSlider);
     crossfadeAttachment = std::make_unique<SliderAttachment>(state, "crossfadeMs", crossfadeSlider);
     mixAttachment = std::make_unique<SliderAttachment>(state, "mix", mixSlider);
+    syncAttachment = std::make_unique<ButtonAttachment>(state, "syncToHost", syncButton);
+    barsAttachment = std::make_unique<ComboBoxAttachment>(state, "bars", barsBox);
 
     setResizable(true, true);
-    setResizeLimits(560, 320, 900, 600);
-    setSize(680, 390);
+    setResizeLimits(620, 390, 980, 680);
+    setSize(720, 460);
     startTimerHz(12);
 }
 
@@ -75,7 +85,13 @@ void LoopSurgeonAudioProcessorEditor::resized()
     placeControl(crossfadeSlider, crossfadeLabel);
     placeControl(mixSlider, mixLabel);
 
-    area.removeFromTop(14);
+    area.removeFromTop(10);
+    auto syncRow = area.removeFromTop(34);
+    syncButton.setBounds(syncRow.removeFromLeft(210));
+    barsLabel.setBounds(syncRow.removeFromLeft(70));
+    barsBox.setBounds(syncRow.removeFromLeft(120).reduced(0, 3));
+
+    area.removeFromTop(10);
     auto buttons = area.removeFromTop(44);
     captureButton.setBounds(buttons.removeFromLeft(170));
     buttons.removeFromLeft(12);
@@ -91,15 +107,26 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
         case LoopEngine::State::empty:
             statusLabel.setText("Ready for input", juce::dontSendNotification);
             break;
+        case LoopEngine::State::armed:
+            statusLabel.setText("Armed - capture begins on the next host bar",
+                                juce::dontSendNotification);
+            break;
         case LoopEngine::State::capturing:
             statusLabel.setText("Capturing "
                                     + juce::String(juce::roundToInt(processor.getCaptureProgress() * 100.0f))
                                     + "%",
                                 juce::dontSendNotification);
             break;
+        case LoopEngine::State::analysing:
+            statusLabel.setText("Finding seam: level / slope / spectrum / phase / stereo",
+                                juce::dontSendNotification);
+            break;
         case LoopEngine::State::ready:
-            statusLabel.setText("Loop ready  |  seam quality "
-                                    + juce::String(processor.getSeamQuality(), 0) + "/100",
+            statusLabel.setText("Ready " + juce::String(processor.getSeamQuality(), 0)
+                                    + "  |  L " + juce::String(processor.getLevelScore(), 0)
+                                    + "  F " + juce::String(processor.getSpectrumScore(), 0)
+                                    + "  P " + juce::String(processor.getPhaseScore(), 0)
+                                    + "  S " + juce::String(processor.getStereoScore(), 0),
                                 juce::dontSendNotification);
             break;
     }
@@ -120,4 +147,3 @@ void LoopSurgeonAudioProcessorEditor::configureSlider(juce::Slider& slider,
     label.setColour(juce::Label::textColourId, juce::Colour(0xffd6dbe2));
     addAndMakeVisible(label);
 }
-

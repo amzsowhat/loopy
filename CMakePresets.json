@@ -25,6 +25,27 @@
       "name": "vs2022-release",
       "inherits": "vs2022-base",
       "displayName": "Visual Studio 2022 Release"
+    },
+    {
+      "name": "macos-base",
+      "hidden": true,
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build/macos",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64;x86_64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
+        "SOUND_VST_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "macos-debug",
+      "inherits": "macos-base",
+      "displayName": "macOS Universal Debug"
+    },
+    {
+      "name": "macos-release",
+      "inherits": "macos-base",
+      "displayName": "macOS Universal Release"
     }
   ],
   "buildPresets": [
@@ -36,6 +57,16 @@
     {
       "name": "build-release",
       "configurePreset": "vs2022-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "build-macos-debug",
+      "configurePreset": "macos-debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "build-macos-release",
+      "configurePreset": "macos-release",
       "configuration": "Release"
     }
   ],
@@ -55,7 +86,14 @@
       "output": {
         "outputOnFailure": true
       }
+    },
+    {
+      "name": "test-macos-debug",
+      "configurePreset": "macos-debug",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
     }
   ]
 }
-
