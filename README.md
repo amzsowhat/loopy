@@ -46,3 +46,4 @@ AGENTS.md                Handoff context for future Codex sessions
 
 The project uses JUCE. JUCE is dual-licensed, and proprietary distribution may require a commercial
 JUCE licence. Review the current JUCE terms before selling or distributing binaries.
+

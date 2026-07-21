@@ -1,0 +1,21 @@
+# CMake and IDE output
+build/
+out/
+.vs/
+.vscode/
+.idea/
+CMakeUserPresets.json
+
+# Audio plug-in artifacts
+*.vst3/
+*.component/
+*.aaxplugin/
+*.exe
+*.dll
+*.pdb
+*.ilk
+
+# OS files
+.DS_Store
+Thumbs.db
+
