@@ -1,5 +1,7 @@
 # P2 Loop Surgeon
 
+Current package target: **0.3 Alpha**.
+
 Loop Surgeon is a VST3 effect and Standalone application that turns an existing audio material into
 a seamless loop. File import is the primary workflow; DAW-input capture remains a secondary source.
 
@@ -77,3 +79,4 @@ rendered-boundary jump limits, real-time playback, and DAW state round-trip.
   the UI callback; long files can briefly freeze the editor. Linear sample-rate conversion also needs
   replacement with a production-grade band-limited converter.
 - Apple Silicon/Reaper and Windows/Reaper still require hands-on DAW validation for this revision.
+
