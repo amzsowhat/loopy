@@ -62,3 +62,5 @@ jobs:
               --prerelease
           fi
           gh release upload "$RELEASE_TAG" "Loop-Surgeon-macOS-arm64-VST3.zip" --clobber
+          git tag "${RELEASE_TAG}-macos-ready" "$GITHUB_SHA"
+          git push origin "refs/tags/${RELEASE_TAG}-macos-ready" --force
