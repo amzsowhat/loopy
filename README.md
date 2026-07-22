@@ -8,14 +8,15 @@ keeps Codex sessions and CI consistent across machines.
 
 | Product | Directory | Status |
 | --- | --- | --- |
-| P2 Loop Surgeon | [`plugins/loop-surgeon`](plugins/loop-surgeon) | Functional capture/loop demo |
+| P2 Loop Surgeon | [`plugins/loop-surgeon`](plugins/loop-surgeon) | File-first automatic seamless-loop alpha |
 
 ## Demo capabilities
 
-Loop Surgeon builds as both a VST3 effect and a Standalone application. One capture automatically
-searches around the requested duration for the strongest loop boundary using level, slope,
-spectrum, phase, and stereo-continuity measurements. The selected audio and parameters are stored
-in the DAW project, and a click-reducing seam crossfade is applied during playback.
+Loop Surgeon builds as both a VST3 effect and a Standalone application. Drop in source audio, limit
+the material with Source In/Out, and let the worker search multiple period and seam candidates using
+waveform, level, slope, spectrum, phase, transient, and stereo evidence. The final Loop In/Out remains
+draggable, Original/Loop A/B is built in, the finished loop is stored in the DAW project, and a
+preview-matched repair can be exported as a 24-bit WAV.
 
 ## Build on Windows
 
@@ -35,7 +36,7 @@ Release builds use `vs2022-release` and `build-release`.
 
 ## Download for Windows / Reaper
 
-- [Loop Surgeon 0.2 Alpha - Windows x64 VST3](https://github.com/amzsowhat/sound-VST-project/releases/download/v0.2.0-alpha/Loop-Surgeon-Windows-x64-VST3.zip)
+- [Loop Surgeon 0.3 Alpha - Windows x64 VST3](https://github.com/amzsowhat/sound-VST-project/releases/download/v0.3.0-alpha/Loop-Surgeon-Windows-x64-VST3.zip)
 
 Unzip the package and copy the complete `Loop Surgeon.vst3` folder to:
 
@@ -53,7 +54,7 @@ for the smoke-test checklist.
 
 Download the current private alpha package:
 
-- [Loop Surgeon 0.2 Alpha - macOS arm64 VST3](https://github.com/amzsowhat/sound-VST-project/releases/download/v0.2.0-alpha/Loop-Surgeon-macOS-arm64-VST3.zip)
+- [Loop Surgeon 0.3 Alpha - macOS arm64 VST3](https://github.com/amzsowhat/sound-VST-project/releases/download/v0.3.0-alpha/Loop-Surgeon-macOS-arm64-VST3.zip)
 
 Unzip it and copy `Loop Surgeon.vst3` to `~/Library/Audio/Plug-Ins/VST3/`. If macOS blocks
 the private ad-hoc-signed test build, run:

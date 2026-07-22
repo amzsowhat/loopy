@@ -60,6 +60,10 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          gh release upload "v0.2.0-alpha" "Loop-Surgeon-Windows-x64-VST3.zip" --clobber
-          git tag "v0.2.0-alpha-windows-ready" $env:GITHUB_SHA
-          git push origin "refs/tags/v0.2.0-alpha-windows-ready" --force
+          $tag = "v0.3.0-alpha"
+          if (-not (gh release view $tag 2>$null)) {
+            gh release create $tag --target $env:GITHUB_SHA --title "Loop Surgeon 0.3 Alpha" --notes "File-first automatic seamless-loop alpha with Source/Loop In-Out, multi-domain search, A/B preview, project recall, and WAV export." --prerelease
+          }
+          gh release upload $tag "Loop-Surgeon-Windows-x64-VST3.zip" --clobber
+          git tag "v0.3.0-alpha-windows-ready" $env:GITHUB_SHA
+          git push origin "refs/tags/v0.3.0-alpha-windows-ready" --force

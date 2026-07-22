@@ -1,43 +1,18 @@
 # macOS / Reaper test checklist
 
-## Build
-
-Requirements: macOS 11 or newer, Xcode command-line tools, CMake 3.22+, Git, and internet access.
-
-```bash
-git clone https://github.com/amzsowhat/sound-VST-project.git
-cd sound-VST-project
-git switch agent/loop-surgeon-demo
-cmake --preset macos-debug
-cmake --build --preset build-macos-debug
-ctest --preset test-macos-debug
-```
-
-The preset builds a native Apple Silicon `arm64` binary for M-series Macs. Use the Apple Silicon
-build of Reaper rather than launching Reaper through Rosetta.
-
-## Install for the current user
-
-Copy the generated `Loop Surgeon.vst3` bundle to:
-
-```text
-~/Library/Audio/Plug-Ins/VST3/
-```
-
-Then open Reaper and use **Preferences > Plug-ins > VST > Re-scan**. For an unsigned Debug build,
-macOS may require **System Settings > Privacy & Security > Open Anyway**.
+Use native Apple Silicon Reaper. Install `Loop Surgeon.vst3` under
+`~/Library/Audio/Plug-Ins/VST3/`, then run **Preferences > Plug-ins > VST > Re-scan**.
 
 ## Functional test
 
-1. Insert Loop Surgeon on a stereo audio track.
-2. Keep host sync enabled and choose one bar.
-3. Start transport, press Capture Input midway through a bar, and confirm capture begins on the next
-   bar line.
-4. Confirm the UI moves from Armed to Capturing to Analysing to Ready.
-5. Listen at 100% Loop Mix and automate Mix while checking for clicks.
-6. Save the Reaper project, close Reaper, reopen it, and confirm the captured loop returns.
-7. Repeat at 44.1, 48, and 96 kHz with buffer sizes 32, 64, 256, and 1024.
-8. Test mono and stereo tracks, Clear Loop, recapture, offline render, and project sample-rate change.
+1. Drag a WAV/AIFF/FLAC source into Loop Surgeon.
+2. Move blue Source In/Out, click **Analyze Selection**, and confirm every candidate remains inside.
+3. Compare **Original** and **Loop** at matched preview level.
+4. Drag green Loop In/Out, adjust **Seam repair**, and listen for clicks, flams, image jumps, or bumps.
+5. Export the 24-bit WAV and compare repeated playback with the plug-in preview.
+6. Save, close, and reopen the Reaper project; verify the finished loop returns.
+7. Repeat with mono/stereo material at 44.1, 48, and 96 kHz and common buffer sizes.
+8. Test the secondary **Use DAW Input** capture path and confirm it does not select uncaptured silence.
 
-Record Reaper version, macOS version, CPU architecture, failing step, and a minimal project when
-reporting a problem.
+Record Reaper version, macOS version, buffer size, sample rate, source file, failing candidate, and a
+minimal project when reporting a problem.

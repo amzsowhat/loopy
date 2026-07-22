@@ -2,7 +2,7 @@
 
 ## Install
 
-1. Download `Loop-Surgeon-Windows-x64-VST3.zip` from the `v0.2.0-alpha` release.
+1. Download `Loop-Surgeon-Windows-x64-VST3.zip` from the `v0.3.0-alpha` release.
 2. Extract the complete `Loop Surgeon.vst3` directory to
    `C:\Program Files\Common Files\VST3\`.
 3. Start the 64-bit build of Reaper.
@@ -11,12 +11,13 @@
 
 ## Functional test
 
-1. Insert Loop Surgeon on a mono or stereo audio track.
-2. Start playback, keep host sync enabled, select one bar, and press **Capture Input**.
-3. Confirm the status moves through Armed, Capturing, Analysing, and Ready.
-4. Listen at 100% Loop Mix and automate the Mix control while checking for clicks.
-5. Save the Reaper project, close Reaper, reopen it, and confirm the loop returns.
-6. Test Clear Loop, recapture, offline render, mono/stereo tracks, and 44.1/48/96 kHz projects.
+1. Insert Loop Surgeon on a mono or stereo audio track and drag in a WAV/AIFF/FLAC source.
+2. Drag blue Source In/Out, run **Analyze Selection**, and confirm the green result stays inside it.
+3. Switch among all candidates and compare **Original** with **Loop**.
+4. Drag green Loop In/Out and adjust **Seam repair** while checking for clicks and level bumps.
+5. Export the WAV, re-import it on a track, and compare repeated playback with the plug-in preview.
+6. Save the Reaper project, close Reaper, reopen it, and confirm the finished loop returns.
+7. Repeat with mono/stereo material at 44.1/48/96 kHz. Test the secondary **Use DAW Input** path too.
 
 If Reaper cannot scan the plug-in, confirm that Reaper is 64-bit and install the current Microsoft
 Visual C++ 2015-2022 x64 Redistributable before rescanning.

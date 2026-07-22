@@ -50,15 +50,15 @@ jobs:
       - name: Publish alpha release download
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: v0.2.0-alpha
+          RELEASE_TAG: v0.3.0-alpha
         shell: bash
         run: |
           set -euo pipefail
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" \
               --target "$GITHUB_SHA" \
-              --title "Loop Surgeon 0.2 Alpha" \
-              --notes "Ad-hoc signed development build for private Apple Silicon macOS/Reaper testing." \
+              --title "Loop Surgeon 0.3 Alpha" \
+              --notes "File-first automatic seamless-loop alpha with Source/Loop In-Out, multi-domain search, A/B preview, project recall, and WAV export. Ad-hoc signed for private Apple Silicon testing." \
               --prerelease
           fi
           gh release upload "$RELEASE_TAG" "Loop-Surgeon-macOS-arm64-VST3.zip" --clobber
