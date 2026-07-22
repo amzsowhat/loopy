@@ -5,7 +5,7 @@ juce_add_plugin(LoopSurgeon
     PLUGIN_CODE LpSg
     FORMATS VST3 Standalone
     PRODUCT_NAME "Loop Surgeon"
-    DESCRIPTION "Capture and audition seamless audio loops"
+    DESCRIPTION "Automatically find, repair and export seamless audio loops"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
@@ -37,6 +37,7 @@ target_compile_definitions(LoopSurgeon
 target_link_libraries(LoopSurgeon
     PRIVATE
         juce::juce_audio_utils
+        juce::juce_audio_formats
         juce::juce_dsp
     PUBLIC
         juce::juce_recommended_config_flags

@@ -8,6 +8,7 @@ LoopSurgeonAudioProcessor::LoopSurgeonAudioProcessor()
                          .withOutput("Output", juce::AudioChannelSet::stereo(), true)),
       parameters(*this, nullptr, "LoopSurgeonState", createParameterLayout())
 {
+    formatManager.registerBasicFormats();
 }
 
 void LoopSurgeonAudioProcessor::prepareToPlay(const double newSampleRate,
@@ -88,6 +89,75 @@ void LoopSurgeonAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
 void LoopSurgeonAudioProcessor::beginCapture() noexcept
 {
     captureRequested.store(true, std::memory_order_release);
+}
+
+juce::String LoopSurgeonAudioProcessor::importAudioFile(const juce::File& file)
+{
+    auto reader = std::unique_ptr<juce::AudioFormatReader>(formatManager.createReaderFor(file));
+    if (reader == nullptr)
+        return "Unsupported or unreadable audio file";
+    if (reader->lengthInSamples < 32 || reader->sampleRate <= 0.0)
+        return "The audio file is too short";
+
+    constexpr auto maximumSourceSeconds = 60.0;
+    const auto wasTruncated = reader->lengthInSamples
+                              > static_cast<int64_t>(std::llround(
+                                  reader->sampleRate * maximumSourceSeconds));
+    const auto sourceSamples = static_cast<int>(juce::jmin<int64_t>(
+        reader->lengthInSamples, static_cast<int64_t>(std::llround(
+                                     reader->sampleRate * maximumSourceSeconds))));
+    const auto channels = juce::jlimit(1, 2, static_cast<int>(reader->numChannels));
+    juce::AudioBuffer<float> decoded(channels, sourceSamples);
+    if (!reader->read(&decoded, 0, sourceSamples, 0, true, true))
+        return "The audio file could not be decoded";
+
+    const auto targetSamples = juce::jmax(32, juce::roundToInt(
+        static_cast<double>(sourceSamples) * currentSampleRate / reader->sampleRate));
+    juce::AudioBuffer<float> resampled(channels, targetSamples);
+    for (int channel = 0; channel < channels; ++channel)
+    {
+        for (int index = 0; index < targetSamples; ++index)
+        {
+            const auto position = static_cast<double>(index) * reader->sampleRate / currentSampleRate;
+            const auto lower = juce::jlimit(0, sourceSamples - 1, static_cast<int>(position));
+            const auto upper = juce::jmin(sourceSamples - 1, lower + 1);
+            const auto fraction = static_cast<float>(position - static_cast<double>(lower));
+            const auto first = decoded.getSample(channel, lower);
+            resampled.setSample(channel, index,
+                                first + fraction * (decoded.getSample(channel, upper) - first));
+        }
+    }
+
+    loopEngine.submitSource(std::move(resampled), file.getFileName());
+    return wasTruncated ? "Only the first 60 seconds were imported" : juce::String {};
+}
+
+juce::String LoopSurgeonAudioProcessor::exportLoopFile(const juce::File& requestedFile) const
+{
+    auto audio = loopEngine.createRenderedLoop();
+    if (audio.getNumSamples() == 0)
+        return "No analysed loop is ready to export";
+
+    auto file = requestedFile.hasFileExtension("wav")
+                    ? requestedFile
+                    : requestedFile.withFileExtension("wav");
+    if (file.existsAsFile() && !file.deleteFile())
+        return "The existing output file could not be replaced";
+    std::unique_ptr<juce::OutputStream> stream = file.createOutputStream();
+    if (stream == nullptr)
+        return "The output file could not be created";
+
+    juce::WavAudioFormat wav;
+    const auto options = juce::AudioFormatWriterOptions {}
+                             .withSampleRate(currentSampleRate)
+                             .withNumChannels(audio.getNumChannels())
+                             .withBitsPerSample(24);
+    auto writer = wav.createWriterFor(stream, options);
+    if (writer == nullptr)
+        return "The WAV encoder could not be created";
+    if (!writer->writeFromAudioSampleBuffer(audio, 0, audio.getNumSamples()))
+        return "Writing the WAV file failed";
+    return {};
 }
 
 juce::AudioProcessorEditor* LoopSurgeonAudioProcessor::createEditor()

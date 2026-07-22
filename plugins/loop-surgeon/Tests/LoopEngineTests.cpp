@@ -33,6 +33,83 @@ int main()
 {
     bool passed = true;
 
+    constexpr auto automaticSampleRate = 2000.0;
+    constexpr auto truePeriod = 800;
+    juce::AudioBuffer<float> repeatedMaterial(2, truePeriod * 6);
+    for (int sample = 0; sample < repeatedMaterial.getNumSamples(); ++sample)
+    {
+        const auto position = sample % truePeriod;
+        const auto envelope = 0.35f + 0.55f * std::sin(
+            juce::MathConstants<float>::twoPi * static_cast<float>(position) / truePeriod);
+        const auto carrier = std::sin(juce::MathConstants<float>::twoPi
+                                      * 13.0f * static_cast<float>(position) / truePeriod);
+        repeatedMaterial.setSample(0, sample, envelope * carrier);
+        repeatedMaterial.setSample(1, sample, 0.8f * envelope * std::sin(
+            juce::MathConstants<float>::twoPi * 13.0f * static_cast<float>(position) / truePeriod + 0.1f));
+    }
+    const auto automatic = LoopAnalyzer::analyzeSource(repeatedMaterial, automaticSampleRate,
+                                                        500, 1200, 3);
+    passed &= expect(!automatic.candidates.empty(),
+                     "automatic source analysis should produce candidates");
+    if (!automatic.candidates.empty())
+    {
+        const auto detectedLength = automatic.candidates.front().endSample
+                                    - automatic.candidates.front().startSample;
+        passed &= expect(std::abs(detectedLength - truePeriod) < 100,
+                         "automatic source analysis should recover the repeated period");
+        passed &= expect(automatic.candidates.front().transient >= 0.0f
+                             && automatic.candidates.front().transient <= 100.0f,
+                         "transient seam score should be normalized");
+    }
+    const auto overlapAware = LoopAnalyzer::analyzeSource(repeatedMaterial, automaticSampleRate,
+                                                           500, 1200, 3, 50);
+    passed &= expect(!overlapAware.candidates.empty(),
+                     "overlap-aware analysis should produce candidates");
+    if (!overlapAware.candidates.empty())
+    {
+        const auto renderedLength = overlapAware.candidates.front().endSample
+                                    - overlapAware.candidates.front().startSample - 50;
+        passed &= expect(std::abs(renderedLength - truePeriod) < 100,
+                         "crossfade overlap must not shorten the intended loop period");
+    }
+    const auto exactRange = LoopAnalyzer::evaluateFixedRange(repeatedMaterial,
+                                                              automaticSampleRate, 0, truePeriod);
+    const auto brokenRange = LoopAnalyzer::evaluateFixedRange(repeatedMaterial,
+                                                               automaticSampleRate, 0, truePeriod - 137);
+    passed &= expect(exactRange.waveform > brokenRange.waveform,
+                     "direct boundary score should prefer the sample-continuous period");
+
+    LoopEngine rangeEngine;
+    rangeEngine.prepare(automaticSampleRate, 64, 2);
+    rangeEngine.submitSource(repeatedMaterial, "repeated-material.wav");
+    passed &= expect(waitForReady(rangeEngine), "imported source should be analysed in background");
+    passed &= expect(rangeEngine.getCandidateCount() > 0,
+                     "imported source should expose alternate candidates");
+    passed &= expect(rangeEngine.getWaveformPreview().size() == 320,
+                     "imported source should publish a bounded waveform preview");
+    passed &= expect(rangeEngine.reanalyzeSourceRange(0.3f, 0.9f),
+                     "source In/Out selection should queue reanalysis");
+    passed &= expect(waitForReady(rangeEngine), "selected source range should finish analysis");
+    passed &= expect(rangeEngine.getLoopStartProportion() >= 0.29f
+                         && rangeEngine.getLoopEndProportion() <= 0.91f,
+                     "automatic loop must remain inside user Source In/Out selection");
+    passed &= expect(rangeEngine.setManualLoopRange(0.4f, 0.55f),
+                     "draggable Loop In/Out should publish a manually refined loop");
+    passed &= expect(std::abs(rangeEngine.getLoopStartProportion() - 0.4f) < 0.002f
+                         && std::abs(rangeEngine.getLoopEndProportion() - 0.55f) < 0.002f,
+                     "manual Loop In/Out should retain the requested visible range");
+    const auto manualRendered = rangeEngine.createRenderedLoop();
+    passed &= expect(std::abs(manualRendered.getNumSamples()
+                              - juce::roundToInt(0.15 * repeatedMaterial.getNumSamples())) < 3,
+                     "manual loop crossfade must preserve the visible Loop In/Out duration");
+    rangeEngine.setPreviewMode(LoopEngine::PreviewMode::original);
+    juce::AudioBuffer<float> originalPreview(2, 64);
+    originalPreview.clear();
+    rangeEngine.process(originalPreview, 1.0f);
+    passed &= expect(originalPreview.getMagnitude(0, 0, 64) > 0.0f
+                         && originalPreview.getMagnitude(1, 0, 64) > 0.0f,
+                     "Original A/B mode should audition imported stereo source");
+
     juce::AudioBuffer<float> realisticAnalysis(2, 62400);
     for (int sample = 0; sample < realisticAnalysis.getNumSamples(); ++sample)
     {
@@ -86,6 +163,17 @@ int main()
     passed &= expect(engine.getStereoScore() >= 0.0f && engine.getStereoScore() <= 100.0f,
                      "stereo score should be normalized");
 
+    const auto rendered = engine.createRenderedLoop();
+    passed &= expect(rendered.getNumSamples() > 0,
+                     "seam repair should produce exportable loop audio");
+    if (rendered.getNumSamples() > 1)
+    {
+        const auto boundaryJump = std::abs(rendered.getSample(0, rendered.getNumSamples() - 1)
+                                           - rendered.getSample(0, 0));
+        passed &= expect(boundaryJump < 0.25f,
+                         "rendered loop boundary should not contain an obvious jump");
+    }
+
     juce::AudioBuffer<float> playback(2, 64);
     playback.clear();
     engine.process(playback, 1.0f);
@@ -97,6 +185,15 @@ int main()
         passed &= expect(std::isfinite(value), "playback must contain finite samples");
     }
     passed &= expect(containsSignal, "playback should emit the selected loop");
+    if (!containsSignal)
+    {
+        const auto diagnosticLoop = engine.createRenderedLoop();
+        std::cerr << "playback diagnostic: samples=" << engine.getCapturedSampleCount()
+                  << " seam=" << engine.getSeamQuality()
+                  << " rendered=" << (diagnosticLoop.getNumSamples() > 0
+                      ? diagnosticLoop.getMagnitude(0, 0, diagnosticLoop.getNumSamples()) : -1.0f)
+                  << '\n';
+    }
 
     const auto savedState = engine.createLoopState();
     passed &= expect(!savedState.isEmpty(), "captured loop should serialize");
