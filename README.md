@@ -36,7 +36,9 @@ Release builds use `vs2022-release` and `build-release`.
 
 ## Download for Windows / Reaper
 
-- [Loop Surgeon 0.3 Alpha - Windows x64 VST3](https://github.com/amzsowhat/sound-VST-project/releases/download/v0.3.0-alpha/Loop-Surgeon-Windows-x64-VST3.zip)
+The 0.3 Alpha source is on `main`, but the Windows package is not listed as downloadable until the
+`v0.3.0-alpha-windows-ready` CI marker exists. The previous 0.2 binary has the obsolete capture-first
+behavior and is not a valid test of the current product.
 
 Unzip the package and copy the complete `Loop Surgeon.vst3` folder to:
 
@@ -52,9 +54,9 @@ for the smoke-test checklist.
 
 ### Download the M-series Mac build
 
-Download the current private alpha package:
-
-- [Loop Surgeon 0.3 Alpha - macOS arm64 VST3](https://github.com/amzsowhat/sound-VST-project/releases/download/v0.3.0-alpha/Loop-Surgeon-macOS-arm64-VST3.zip)
+The Apple Silicon package is not listed as downloadable until the
+`v0.3.0-alpha-macos-ready` CI marker exists. Do not use the obsolete 0.2 binary to evaluate the
+current file-first workflow.
 
 Unzip it and copy `Loop Surgeon.vst3` to `~/Library/Audio/Plug-Ins/VST3/`. If macOS blocks
 the private ad-hoc-signed test build, run:
@@ -95,3 +97,4 @@ AGENTS.md                Handoff context for future Codex sessions
 
 The project uses JUCE. JUCE is dual-licensed, and proprietary distribution may require a commercial
 JUCE licence. Review the current JUCE terms before selling or distributing binaries.
+
