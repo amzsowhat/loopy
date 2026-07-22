@@ -31,6 +31,8 @@ and exports a reusable loop. Features that do not shorten that path are secondar
    automatic optimum may intentionally sit away from a zero crossing when a crossfade is superior.
 4. **Seam audition**: Original/Loop level-matched A/B, seam-only repeat, and 10/30/100-repeat endurance.
 5. **Visible repair region**: draggable crossfade length and curve with transient-protection warning.
+   Changing repair length after analysis must automatically rebuild/reanalyse the candidate; the current
+   alpha can otherwise change rendered length while the green Loop Out marker remains unchanged.
 6. **Export contract**: WAV plus `cue`/`smpl` loop chunks and sidecar JSON; exported audio must null or
    closely match the plug-in preview.
 7. **Complete project recall**: source reference/hash, Source In/Out, candidate list, selected result,
@@ -54,3 +56,4 @@ and exports a reusable loop. Features that do not shorten that path are secondar
   sound design in the style of CR8;
 - claiming every source is loopable;
 - hiding a low-confidence result behind a polished score or marketing copy.
+
