@@ -52,10 +52,12 @@ class LoopQualityView final : public juce::Component
 public:
     void setScores(float quality, float repair, float spectrum,
                    float phase, float stereo, float transient);
+    void setTextureMode(bool shouldUseTextureLabels);
     void paint(juce::Graphics&) override;
 
 private:
     std::array<float, 6> scores {};
+    bool textureMode = true;
 };
 
 class LoopSurgeonAudioProcessorEditor final : public juce::AudioProcessorEditor,
