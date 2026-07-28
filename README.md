@@ -36,9 +36,9 @@ Release builds use `vs2022-release` and `build-release`.
 
 ## Download for Windows / Reaper
 
-The 0.3 Alpha source is on `main`, but the Windows package is not listed as downloadable until the
-`v0.3.0-alpha-windows-ready` CI marker exists. The previous 0.2 binary has the obsolete capture-first
-behavior and is not a valid test of the current product.
+The 0.4 Alpha quality-preview source is on `main`, but the Windows package is not listed as
+downloadable until the `v0.4.0-alpha-windows-ready` CI marker exists. Earlier binaries do not contain
+the retained manual range, Preview/Stop, redesigned workflow, or adaptive repair scoring.
 
 Unzip the package and copy the complete `Loop Surgeon.vst3` folder to:
 
@@ -55,8 +55,8 @@ for the smoke-test checklist.
 ### Download the M-series Mac build
 
 The Apple Silicon package is not listed as downloadable until the
-`v0.3.0-alpha-macos-ready` CI marker exists. Do not use the obsolete 0.2 binary to evaluate the
-current file-first workflow.
+`v0.4.0-alpha-macos-ready` CI marker exists. Earlier binaries are not a valid test of the current
+workflow or algorithm.
 
 Unzip it and copy `Loop Surgeon.vst3` to `~/Library/Audio/Plug-Ins/VST3/`. If macOS blocks
 the private ad-hoc-signed test build, run:
@@ -97,4 +97,3 @@ AGENTS.md                Handoff context for future Codex sessions
 
 The project uses JUCE. JUCE is dual-licensed, and proprietary distribution may require a commercial
 JUCE licence. Review the current JUCE terms before selling or distributing binaries.
-
