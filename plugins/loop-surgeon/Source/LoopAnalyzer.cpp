@@ -134,15 +134,19 @@ float calculateStereoScore(const juce::AudioBuffer<float>& audio, const int star
                                                     - stereoCorrelation(audio, end - window, window))));
 }
 
-std::array<double, 8> spectralSignature(const juce::AudioBuffer<float>& audio,
-                                        const int start, const int window)
+std::array<double, 16> spectralSignature(const juce::AudioBuffer<float>& audio,
+                                         const int start, const int window)
 {
-    std::array<double, 8> signature {};
+    constexpr std::array<int, 16> cycles {
+        1, 2, 3, 4, 6, 8, 12, 16, 24, 32, 48, 64, 80, 96, 128, 160
+    };
+    std::array<double, cycles.size()> signature {};
     const auto channelScale = 1.0 / static_cast<double>(juce::jmax(1, audio.getNumChannels()));
     for (size_t band = 0; band < signature.size(); ++band)
     {
         double real = 0.0;
         double imaginary = 0.0;
+        const auto cycle = juce::jlimit(1, juce::jmax(1, window / 2 - 1), cycles[band]);
         for (int index = 0; index < window; ++index)
         {
             double mono = 0.0;
@@ -151,7 +155,7 @@ std::array<double, 8> spectralSignature(const juce::AudioBuffer<float>& audio,
             mono *= channelScale;
             const auto hann = 0.5 - 0.5 * std::cos(2.0 * pi * static_cast<double>(index)
                                                   / static_cast<double>(window - 1));
-            const auto phase = 2.0 * pi * static_cast<double>(band + 1) * index / window;
+            const auto phase = 2.0 * pi * static_cast<double>(cycle) * index / window;
             real += mono * hann * std::cos(phase);
             imaginary -= mono * hann * std::sin(phase);
         }
@@ -172,7 +176,7 @@ float calculateSpectrumScore(const juce::AudioBuffer<float>& audio, const int st
 }
 
 float calculateTransientScore(const juce::AudioBuffer<float>& audio, const int start,
-                              const int end, const int window)
+                               const int end, const int window)
 {
     double mismatch = 0.0;
     double scale = 0.0;
@@ -192,31 +196,139 @@ float calculateTransientScore(const juce::AudioBuffer<float>& audio, const int s
     return clampScore(100.0 * std::exp(-1.5 * mismatch / juce::jmax(1.0e-7, scale)));
 }
 
+float calculateRepairScore(const juce::AudioBuffer<float>& audio, const int start,
+                           const int end, const int requestedFade, const float phaseScore)
+{
+    const auto rawSamples = end - start;
+    const auto fade = juce::jlimit(0, rawSamples / 3, requestedFade);
+    if (fade < 2)
+        return 0.6f * calculateWaveformScore(audio, start, end, juce::jmin(64, rawSamples / 4))
+               + 0.4f * calculateSlopeScore(audio, start, end);
+
+    const auto renderedSamples = rawSamples - fade;
+    const auto middleSamples = rawSamples - 2 * fade;
+    if (renderedSamples < 8 || middleSamples < 0)
+        return 0.0f;
+
+    const auto useLinearFade = phaseScore >= 75.0f;
+    const auto repairedSample = [&] (const int channel, const int position)
+    {
+        if (position < middleSamples)
+            return audio.getSample(channel, start + fade + position);
+
+        const auto index = position - middleSamples;
+        const auto alpha = static_cast<float>(index + 1) / static_cast<float>(fade + 1);
+        const auto tailGain = useLinearFade ? 1.0f - alpha
+                                            : std::cos(alpha * juce::MathConstants<float>::halfPi);
+        const auto headGain = useLinearFade ? alpha
+                                            : std::sin(alpha * juce::MathConstants<float>::halfPi);
+        return tailGain * audio.getSample(channel, end - fade + index)
+               + headGain * audio.getSample(channel, start + index);
+    };
+
+    const auto comparison = juce::jlimit(4, 96, renderedSamples / 4);
+    double dot = 0.0;
+    double headEnergy = 0.0;
+    double tailEnergy = 0.0;
+    double jump = 0.0;
+    double slopeError = 0.0;
+    double derivativeScale = 0.0;
+    for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+    {
+        const auto first = static_cast<double>(repairedSample(channel, 0));
+        const auto second = static_cast<double>(repairedSample(channel, 1));
+        const auto last = static_cast<double>(repairedSample(channel, renderedSamples - 1));
+        const auto previous = static_cast<double>(repairedSample(channel, renderedSamples - 2));
+        jump += std::abs(last - first);
+        slopeError += std::abs((second - first) - (last - previous));
+        derivativeScale += 0.5 * (std::abs(second - first) + std::abs(last - previous));
+
+        for (int index = 0; index < comparison; ++index)
+        {
+            const auto head = static_cast<double>(repairedSample(channel, index));
+            const auto tail = static_cast<double>(
+                repairedSample(channel, renderedSamples - comparison + index));
+            dot += head * tail;
+            headEnergy += head * head;
+            tailEnergy += tail * tail;
+        }
+    }
+
+    const auto rmsScale = std::sqrt((headEnergy + tailEnergy)
+                                    / static_cast<double>(juce::jmax(1, 2 * comparison
+                                        * audio.getNumChannels()))) + 1.0e-8;
+    const auto jumpScore = clampScore(100.0 * std::exp(
+        -2.7 * jump / (rmsScale * juce::jmax(1, audio.getNumChannels()))));
+    const auto repairedSlopeScore = clampScore(100.0 * std::exp(
+        -1.8 * slopeError / juce::jmax(1.0e-8, derivativeScale)));
+    const auto denominator = std::sqrt(headEnergy * tailEnergy);
+    const auto correlation = denominator > 1.0e-12
+                                 ? juce::jlimit(-1.0, 1.0, dot / denominator)
+                                 : 0.0;
+    const auto contextScore = clampScore(50.0 * (correlation + 1.0));
+
+    return 0.45f * jumpScore + 0.20f * repairedSlopeScore + 0.35f * contextScore;
+}
+
 LoopAnalysisResult evaluateCandidate(const juce::AudioBuffer<float>& audio, const int start,
-                                     const int end, const int requestedLoopSamples,
+                                     const int end, const int requestedVisibleSamples,
                                      const int window, const bool detailed,
-                                     const float periodicity)
+                                     const float periodicity, const int repairOverlapSamples,
+                                     const double sourceRms, const double sampleRate)
 {
     const auto effectiveWindow = detailed ? window : juce::jmin(window, 64);
+    const auto longWindow = detailed
+        ? juce::jlimit(effectiveWindow,
+                       juce::jmax(effectiveWindow, (end - start) / 4),
+                       juce::roundToInt(sampleRate * 0.04))
+        : effectiveWindow;
     LoopAnalysisResult result;
     result.startSample = start;
     result.endSample = end;
+    result.repairOverlapSamples = juce::jlimit(0, (end - start) / 3, repairOverlapSamples);
     result.waveform = calculateWaveformScore(audio, start, end, effectiveWindow);
-    result.level = calculateLevelScore(audio, start, end, effectiveWindow);
+    result.level = detailed
+        ? 0.55f * calculateLevelScore(audio, start, end, effectiveWindow)
+              + 0.45f * calculateLevelScore(audio, start, end, longWindow)
+        : calculateLevelScore(audio, start, end, effectiveWindow);
     result.slope = calculateSlopeScore(audio, start, end);
-    result.phase = calculatePhaseScore(audio, start, end, effectiveWindow);
-    result.stereo = calculateStereoScore(audio, start, end, effectiveWindow);
-    result.transient = calculateTransientScore(audio, start, end, effectiveWindow);
+    result.phase = detailed
+        ? 0.60f * calculatePhaseScore(audio, start, end, effectiveWindow)
+              + 0.40f * calculatePhaseScore(audio, start, end, longWindow)
+        : calculatePhaseScore(audio, start, end, effectiveWindow);
+    result.stereo = detailed
+        ? 0.60f * calculateStereoScore(audio, start, end, effectiveWindow)
+              + 0.40f * calculateStereoScore(audio, start, end, longWindow)
+        : calculateStereoScore(audio, start, end, effectiveWindow);
+    result.transient = detailed
+        ? 0.65f * calculateTransientScore(audio, start, end, effectiveWindow)
+              + 0.35f * calculateTransientScore(audio, start, end, longWindow)
+        : calculateTransientScore(audio, start, end, effectiveWindow);
     result.periodicity = periodicity;
-    result.spectrum = detailed ? calculateSpectrumScore(audio, start, end, window) : 0.0f;
-    const auto durationError = std::abs((end - start) - requestedLoopSamples)
-                               / static_cast<double>(juce::jmax(1, requestedLoopSamples));
+    result.spectrum = detailed ? calculateSpectrumScore(audio, start, end, longWindow) : 0.0f;
+    result.repair = calculateRepairScore(audio, start, end, result.repairOverlapSamples,
+                                         result.phase);
+    const auto visibleSamples = end - start - result.repairOverlapSamples;
+    const auto durationError = std::abs(visibleSamples - requestedVisibleSamples)
+                               / static_cast<double>(juce::jmax(1, requestedVisibleSamples));
     const auto duration = clampScore(100.0 * std::exp(-8.0 * durationError));
-    result.overall = 0.18f * result.waveform + 0.13f * result.level
-                     + 0.10f * result.slope + 0.17f * result.phase
-                     + 0.08f * result.stereo + 0.12f * result.transient
-                     + 0.04f * duration + 0.06f * result.periodicity
-                     + (detailed ? 0.12f * result.spectrum : 0.0f);
+    const auto localRms = 0.5 * (sampleRms(audio, start, effectiveWindow)
+                                 + sampleRms(audio, end - effectiveWindow, effectiveWindow));
+    const auto activity = clampScore(100.0 * localRms / juce::jmax(1.0e-8, sourceRms * 0.35));
+
+    const auto weighted = detailed
+        ? 0.13f * result.waveform + 0.09f * result.level + 0.06f * result.slope
+              + 0.12f * result.phase + 0.06f * result.stereo
+              + 0.11f * result.transient + 0.13f * result.spectrum
+              + 0.20f * result.repair + 0.06f * result.periodicity + 0.04f * duration
+        : 0.18f * result.waveform + 0.11f * result.level + 0.08f * result.slope
+              + 0.16f * result.phase + 0.07f * result.stereo
+              + 0.13f * result.transient + 0.20f * result.repair
+              + 0.07f * result.periodicity;
+    const auto weakestCritical = juce::jmin(result.waveform, result.phase,
+                                            result.transient, result.repair);
+    result.overall = (0.82f * weighted + 0.18f * weakestCritical)
+                     * (0.65f + 0.35f * activity / 100.0f);
     return result;
 }
 
@@ -350,13 +462,15 @@ std::vector<PeriodCandidate> findPeriods(const juce::AudioBuffer<float>& audio,
 
 LoopAnalysisResult searchAtPeriod(const juce::AudioBuffer<float>& audio, const double sampleRate,
                                   const PeriodCandidate period, const int refinementRadius,
-                                  const int repairOverlapSamples)
+                                  const int maximumRepairOverlapSamples,
+                                  const double sourceRms)
 {
     const auto window = juce::jlimit(16, juce::jmin(512, audio.getNumSamples() / 4),
                                      juce::roundToInt(sampleRate * 0.012));
     const auto startStep = juce::jmax(1, juce::roundToInt(sampleRate * 0.02));
     const auto lengthStep = juce::jmax(1, juce::roundToInt(sampleRate * 0.0025));
-    const auto requestedSourceSpan = period.samples + juce::jmax(0, repairOverlapSamples);
+    const auto preferredRepair = juce::jmax(0, maximumRepairOverlapSamples);
+    const auto requestedSourceSpan = period.samples + preferredRepair;
     std::vector<Candidate> finalists;
     for (int start = 0; start + requestedSourceSpan - refinementRadius < audio.getNumSamples(); start += startStep)
     {
@@ -366,21 +480,41 @@ LoopAnalysisResult searchAtPeriod(const juce::AudioBuffer<float>& audio, const d
             if (end > audio.getNumSamples() || end - start < window * 2)
                 continue;
             Candidate candidate;
-            candidate.result = evaluateCandidate(audio, start, end, requestedSourceSpan,
-                                                  window, false, period.score);
+            candidate.result = evaluateCandidate(audio, start, end, period.samples,
+                                                  window, false, period.score, preferredRepair,
+                                                  sourceRms, sampleRate);
             candidate.cheapScore = candidate.result.overall;
             keepBest(finalists, std::move(candidate), 16);
         }
     }
     LoopAnalysisResult best;
     best.overall = -1.0f;
+    std::vector<int> repairOptions { preferredRepair };
+    if (preferredRepair >= 4)
+    {
+        repairOptions.push_back(juce::jmax(2, preferredRepair / 3));
+        repairOptions.push_back(juce::jmax(2, 2 * preferredRepair / 3));
+    }
+    std::sort(repairOptions.begin(), repairOptions.end());
+    repairOptions.erase(std::unique(repairOptions.begin(), repairOptions.end()),
+                        repairOptions.end());
+
     for (const auto& candidate : finalists)
     {
-        const auto detailed = evaluateCandidate(audio, candidate.result.startSample,
-                                                candidate.result.endSample, requestedSourceSpan,
-                                                window, true, period.score);
-        if (detailed.overall > best.overall)
-            best = detailed;
+        const auto visibleSamples = candidate.result.endSample
+                                    - candidate.result.startSample - preferredRepair;
+        for (const auto repair : repairOptions)
+        {
+            const auto adjustedEnd = candidate.result.startSample + visibleSamples + repair;
+            if (adjustedEnd > audio.getNumSamples())
+                continue;
+            const auto detailed = evaluateCandidate(audio, candidate.result.startSample,
+                                                    adjustedEnd, period.samples,
+                                                    window, true, period.score, repair,
+                                                    sourceRms, sampleRate);
+            if (detailed.overall > best.overall)
+                best = detailed;
+        }
     }
     if (best.overall < 0.0f)
         return best;
@@ -400,8 +534,10 @@ LoopAnalysisResult searchAtPeriod(const juce::AudioBuffer<float>& audio, const d
             if (end > audio.getNumSamples() || end - start < window * 2)
                 continue;
             Candidate candidate;
-            candidate.result = evaluateCandidate(audio, start, end, requestedSourceSpan,
-                                                  window, false, period.score);
+            candidate.result = evaluateCandidate(audio, start, end, period.samples,
+                                                  window, false, period.score,
+                                                  best.repairOverlapSamples,
+                                                  sourceRms, sampleRate);
             candidate.cheapScore = candidate.result.overall;
             keepBest(sampleFinalists, std::move(candidate), 16);
         }
@@ -409,8 +545,10 @@ LoopAnalysisResult searchAtPeriod(const juce::AudioBuffer<float>& audio, const d
     for (const auto& candidate : sampleFinalists)
     {
         const auto detailed = evaluateCandidate(audio, candidate.result.startSample,
-                                                candidate.result.endSample, requestedSourceSpan,
-                                                window, true, period.score);
+                                                candidate.result.endSample, period.samples,
+                                                window, true, period.score,
+                                                best.repairOverlapSamples,
+                                                sourceRms, sampleRate);
         if (detailed.overall > best.overall)
             best = detailed;
     }
@@ -432,26 +570,43 @@ LoopAnalysisReport LoopAnalyzer::analyzeSource(const juce::AudioBuffer<float>& a
     maximumLoopSamples = juce::jlimit(minimumLoopSamples,
                                       audio.getNumSamples() - 1 - juce::jmax(0, repairOverlapSamples),
                                       maximumLoopSamples);
+    const auto sourceRms = sampleRms(audio, 0, audio.getNumSamples());
     const auto periods = findPeriods(audio, sampleRate, minimumLoopSamples, maximumLoopSamples);
     for (const auto& period : periods)
     {
         const auto radius = juce::jmin(juce::roundToInt(sampleRate * 0.08), period.samples / 12);
-        auto result = searchAtPeriod(audio, sampleRate, period, radius, repairOverlapSamples);
+        auto result = searchAtPeriod(audio, sampleRate, period, radius,
+                                     repairOverlapSamples, sourceRms);
         if (result.overall >= 0.0f)
-        {
-            result.repairOverlapSamples = repairOverlapSamples;
             report.candidates.push_back(result);
-        }
     }
     std::sort(report.candidates.begin(), report.candidates.end(), [] (const auto& left, const auto& right)
     {
         return left.overall > right.overall;
     });
-    if (report.candidates.size() > static_cast<size_t>(juce::jmax(1, maximumCandidates)))
-        report.candidates.resize(static_cast<size_t>(juce::jmax(1, maximumCandidates)));
+    std::vector<LoopAnalysisResult> diverse;
+    const auto duplicateStartTolerance = juce::roundToInt(sampleRate * 0.05);
+    for (const auto& candidate : report.candidates)
+    {
+        const auto candidateLength = candidate.endSample - candidate.startSample
+                                     - candidate.repairOverlapSamples;
+        const auto duplicate = std::any_of(diverse.begin(), diverse.end(), [&] (const auto& kept)
+        {
+            const auto keptLength = kept.endSample - kept.startSample - kept.repairOverlapSamples;
+            return std::abs(candidate.startSample - kept.startSample) < duplicateStartTolerance
+                   && std::abs(candidateLength - keptLength)
+                          < juce::jmax(8, candidateLength / 40);
+        });
+        if (!duplicate)
+            diverse.push_back(candidate);
+        if (diverse.size() >= static_cast<size_t>(juce::jmax(1, maximumCandidates)))
+            break;
+    }
+    report.candidates = std::move(diverse);
     report.lowConfidence = report.candidates.empty()
                            || report.candidates.front().overall < 62.0f
-                           || report.candidates.front().periodicity < 58.0f;
+                           || report.candidates.front().periodicity < 58.0f
+                           || report.candidates.front().repair < 55.0f;
     return report;
 }
 
@@ -465,14 +620,16 @@ LoopAnalysisResult LoopAnalyzer::findBestLoop(const juce::AudioBuffer<float>& au
     if (audio.getNumChannels() == 0 || audio.getNumSamples() < 8)
         return fallback;
     const auto period = PeriodCandidate { requestedLoopSamples, 100.0f };
-    const auto result = searchAtPeriod(audio, sampleRate, period, searchRadiusSamples, 0);
+    const auto result = searchAtPeriod(audio, sampleRate, period, searchRadiusSamples,
+                                       0, sampleRms(audio, 0, audio.getNumSamples()));
     return result.overall < 0.0f ? fallback : result;
 }
 
 LoopAnalysisResult LoopAnalyzer::evaluateFixedRange(const juce::AudioBuffer<float>& audio,
                                                      const double sampleRate,
                                                      const int startSample,
-                                                     const int endSample)
+                                                     const int endSample,
+                                                     const int repairOverlapSamples)
 {
     LoopAnalysisResult empty;
     if (audio.getNumChannels() == 0 || startSample < 0 || endSample > audio.getNumSamples()
@@ -480,6 +637,10 @@ LoopAnalysisResult LoopAnalyzer::evaluateFixedRange(const juce::AudioBuffer<floa
         return empty;
     const auto window = juce::jlimit(16, juce::jmin(512, (endSample - startSample) / 4),
                                      juce::roundToInt(sampleRate * 0.012));
-    return evaluateCandidate(audio, startSample, endSample, endSample - startSample,
-                             window, true, 100.0f);
+    const auto repair = juce::jlimit(0, (endSample - startSample) / 3,
+                                     repairOverlapSamples);
+    return evaluateCandidate(audio, startSample, endSample,
+                             endSample - startSample - repair,
+                             window, true, 100.0f, repair,
+                             sampleRms(audio, 0, audio.getNumSamples()), sampleRate);
 }
