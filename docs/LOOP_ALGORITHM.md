@@ -1,36 +1,43 @@
-# Automatic loop algorithm
+# Loop Surgeon algorithms
 
-The primary path is file import, user Search In/Out, automatic search, optional manual Loop In/Out,
-audition, and WAV export. DAW capture is secondary.
+## Evolving Texture
 
-## 0.4 analysis path
+This is the default imported-source path for wind, rain, room tone, drones, and other reasonably
+stationary material.
 
-1. Decode mono/stereo input, resample it to the host rate with a high-order windowed-sinc
-   interpolator, and cap imported analysis memory at 60 seconds.
-2. Build 100 Hz loudness, change-rate, and four-band spectral feature frames.
-3. Normalize every feature stream and use multivariate autocorrelation to propose distinct periods.
-4. Search start/end pairs across the blue user range near each proposed period.
-5. Prune broad candidates with cheap waveform, level, slope, phase, stereo, transient, repair, and
-   period evidence.
-6. Re-evaluate finalists with short and long windows plus a 16-band spectral signature.
-7. Test multiple repair lengths up to the user's **Max Repair Window**. The repair score simulates
-   the actual linear/equal-power overlap and measures the final rendered boundary, not just the raw
-   source endpoints.
-8. Apply a weak-link penalty across waveform, phase, transient, and repair evidence so one severe
-   defect cannot be hidden by several unrelated high scores. A source-relative activity penalty
-   prevents silent regions from receiving a misleading perfect score.
-9. Refine both boundaries at single-sample resolution and return up to three diverse candidates.
-10. Keep the repair overlap inside the searched source span so the rendered loop retains the
-    detected period after overlap.
-11. Use linear overlap for highly phase-correlated seams and equal-power overlap otherwise.
-    Real-time preview begins on the same repaired sample as the exported WAV.
+1. Resample imported mono/stereo audio to the host rate and limit it to 60 seconds.
+2. Use only the user-selected Source In/Out range.
+3. Adapt a long grain size from about 0.45 to 1.8 seconds. Long grains preserve environmental
+   events better than a dense cloud of 10–100 ms grains.
+4. Measure each candidate head/tail using level, derivative energy, stereo correlation, and an
+   eight-band spectral signature.
+5. Build a seeded path. Acoustic transition distance ranks candidates; Variation widens the
+   top-ranked choice set. Penalties discourage immediate reuse, recent reuse, near-identical source
+   positions, and simply continuing through the source in order.
+6. Include transition-back-to-start cost near the end of the path.
+7. Render every grain into a circular output buffer with overlapping windows and per-sample
+   normalization. The full 4–60 second result is therefore the loop, not a short segment repeated
+   until the requested duration.
+8. Generate three deterministic seeds. Candidate switching swaps buffer ownership instead of
+   duplicating the active long buffer.
 
-Manual green Loop In/Out edits are evaluated without returning to an automatic default. The chosen
-repair length remains frozen for the current candidate; changing **Max Repair Window** affects the
-next Find Best Loop or Use Manual Loop operation.
+## Seam Loop
 
-This remains an explainable deterministic heuristic, not a trained perceptual model and not a claim
-that every source is loopable. A paid release still requires a licensed real-world corpus and blind
-listening validation; those blockers are tracked in
-`plugins/loop-surgeon/docs/PRODUCT_REVIEW.md`.
+This path remains for strongly periodic material.
 
+1. Build 100 Hz loudness, change-rate, and four-band spectral feature frames.
+2. Normalize the streams and use multivariate autocorrelation to propose periods.
+3. Search Source In/Out for start/end pairs near each period.
+4. Score waveform jump, level, slope, phase, stereo, transient, repair, and period evidence.
+5. Re-evaluate finalists using short/long windows and a 16-band spectral signature.
+6. Test several repair lengths up to the configured maximum against the actual rendered boundary.
+7. Apply weak-link and activity penalties, then refine boundaries at single-sample resolution.
+
+## Auto
+
+Auto runs the periodic analysis first. It keeps Seam Loop only when the leading candidate has strong
+periodicity, transient continuity, overall quality, and high confidence; otherwise it selects
+Evolving Texture. The chosen mode is reported by the engine and can be overridden by the user.
+
+Both paths are deterministic explainable DSP, not trained perceptual models. Commercial claims
+remain blocked on a licensed corpus and blind listening tests.
