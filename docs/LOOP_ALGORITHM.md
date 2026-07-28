@@ -7,18 +7,24 @@ stationary material.
 
 1. Resample imported mono/stereo audio to the host rate and limit it to 60 seconds.
 2. Use only the user-selected Source In/Out range.
-3. Adapt a long grain size from about 0.45 to 1.8 seconds. Long grains preserve environmental
-   events better than a dense cloud of 10–100 ms grains.
-4. Measure each candidate head/tail using level, derivative energy, stereo correlation, and an
+3. Estimate a 160 ms slow RMS envelope. Reject near-silent, attack, decay-tail, and strongly
+   changing candidate regions so a one-shot's macro envelope is not copied repeatedly.
+4. Smoothly invert that envelope with bounded gain, shared by all channels. This creates a
+   stationary timbral carrier while preserving short-term noise detail and stereo relationships.
+5. Adapt a long grain size from about 0.42 to 1.35 seconds. Long grains preserve environmental
+   timbre better than a dense cloud of 10–100 ms grains.
+6. Measure each candidate head/tail using level, derivative energy, stereo correlation, and an
    eight-band spectral signature.
-5. Build a seeded path. Acoustic transition distance ranks candidates; Variation widens the
+7. Build a seeded path. Acoustic transition distance ranks candidates; Variation widens the
    top-ranked choice set. Penalties discourage immediate reuse, recent reuse, near-identical source
    positions, and simply continuing through the source in order.
-6. Include transition-back-to-start cost near the end of the path.
-7. Render every grain into a circular output buffer with overlapping windows and per-sample
+8. Include transition-back-to-start cost near the end of the path.
+9. Render every grain into a circular output buffer with overlapping windows and per-sample
    normalization. The full 4–60 second result is therefore the loop, not a short segment repeated
    until the requested duration.
-8. Generate three deterministic seeds. Candidate switching swaps buffer ownership instead of
+10. Measure the circular output with a 360 ms envelope and apply a bounded, circularly smoothed
+    correction. This suppresses repeated macro swells without flattening microtexture.
+11. Generate three deterministic seeds. Candidate switching swaps buffer ownership instead of
    duplicating the active long buffer.
 
 ## Seam Loop
