@@ -17,9 +17,14 @@ and exports a reusable loop. Features that do not shorten that path are secondar
 - whole-selection in/out pair search and single-sample finalist refinement;
 - direct waveform-jump, level, slope, phase, spectrum, stereo, and transient evidence;
 - three selectable candidates and explicit low-confidence failure;
-- Original/Loop A/B playback using the imported source;
+- guided four-step UI, separate Search/Loop handle lanes, and full-size session controls;
+- explicit stopped-by-default Preview/Stop plus Original/Loop audition;
 - phase-aware repair shared by real-time preview and WAV export;
+- preview/export sample-path parity from the first audible sample;
+- adaptive repair-length selection with post-render boundary scoring;
+- multi-scale 16-band spectral evidence, critical-domain weak-link penalty, and silent-region rejection;
 - overlap-length compensation so repair does not shorten the detected output period;
+- high-order windowed-sinc source and project-state resampling;
 - 24-bit WAV export and finished-loop DAW state restore.
 
 ### Still mandatory
@@ -30,15 +35,16 @@ and exports a reusable loop. Features that do not shorten that path are secondar
 3. **Snap modes**: off, zero crossing, transient, and host grid. Snapping must be optional because the
    automatic optimum may intentionally sit away from a zero crossing when a crossfade is superior.
 4. **Seam audition**: Original/Loop level-matched A/B, seam-only repeat, and 10/30/100-repeat endurance.
-5. **Visible repair region**: draggable crossfade length and curve with transient-protection warning.
-   Changing repair length after analysis must automatically rebuild/reanalyse the candidate; the current
-   alpha can otherwise change rendered length while the green Loop Out marker remains unchanged.
+5. **Visible repair region**: show the automatically selected repair length on the waveform and add
+   draggable curve/length editing with transient-protection warning. The current result now freezes
+   its chosen repair length until the next Find Best Loop or Use Manual Loop, preventing marker/render
+   desynchronisation.
 6. **Export contract**: WAV plus `cue`/`smpl` loop chunks and sidecar JSON; exported audio must null or
    closely match the plug-in preview.
 7. **Complete project recall**: source reference/hash, Source In/Out, candidate list, selected result,
    manual edits, repair settings, and a portable "collect source" option.
-8. **Non-blocking jobs**: decode, production-grade band-limited sample-rate conversion, analysis, and
-   export on cancellable workers with progress and deterministic cancellation.
+8. **Non-blocking jobs**: decode, windowed-sinc sample-rate conversion, analysis, and export on
+   cancellable workers with progress and deterministic cancellation.
 9. **Quality corpus**: licensed ambience, rain, wind, engines, machines, tonal beds, stereo textures,
    and adversarial non-loopable material; objective boundary metrics plus blind listening labels.
 
@@ -47,6 +53,7 @@ and exports a reusable loop. Features that do not shorten that path are secondar
 - event-map detection and constrained rearrangement to reduce long-term repetition;
 - multiple rendered variants and long-timeline export;
 - optional M/S and local STFT repair for candidates that time-domain repair cannot solve;
+- a true spectrum/phase inspector rather than quality bars alone;
 - tempo/BPM inference and fixed musical-length search;
 - batch processing and standalone queue.
 
@@ -56,4 +63,3 @@ and exports a reusable loop. Features that do not shorten that path are secondar
   sound design in the style of CR8;
 - claiming every source is loopable;
 - hiding a low-confidence result behind a polished score or marketing copy.
-
