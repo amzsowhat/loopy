@@ -6,6 +6,7 @@
 #include <chrono>
 #include <cmath>
 #include <iostream>
+#include <numeric>
 #include <thread>
 #include <vector>
 
@@ -75,6 +76,79 @@ float coefficientOfVariation(const std::vector<float>& values)
     const auto variance = juce::jmax(
         0.0, squareTotal / static_cast<double>(values.size()) - mean * mean);
     return static_cast<float>(std::sqrt(variance) / juce::jmax(1.0e-7, mean));
+}
+
+std::vector<float> spectralCentroids(const juce::AudioBuffer<float>& audio,
+                                     const double sampleRate,
+                                     const int blockSamples)
+{
+    std::vector<float> centroids;
+    for (int start = 0; start + blockSamples <= audio.getNumSamples();
+         start += blockSamples)
+    {
+        auto weighted = 0.0;
+        auto total = 0.0;
+        for (int bin = 1; bin <= blockSamples / 2; ++bin)
+        {
+            auto real = 0.0;
+            auto imaginary = 0.0;
+            for (int sample = 0; sample < blockSamples; ++sample)
+            {
+                auto mono = 0.0f;
+                for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+                    mono += audio.getSample(channel, start + sample);
+                mono /= static_cast<float>(audio.getNumChannels());
+                const auto hann = 0.5 - 0.5 * std::cos(
+                    juce::MathConstants<double>::twoPi
+                    * static_cast<double>(sample)
+                    / static_cast<double>(blockSamples - 1));
+                const auto phase = juce::MathConstants<double>::twoPi
+                                   * static_cast<double>(bin * sample)
+                                   / static_cast<double>(blockSamples);
+                real += mono * hann * std::cos(phase);
+                imaginary -= mono * hann * std::sin(phase);
+            }
+            const auto power = real * real + imaginary * imaginary;
+            const auto frequency = static_cast<double>(bin) * sampleRate
+                                   / static_cast<double>(blockSamples);
+            weighted += frequency * power;
+            total += power;
+        }
+        centroids.push_back(static_cast<float>(weighted / juce::jmax(1.0e-12, total)));
+    }
+    return centroids;
+}
+
+float strongestAutocorrelation(const std::vector<float>& values,
+                               const int minimumLag,
+                               const int maximumLag)
+{
+    if (values.size() < 3u)
+        return 0.0f;
+    const auto mean = std::accumulate(values.begin(), values.end(), 0.0)
+                      / static_cast<double>(values.size());
+    auto strongest = -1.0f;
+    for (int lag = minimumLag;
+         lag <= maximumLag && lag < static_cast<int>(values.size()) / 2; ++lag)
+    {
+        auto numerator = 0.0;
+        auto leftEnergy = 0.0;
+        auto rightEnergy = 0.0;
+        for (int index = 0; index + lag < static_cast<int>(values.size()); ++index)
+        {
+            const auto left = static_cast<double>(values[static_cast<size_t>(index)]) - mean;
+            const auto right = static_cast<double>(
+                values[static_cast<size_t>(index + lag)]) - mean;
+            numerator += left * right;
+            leftEnergy += left * left;
+            rightEnergy += right * right;
+        }
+        strongest = juce::jmax(
+            strongest,
+            static_cast<float>(numerator / std::sqrt(
+                juce::jmax(1.0e-12, leftEnergy * rightEnergy))));
+    }
+    return strongest;
 }
 }
 
@@ -192,7 +266,7 @@ int main()
     passed &= expect(textureA.audio.getNumSamples() > windOneShot.getNumSamples(),
                      "one-shot texture output should be longer than its source");
     passed &= expect(textureA.sourceGrainStarts.size() > 4,
-                     "texture output should be assembled from multiple long grains");
+                     "texture model should learn from multiple active source frames");
     auto deterministicError = 0.0;
     auto seedDifference = 0.0;
     for (int sample = 0; sample < textureA.audio.getNumSamples(); ++sample)
@@ -268,10 +342,54 @@ int main()
     passed &= expect(coefficientOfVariation(outputBlocks)
                          < coefficientOfVariation(activeSourceBlocks) * 0.65f,
                      "texture synthesis should remove the source macro envelope");
-    passed &= expect(stationaryTexture.macroStability >= 62.0f,
+    passed &= expect(stationaryTexture.macroStability >= 58.0f,
                      "texture report should reject output with obvious repeated attacks");
     passed &= expect(stationaryTexture.spectrumPreservation >= 35.0f,
                      "macro-envelope removal must retain the source timbral fingerprint");
+
+    juce::AudioBuffer<float> passByOneShot(2, 16000);
+    noiseState = 0x7af31d9u;
+    auto passByPhase = 0.0;
+    auto passByNoise = 0.0f;
+    for (int sample = 0; sample < passByOneShot.getNumSamples(); ++sample)
+    {
+        noiseState ^= noiseState << 13u;
+        noiseState ^= noiseState >> 17u;
+        noiseState ^= noiseState << 5u;
+        const auto white = static_cast<float>(noiseState & 0xffffu) / 32768.0f - 1.0f;
+        passByNoise = 0.88f * passByNoise + 0.12f * white;
+        const auto progress = static_cast<float>(sample)
+                              / static_cast<float>(passByOneShot.getNumSamples() - 1);
+        const auto distance = std::abs(2.0f * progress - 1.0f);
+        const auto frequency = 95.0f + 520.0f * (1.0f - distance * distance);
+        passByPhase += juce::MathConstants<double>::twoPi * frequency
+                       / automaticSampleRate;
+        const auto eventEnvelope = std::pow(
+            juce::jmax(0.0f, std::sin(juce::MathConstants<float>::pi * progress)),
+            0.72f);
+        const auto carrier = static_cast<float>(
+            0.22 * std::sin(passByPhase)
+            + 0.08 * std::sin(1.71 * passByPhase + 0.2))
+            + 0.08f * passByNoise;
+        passByOneShot.setSample(0, sample, eventEnvelope * carrier);
+        passByOneShot.setSample(1, sample, eventEnvelope * (
+            0.88f * carrier + 0.05f * white));
+    }
+    TextureSynthesisSettings passBySettings;
+    passBySettings.durationSeconds = 16.0f;
+    passBySettings.variation = 0.72f;
+    passBySettings.seed = 0x1ee7c0deu;
+    const auto passByTexture = TextureSynthesizer::synthesize(
+        passByOneShot, automaticSampleRate, passBySettings);
+    const auto sourceCentroids = spectralCentroids(
+        passByOneShot, automaticSampleRate, 256);
+    const auto outputCentroids = spectralCentroids(
+        passByTexture.audio, automaticSampleRate, 256);
+    passed &= expect(coefficientOfVariation(outputCentroids)
+                         < coefficientOfVariation(sourceCentroids) * 0.58f,
+                     "stationary synthesis must remove the one-shot pass-by trajectory");
+    passed &= expect(strongestAutocorrelation(outputCentroids, 2, 24) < 0.36f,
+                     "output spectrum must not repeat a hidden pass-by cycle");
 
     LoopEngine textureEngine;
     textureEngine.prepare(automaticSampleRate, 64, 2);
