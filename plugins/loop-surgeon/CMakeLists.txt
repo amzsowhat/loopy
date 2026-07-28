@@ -1,12 +1,12 @@
 juce_add_plugin(LoopSurgeon
-    VERSION 0.4.0
+    VERSION 0.5.0
     COMPANY_NAME "Sound VST Project"
     BUNDLE_ID com.amzsowhat.loopsurgeon
     PLUGIN_MANUFACTURER_CODE SVst
     PLUGIN_CODE LpSg
     FORMATS VST3 Standalone
     PRODUCT_NAME "Loop Surgeon"
-    DESCRIPTION "Automatically find, repair and export seamless audio loops"
+    DESCRIPTION "Turn source audio into evolving seamless textures or repaired loops"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
@@ -22,6 +22,8 @@ target_sources(LoopSurgeon
         Source/LoopEngine.h
         Source/LoopAnalyzer.cpp
         Source/LoopAnalyzer.h
+        Source/TextureSynthesizer.cpp
+        Source/TextureSynthesizer.h
         Source/PluginEditor.cpp
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
@@ -59,6 +61,8 @@ if(SOUND_VST_BUILD_TESTS)
             Source/LoopEngine.h
             Source/LoopAnalyzer.cpp
             Source/LoopAnalyzer.h
+            Source/TextureSynthesizer.cpp
+            Source/TextureSynthesizer.h
             Tests/LoopEngineTests.cpp
     )
 
