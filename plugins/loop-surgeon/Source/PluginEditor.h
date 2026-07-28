@@ -33,11 +33,9 @@ public:
     void mouseUp(const juce::MouseEvent&) override;
 
     std::function<void()> onSourceRangeEdited;
-    std::function<void()> onLoopRangeEdited;
-    std::function<void()> onLoopRangeCommitted;
 
 private:
-    enum class DragTarget { none, sourceIn, sourceOut, sourceRange, loopIn, loopOut };
+    enum class DragTarget { none, sourceIn, sourceOut, sourceRange };
     std::vector<float> peaks;
     float loopStart = 0.0f;
     float loopEnd = 0.0f;
@@ -75,6 +73,7 @@ public:
 
 private:
     using SliderAttachment = juce::AudioProcessorValueTreeState::SliderAttachment;
+    using ComboBoxAttachment = juce::AudioProcessorValueTreeState::ComboBoxAttachment;
 
     void timerCallback() override;
     void importFile(const juce::File& file);
@@ -84,7 +83,7 @@ private:
     void updateRangeLabel();
     void updatePrimaryAction();
     void drawCard(juce::Graphics&, juce::Rectangle<int>, const juce::String&,
-                  const juce::String&, juce::Colour) const;
+                  juce::Colour) const;
 
     LoopSurgeonAudioProcessor& processor;
     LoopSurgeonLookAndFeel lookAndFeel;
@@ -92,39 +91,45 @@ private:
     juce::Label versionLabel;
     juce::Label dropLabel;
     juce::Label sourceLabel;
-    juce::Label selectionHelpLabel;
-    juce::Label previewHelpLabel;
     juce::Label statusLabel;
     LoopWaveformView waveformView;
     LoopQualityView qualityView;
     juce::ComboBox candidateBox;
     juce::Label rangeLabel;
-    juce::TextButton analyzeRangeButton { "Find Best Loop" };
-    juce::TextButton resetRangeButton { "Reset Search" };
+    juce::TextButton analyzeRangeButton { "Generate" };
+    juce::TextButton resetRangeButton { "Full Source" };
+    juce::TextButton regenerateButton { "New Variation" };
     juce::TextButton previewTransportButton { "Preview" };
-    juce::TextButton originalPreviewButton { "Original" };
-    juce::TextButton loopPreviewButton { "Loop" };
+    juce::TextButton originalPreviewButton { "Source" };
+    juce::TextButton loopPreviewButton { "Generated" };
     juce::TextButton importButton { "Choose Audio..." };
-    juce::TextButton exportButton { "Export Loop WAV" };
+    juce::TextButton exportButton { "Export WAV" };
     juce::TextButton captureButton { "Record DAW Input" };
     juce::TextButton clearButton { "Clear Session" };
     juce::Slider crossfadeSlider;
     juce::Slider mixSlider;
+    juce::Slider durationSlider;
+    juce::Slider variationSlider;
+    juce::ComboBox generationModeBox;
     juce::Label crossfadeLabel;
     juce::Label mixLabel;
+    juce::Label durationLabel;
+    juce::Label variationLabel;
+    juce::Label modeLabel;
     std::unique_ptr<SliderAttachment> crossfadeAttachment;
     std::unique_ptr<SliderAttachment> mixAttachment;
+    std::unique_ptr<SliderAttachment> durationAttachment;
+    std::unique_ptr<SliderAttachment> variationAttachment;
+    std::unique_ptr<ComboBoxAttachment> modeAttachment;
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::String lastMessage;
     juce::String displayedSource;
     int displayedCandidateCount = -1;
     uint64_t displayedCandidateRevision = 0;
     uint64_t displayedSourceRevision = 0;
-    bool manualLoopEdited = false;
     bool sourceRangeEdited = false;
 
     juce::Rectangle<int> sourceCard;
-    juce::Rectangle<int> workflowArea;
     juce::Rectangle<int> waveformCard;
     juce::Rectangle<int> auditionCard;
     juce::Rectangle<int> finishCard;
