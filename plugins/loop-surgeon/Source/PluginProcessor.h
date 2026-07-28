@@ -37,6 +37,8 @@ public:
     void beginCapture() noexcept;
     void setPreviewMode(LoopEngine::PreviewMode mode) noexcept { loopEngine.setPreviewMode(mode); }
     [[nodiscard]] LoopEngine::PreviewMode getPreviewMode() const noexcept { return loopEngine.getPreviewMode(); }
+    void setPreviewPlaying(bool shouldPlay) noexcept { loopEngine.setPreviewPlaying(shouldPlay); }
+    [[nodiscard]] bool isPreviewPlaying() const noexcept { return loopEngine.isPreviewPlaying(); }
     juce::String importAudioFile(const juce::File& file);
     juce::String exportLoopFile(const juce::File& file) const;
     void clearLoop() noexcept { loopEngine.clear(); }
@@ -51,6 +53,7 @@ public:
     [[nodiscard]] float getStereoScore() const noexcept { return loopEngine.getStereoScore(); }
     [[nodiscard]] float getTransientScore() const noexcept { return loopEngine.getTransientScore(); }
     [[nodiscard]] float getPeriodicityScore() const noexcept { return loopEngine.getPeriodicityScore(); }
+    [[nodiscard]] float getRepairScore() const noexcept { return loopEngine.getRepairScore(); }
     [[nodiscard]] bool isLowConfidence() const noexcept { return loopEngine.isLowConfidence(); }
     [[nodiscard]] juce::String getSourceName() const { return loopEngine.getSourceName(); }
     [[nodiscard]] double getSourceDurationSeconds() const { return loopEngine.getSourceDurationSeconds(); }
