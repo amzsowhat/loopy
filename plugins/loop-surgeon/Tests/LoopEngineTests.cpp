@@ -67,10 +67,16 @@ int main()
                      "overlap-aware analysis should produce candidates");
     if (!overlapAware.candidates.empty())
     {
+        const auto selectedRepair = overlapAware.candidates.front().repairOverlapSamples;
         const auto renderedLength = overlapAware.candidates.front().endSample
-                                    - overlapAware.candidates.front().startSample - 50;
+                                    - overlapAware.candidates.front().startSample - selectedRepair;
+        passed &= expect(selectedRepair > 0 && selectedRepair <= 50,
+                         "automatic analysis should choose a repair window within the user maximum");
         passed &= expect(std::abs(renderedLength - truePeriod) < 100,
                          "crossfade overlap must not shorten the intended loop period");
+        passed &= expect(overlapAware.candidates.front().repair >= 0.0f
+                             && overlapAware.candidates.front().repair <= 100.0f,
+                         "post-repair seam score should be normalized");
     }
     const auto exactRange = LoopAnalyzer::evaluateFixedRange(repeatedMaterial,
                                                               automaticSampleRate, 0, truePeriod);
@@ -78,6 +84,33 @@ int main()
                                                                automaticSampleRate, 0, truePeriod - 137);
     passed &= expect(exactRange.waveform > brokenRange.waveform,
                      "direct boundary score should prefer the sample-continuous period");
+    const auto repairedExact = LoopAnalyzer::evaluateFixedRange(
+        repeatedMaterial, automaticSampleRate, 0, truePeriod + 50, 50);
+    const auto repairedBroken = LoopAnalyzer::evaluateFixedRange(
+        repeatedMaterial, automaticSampleRate, 0, truePeriod - 137 + 50, 50);
+    passed &= expect(repairedExact.repair > repairedBroken.repair,
+                     "post-render repair scoring should reject a misleading bad seam");
+
+    juce::AudioBuffer<float> silenceTrap(1, truePeriod * 6);
+    silenceTrap.clear();
+    for (int sample = truePeriod; sample < silenceTrap.getNumSamples(); ++sample)
+    {
+        const auto position = sample % truePeriod;
+        const auto tone = 0.5f * std::sin(
+            juce::MathConstants<float>::twoPi * 9.0f * static_cast<float>(position)
+            / truePeriod);
+        const auto texture = 0.18f * std::sin(
+            juce::MathConstants<float>::twoPi * 23.0f * static_cast<float>(position)
+            / truePeriod + 0.3f);
+        silenceTrap.setSample(0, sample, tone + texture);
+    }
+    const auto silenceTrapReport = LoopAnalyzer::analyzeSource(
+        silenceTrap, automaticSampleRate, 650, 1150, 3, 50);
+    passed &= expect(!silenceTrapReport.candidates.empty(),
+                     "quality corpus with a silent prefix should still produce an active loop");
+    if (!silenceTrapReport.candidates.empty())
+        passed &= expect(silenceTrapReport.candidates.front().startSample >= truePeriod / 2,
+                         "silence activity penalty should prevent a perfect-score silent loop");
 
     LoopEngine rangeEngine;
     rangeEngine.prepare(automaticSampleRate, 64, 2);
@@ -103,6 +136,7 @@ int main()
                               - juce::roundToInt(0.15 * repeatedMaterial.getNumSamples())) < 3,
                      "manual loop crossfade must preserve the visible Loop In/Out duration");
     rangeEngine.setPreviewMode(LoopEngine::PreviewMode::original);
+    rangeEngine.setPreviewPlaying(true);
     juce::AudioBuffer<float> originalPreview(2, 64);
     originalPreview.clear();
     rangeEngine.process(originalPreview, 1.0f);
@@ -174,6 +208,13 @@ int main()
                          "rendered loop boundary should not contain an obvious jump");
     }
 
+    juce::AudioBuffer<float> stoppedPlayback(2, 64);
+    stoppedPlayback.clear();
+    engine.process(stoppedPlayback, 1.0f);
+    passed &= expect(stoppedPlayback.getMagnitude(0, 0, 64) == 0.0f,
+                     "preview should remain stopped until the user explicitly starts it");
+
+    engine.setPreviewPlaying(true);
     juce::AudioBuffer<float> playback(2, 64);
     playback.clear();
     engine.process(playback, 1.0f);
@@ -185,6 +226,18 @@ int main()
         passed &= expect(std::isfinite(value), "playback must contain finite samples");
     }
     passed &= expect(containsSignal, "playback should emit the selected loop");
+    if (rendered.getNumSamples() >= playback.getNumSamples())
+    {
+        double previewExportError = 0.0;
+        for (int channel = 0; channel < playback.getNumChannels(); ++channel)
+        {
+            for (int sample = 0; sample < playback.getNumSamples(); ++sample)
+                previewExportError += std::abs(playback.getSample(channel, sample)
+                                               - rendered.getSample(channel, sample));
+        }
+        passed &= expect(previewExportError < 1.0e-5,
+                         "preview should start on the exact same samples as exported audio");
+    }
     if (!containsSignal)
     {
         const auto diagnosticLoop = engine.createRenderedLoop();
@@ -194,6 +247,16 @@ int main()
                       ? diagnosticLoop.getMagnitude(0, 0, diagnosticLoop.getNumSamples()) : -1.0f)
                   << '\n';
     }
+
+    engine.setPreviewPlaying(false);
+    juce::AudioBuffer<float> dryAfterStop(2, 64);
+    dryAfterStop.clear();
+    dryAfterStop.addSample(0, 7, 0.25f);
+    dryAfterStop.addSample(1, 11, -0.2f);
+    engine.process(dryAfterStop, 1.0f);
+    passed &= expect(std::abs(dryAfterStop.getSample(0, 7) - 0.25f) < 1.0e-7f
+                         && std::abs(dryAfterStop.getSample(1, 11) + 0.2f) < 1.0e-7f,
+                     "Stop should immediately restore untouched DAW input");
 
     const auto savedState = engine.createLoopState();
     passed &= expect(!savedState.isEmpty(), "captured loop should serialize");
