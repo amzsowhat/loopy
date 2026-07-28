@@ -22,6 +22,7 @@ struct TextureSynthesisResult
     float stereoPreservation = 0.0f;
     float diversity = 0.0f;
     float transientPreservation = 0.0f;
+    float macroStability = 0.0f;
 };
 
 class TextureSynthesizer
