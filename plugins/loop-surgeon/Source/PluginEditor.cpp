@@ -77,11 +77,8 @@ void LoopWaveformView::setWaveform(std::vector<float> newPeaks)
 
 void LoopWaveformView::setLoop(const float newStart, const float newEnd)
 {
-    if (dragTarget == DragTarget::loopIn || dragTarget == DragTarget::loopOut)
-        return;
     loopStart = juce::jlimit(0.0f, 1.0f, newStart);
     loopEnd = juce::jlimit(loopStart, 1.0f, newEnd);
-    repaint();
 }
 
 void LoopWaveformView::setSourceRange(const float newStart, const float newEnd)
@@ -128,16 +125,6 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
     graphics.fillRect(bounds.withX(sourceRight)
                           .withWidth(juce::jmax(0.0f, bounds.getRight() - sourceRight)));
 
-    const auto hasLoop = loopEnd - loopStart > 0.001f;
-    if (hasLoop)
-    {
-        const auto loopX = bounds.getX() + bounds.getWidth() * loopStart;
-        const auto loopRight = bounds.getX() + bounds.getWidth() * loopEnd;
-        graphics.setColour(juce::Colour(loopGreen).withAlpha(0.18f));
-        graphics.fillRect(juce::Rectangle<float>(
-            loopX, bounds.getY() + 23.0f, loopRight - loopX, bounds.getHeight() - 46.0f));
-    }
-
     juce::Path waveform;
     const auto centre = bounds.getCentreY();
     for (size_t index = 0; index < peaks.size(); ++index)
@@ -152,31 +139,20 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
     graphics.strokePath(waveform, juce::PathStrokeType(1.0f));
 
     const auto drawMarker = [&] (const float proportion, const juce::String& label,
-                                 const juce::Colour colour, const bool atTop)
+                                 const juce::Colour colour)
     {
         const auto x = bounds.getX() + bounds.getWidth() * proportion;
         graphics.setColour(colour);
-        graphics.drawLine(x, bounds.getY() + (atTop ? 0.0f : 22.0f),
-                          x, bounds.getBottom() - (atTop ? 22.0f : 0.0f), 2.0f);
+        graphics.drawLine(x, bounds.getY(), x, bounds.getBottom() - 22.0f, 2.0f);
         juce::Path triangle;
-        if (atTop)
-        {
-            triangle.addTriangle(x - 5.0f, bounds.getY(), x + 5.0f, bounds.getY(),
-                                 x, bounds.getY() + 7.0f);
-        }
-        else
-        {
-            triangle.addTriangle(x - 5.0f, bounds.getBottom(), x + 5.0f, bounds.getBottom(),
-                                 x, bounds.getBottom() - 7.0f);
-        }
+        triangle.addTriangle(x - 5.0f, bounds.getY(), x + 5.0f, bounds.getY(),
+                             x, bounds.getY() + 7.0f);
         graphics.fillPath(triangle);
 
         const auto labelWidth = label.length() > 9 ? 82.0f : 72.0f;
         auto labelX = juce::jlimit(bounds.getX() + 3.0f, bounds.getRight() - labelWidth - 3.0f,
                                    x - labelWidth * 0.5f);
-        juce::Rectangle<float> tag(labelX, atTop ? bounds.getY() + 3.0f
-                                                 : bounds.getBottom() - 21.0f,
-                                   labelWidth, 18.0f);
+        juce::Rectangle<float> tag(labelX, bounds.getY() + 3.0f, labelWidth, 18.0f);
         graphics.setColour(colour.withAlpha(0.20f));
         graphics.fillRoundedRectangle(tag, 4.0f);
         graphics.setColour(colour);
@@ -184,13 +160,8 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
         graphics.drawText(label, tag, juce::Justification::centred);
     };
 
-    drawMarker(sourceIn, "SEARCH IN", juce::Colour(searchBlue), true);
-    drawMarker(sourceOut, "SEARCH OUT", juce::Colour(searchBlue), true);
-    if (hasLoop)
-    {
-        drawMarker(loopStart, "LOOP IN", juce::Colour(loopGreen), false);
-        drawMarker(loopEnd, "LOOP OUT", juce::Colour(loopGreen), false);
-    }
+    drawMarker(sourceIn, "SOURCE IN", juce::Colour(searchBlue));
+    drawMarker(sourceOut, "SOURCE OUT", juce::Colour(searchBlue));
 }
 
 void LoopWaveformView::mouseDown(const juce::MouseEvent& event)
@@ -198,25 +169,13 @@ void LoopWaveformView::mouseDown(const juce::MouseEvent& event)
     const auto width = static_cast<float>(juce::jmax(1, getWidth()));
     const auto position = juce::jlimit(0.0f, 1.0f, event.position.x / width);
     const auto handleDistance = 12.0f / width;
-    const auto sourceLane = event.position.y < static_cast<float>(getHeight()) * 0.48f
-                            || loopEnd - loopStart <= 0.001f;
-
-    if (sourceLane)
-    {
-        const auto inDistance = std::abs(position - sourceIn);
-        const auto outDistance = std::abs(position - sourceOut);
-        if (event.mods.isShiftDown() && position > sourceIn && position < sourceOut
-            && juce::jmin(inDistance, outDistance) > handleDistance)
-            dragTarget = DragTarget::sourceRange;
-        else
-            dragTarget = inDistance <= outDistance ? DragTarget::sourceIn : DragTarget::sourceOut;
-    }
+    const auto inDistance = std::abs(position - sourceIn);
+    const auto outDistance = std::abs(position - sourceOut);
+    if (event.mods.isShiftDown() && position > sourceIn && position < sourceOut
+        && juce::jmin(inDistance, outDistance) > handleDistance)
+        dragTarget = DragTarget::sourceRange;
     else
-    {
-        const auto inDistance = std::abs(position - loopStart);
-        const auto outDistance = std::abs(position - loopEnd);
-        dragTarget = inDistance <= outDistance ? DragTarget::loopIn : DragTarget::loopOut;
-    }
+        dragTarget = inDistance <= outDistance ? DragTarget::sourceIn : DragTarget::sourceOut;
 
     dragAnchor = position;
     dragStartIn = sourceIn;
@@ -239,24 +198,13 @@ void LoopWaveformView::mouseDrag(const juce::MouseEvent& event)
         sourceIn = start;
         sourceOut = start + length;
     }
-    else if (dragTarget == DragTarget::loopIn)
-        loopStart = juce::jlimit(sourceIn, loopEnd - 0.001f, position);
-    else if (dragTarget == DragTarget::loopOut)
-        loopEnd = juce::jlimit(loopStart + 0.001f, sourceOut, position);
-
     repaint();
-    if ((dragTarget == DragTarget::loopIn || dragTarget == DragTarget::loopOut)
-        && onLoopRangeEdited)
-        onLoopRangeEdited();
-    else if (dragTarget != DragTarget::none && onSourceRangeEdited)
+    if (dragTarget != DragTarget::none && onSourceRangeEdited)
         onSourceRangeEdited();
 }
 
 void LoopWaveformView::mouseUp(const juce::MouseEvent&)
 {
-    if ((dragTarget == DragTarget::loopIn || dragTarget == DragTarget::loopOut)
-        && onLoopRangeCommitted)
-        onLoopRangeCommitted();
     dragTarget = DragTarget::none;
 }
 
@@ -271,7 +219,7 @@ void LoopQualityView::setScores(const float quality, const float repair,
 void LoopQualityView::paint(juce::Graphics& graphics)
 {
     constexpr std::array<const char*, 6> labels {
-        "QUALITY", "REPAIR", "SPECTRUM", "PHASE", "STEREO", "TRANSIENT"
+        "CLOSURE", "TRANSITION", "SPECTRUM", "CIRCULAR", "STEREO", "DIVERSITY"
     };
     auto row = getLocalBounds();
     const auto gap = 7;
@@ -314,13 +262,13 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
     addAndMakeVisible(titleLabel);
 
-    versionLabel.setText("0.4 QUALITY PREVIEW", juce::dontSendNotification);
+    versionLabel.setText("0.5 TEXTURE ENGINE", juce::dontSendNotification);
     versionLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     versionLabel.setJustificationType(juce::Justification::centredRight);
     versionLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
     addAndMakeVisible(versionLabel);
 
-    dropLabel.setText("Drop audio anywhere, or choose a file", juce::dontSendNotification);
+    dropLabel.setText({}, juce::dontSendNotification);
     dropLabel.setFont(juce::FontOptions(14.0f, juce::Font::bold));
     dropLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
     addAndMakeVisible(dropLabel);
@@ -328,19 +276,6 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     sourceLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
     sourceLabel.setMinimumHorizontalScale(0.7f);
     addAndMakeVisible(sourceLabel);
-
-    selectionHelpLabel.setText(
-        "Blue top handles define where to search. Green bottom handles are the finished loop.",
-        juce::dontSendNotification);
-    selectionHelpLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
-    selectionHelpLabel.setFont(juce::FontOptions(12.0f));
-    addAndMakeVisible(selectionHelpLabel);
-
-    previewHelpLabel.setText("Preview is independent: start and stop it here.",
-                             juce::dontSendNotification);
-    previewHelpLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
-    previewHelpLabel.setFont(juce::FontOptions(11.5f));
-    addAndMakeVisible(previewHelpLabel);
 
     statusLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
     statusLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
@@ -351,64 +286,36 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     waveformView.onSourceRangeEdited = [this]
     {
         sourceRangeEdited = true;
-        manualLoopEdited = false;
         updateRangeLabel();
         updatePrimaryAction();
     };
-    waveformView.onLoopRangeEdited = [this]
-    {
-        manualLoopEdited = true;
-        updateRangeLabel();
-        updatePrimaryAction();
-    };
-    waveformView.onLoopRangeCommitted = [this]
-    {
-        if (processor.setManualLoopRange(waveformView.getLoopIn(), waveformView.getLoopOut()))
-            lastMessage = "Manual Loop In/Out kept — seam repair updated without resetting the markers";
-        else
-            lastMessage = "Load a source before editing Loop In/Out";
-    };
-
     rangeLabel.setColour(juce::Label::textColourId, juce::Colour(0xffb8c3cf));
     rangeLabel.setFont(juce::FontOptions(11.5f));
     addAndMakeVisible(rangeLabel);
 
     analyzeRangeButton.onClick = [this]
     {
-        if (manualLoopEdited)
-        {
-            if (processor.setManualLoopRange(waveformView.getLoopIn(), waveformView.getLoopOut()))
-            {
-                manualLoopEdited = false;
-                lastMessage = "Manual loop retained and re-evaluated";
-            }
-            else
-            {
-                lastMessage = "Load a source before applying a manual loop";
-            }
-        }
-        else if (processor.analyzeSourceRange(waveformView.getSourceIn(),
-                                              waveformView.getSourceOut()))
+        if (processor.analyzeSourceRange(waveformView.getSourceIn(),
+                                         waveformView.getSourceOut()))
         {
             sourceRangeEdited = false;
-            lastMessage = "Searching the blue range for the strongest seamless loop...";
+            lastMessage = "Generating from the selected source range...";
         }
         else
         {
-            lastMessage = "Load a source before finding a loop";
+            lastMessage = "Load a source before generating";
         }
         updatePrimaryAction();
     };
     analyzeRangeButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff246e91));
     analyzeRangeButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff246e91));
-    analyzeRangeButton.setTooltip(
-        "Find an automatic loop inside the blue search range. After editing green handles, this keeps your manual loop.");
+    analyzeRangeButton.setTooltip("Generate from the selected source range");
     addAndMakeVisible(analyzeRangeButton);
 
     resetRangeButton.onClick = [this]
     {
         waveformView.setSourceRange(0.0f, 1.0f);
-        lastMessage = "Search range reset to the full source";
+        lastMessage = "Using the full source";
     };
     addAndMakeVisible(resetRangeButton);
 
@@ -428,33 +335,43 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     originalPreviewButton.onClick = [this]
     {
         processor.setPreviewMode(LoopEngine::PreviewMode::original);
-        if (processor.isPreviewPlaying())
-            processor.setPreviewPlaying(true);
+        processor.setPreviewPlaying(true);
+        lastMessage = "Auditioning source selection";
     };
     loopPreviewButton.onClick = [this]
     {
         processor.setPreviewMode(LoopEngine::PreviewMode::loop);
-        if (processor.isPreviewPlaying())
-            processor.setPreviewPlaying(true);
+        processor.setPreviewPlaying(true);
+        lastMessage = "Auditioning generated result";
     };
     loopPreviewButton.setToggleState(true, juce::dontSendNotification);
     addAndMakeVisible(originalPreviewButton);
     addAndMakeVisible(loopPreviewButton);
 
-    candidateBox.setTextWhenNothingSelected("Automatic candidates appear here");
-    candidateBox.setTooltip("Three diverse automatic loop candidates, ranked by seam quality");
+    candidateBox.setTextWhenNothingSelected("Generated variations");
+    candidateBox.setTooltip("Select a generated variation");
     candidateBox.onChange = [this]
     {
         if (candidateBox.getSelectedItemIndex() >= 0)
         {
             processor.selectCandidate(candidateBox.getSelectedItemIndex());
-            processor.setPreviewPlaying(false);
-            manualLoopEdited = false;
-            lastMessage = "Candidate selected — press Preview to audition from its start";
+            processor.setPreviewMode(LoopEngine::PreviewMode::loop);
+            processor.setPreviewPlaying(true);
+            lastMessage = "Auditioning selected variation";
             updatePrimaryAction();
         }
     };
     addAndMakeVisible(candidateBox);
+
+    regenerateButton.onClick = [this]
+    {
+        if (processor.regenerateTexture(waveformView.getSourceIn(),
+                                        waveformView.getSourceOut()))
+            lastMessage = "Generating three new variations...";
+        else
+            lastMessage = "Load a source before creating a new variation";
+    };
+    addAndMakeVisible(regenerateButton);
 
     importButton.onClick = [this] { chooseImportFile(); };
     importButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff246e91));
@@ -476,7 +393,6 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     {
         processor.setPreviewPlaying(false);
         processor.clearLoop();
-        manualLoopEdited = false;
         sourceRangeEdited = false;
         lastMessage = "Session cleared";
         updatePrimaryAction();
@@ -484,18 +400,41 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     clearButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3b4652));
     addAndMakeVisible(clearButton);
 
-    configureSlider(crossfadeSlider, crossfadeLabel, "MAX REPAIR WINDOW");
-    configureSlider(mixSlider, mixLabel, "PREVIEW MIX");
+    configureSlider(crossfadeSlider, crossfadeLabel, "SEAM REPAIR");
+    configureSlider(mixSlider, mixLabel, "AUDITION MIX");
+    configureSlider(durationSlider, durationLabel, "LENGTH");
+    configureSlider(variationSlider, variationLabel, "VARIATION");
     crossfadeSlider.setTooltip(
-        "Maximum crossfade window. The analyser automatically chooses a shorter value when it scores better.");
+        "Maximum repair window used by Seam Loop mode");
     auto& parameters = processor.getParameterState();
     crossfadeAttachment = std::make_unique<SliderAttachment>(
         parameters, "crossfadeMs", crossfadeSlider);
     mixAttachment = std::make_unique<SliderAttachment>(parameters, "mix", mixSlider);
+    durationAttachment = std::make_unique<SliderAttachment>(
+        parameters, "textureDuration", durationSlider);
+    variationAttachment = std::make_unique<SliderAttachment>(
+        parameters, "variation", variationSlider);
+
+    modeLabel.setText("MODE", juce::dontSendNotification);
+    modeLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
+    modeLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
+    addAndMakeVisible(modeLabel);
+    generationModeBox.addItem("Auto", 1);
+    generationModeBox.addItem("Evolving Texture", 2);
+    generationModeBox.addItem("Seam Loop", 3);
+    generationModeBox.onChange = [this]
+    {
+        updatePrimaryAction();
+        if (processor.getSourceName().isNotEmpty())
+            lastMessage = "Mode changed - press Generate to apply";
+    };
+    addAndMakeVisible(generationModeBox);
+    modeAttachment = std::make_unique<ComboBoxAttachment>(
+        parameters, "generationMode", generationModeBox);
 
     setResizable(true, true);
-    setResizeLimits(880, 760, 1220, 920);
-    setSize(980, 760);
+    setResizeLimits(880, 690, 1220, 880);
+    setSize(980, 720);
     updatePrimaryAction();
     startTimerHz(12);
 }
@@ -507,7 +446,7 @@ LoopSurgeonAudioProcessorEditor::~LoopSurgeonAudioProcessorEditor()
 }
 
 void LoopSurgeonAudioProcessorEditor::drawCard(
-    juce::Graphics& graphics, const juce::Rectangle<int> card, const juce::String& step,
+    juce::Graphics& graphics, const juce::Rectangle<int> card,
     const juce::String& title, const juce::Colour accent) const
 {
     graphics.setColour(juce::Colour(panel));
@@ -516,16 +455,14 @@ void LoopSurgeonAudioProcessorEditor::drawCard(
     graphics.drawRoundedRectangle(card.toFloat().reduced(0.5f), 10.0f, 1.0f);
 
     auto heading = card.reduced(14).removeFromTop(23);
-    auto badge = heading.removeFromLeft(27).toFloat();
-    graphics.setColour(accent.withAlpha(0.18f));
-    graphics.fillRoundedRectangle(badge, 5.0f);
-    graphics.setColour(accent);
-    graphics.setFont(juce::FontOptions(10.5f, juce::Font::bold));
-    graphics.drawText(step, badge, juce::Justification::centred);
-    heading.removeFromLeft(8);
     graphics.setColour(juce::Colour(0xffdbe4ed));
     graphics.setFont(juce::FontOptions(11.5f, juce::Font::bold));
     graphics.drawText(title, heading, juce::Justification::centredLeft);
+    graphics.setColour(accent);
+    graphics.fillRoundedRectangle(
+        juce::Rectangle<float>(static_cast<float>(card.getX() + 14),
+                               static_cast<float>(card.getY() + 34), 44.0f, 2.0f),
+        1.0f);
 }
 
 void LoopSurgeonAudioProcessorEditor::paint(juce::Graphics& graphics)
@@ -536,36 +473,10 @@ void LoopSurgeonAudioProcessorEditor::paint(juce::Graphics& graphics)
     graphics.setGradientFill(gradient);
     graphics.fillAll();
 
-    drawCard(graphics, sourceCard, "01", "SOURCE AUDIO", juce::Colour(searchBlue));
-    drawCard(graphics, waveformCard, "02", "DEFINE SEARCH RANGE & LOOP", juce::Colour(searchBlue));
-    drawCard(graphics, auditionCard, "03", "AUDITION", juce::Colour(loopGreen));
-    drawCard(graphics, finishCard, "04", "REPAIR & EXPORT", juce::Colour(loopGreen));
-
-    const auto hasSource = processor.getSourceName().isNotEmpty();
-    const auto ready = processor.getLoopState() == LoopEngine::State::ready;
-    const auto completed = ready ? 4 : (hasSource ? 2 : 0);
-    const std::array<juce::String, 4> stages {
-        "LOAD SOURCE", "SET SEARCH AREA", "FIND & AUDITION", "EXPORT"
-    };
-    auto stageRow = workflowArea;
-    const auto gap = 7;
-    const auto stageWidth = (stageRow.getWidth() - gap * 3) / 4;
-    for (int index = 0; index < 4; ++index)
-    {
-        auto stage = stageRow.removeFromLeft(stageWidth);
-        if (index < 3)
-            stageRow.removeFromLeft(gap);
-        const auto active = index < completed || (!hasSource && index == 0)
-                            || (hasSource && !ready && index == 1);
-        graphics.setColour(juce::Colour(active ? 0xff20384a : 0xff131b24));
-        graphics.fillRoundedRectangle(stage.toFloat(), 6.0f);
-        graphics.setColour(juce::Colour(active ? searchBlue : border));
-        graphics.drawRoundedRectangle(stage.toFloat().reduced(0.5f), 6.0f, 1.0f);
-        graphics.setFont(juce::FontOptions(10.5f, juce::Font::bold));
-        graphics.setColour(juce::Colour(active ? textPrimary : textMuted));
-        graphics.drawText(juce::String(index + 1) + "  " + stages[static_cast<size_t>(index)],
-                          stage, juce::Justification::centred);
-    }
+    drawCard(graphics, sourceCard, "SOURCE", juce::Colour(searchBlue));
+    drawCard(graphics, waveformCard, "SOURCE RANGE", juce::Colour(searchBlue));
+    drawCard(graphics, auditionCard, "AUDITION", juce::Colour(loopGreen));
+    drawCard(graphics, finishCard, "GENERATION", juce::Colour(loopGreen));
 
     graphics.setColour(juce::Colour(border));
     graphics.drawHorizontalLine(footerArea.getY(), static_cast<float>(footerArea.getX()),
@@ -580,14 +491,12 @@ void LoopSurgeonAudioProcessorEditor::resized()
     versionLabel.setBounds(header.removeFromRight(180));
 
     area.removeFromTop(6);
-    workflowArea = area.removeFromTop(32);
-    area.removeFromTop(10);
     sourceCard = area.removeFromTop(80);
     area.removeFromTop(10);
-    waveformCard = area.removeFromTop(264);
+    waveformCard = area.removeFromTop(244);
     area.removeFromTop(10);
 
-    auto bottom = area.removeFromTop(172);
+    auto bottom = area.removeFromTop(196);
     const auto leftWidth = (bottom.getWidth() - 10) / 2;
     auditionCard = bottom.removeFromLeft(leftWidth);
     bottom.removeFromLeft(10);
@@ -598,8 +507,8 @@ void LoopSurgeonAudioProcessorEditor::resized()
     auto sourceContent = sourceCard.reduced(14);
     sourceContent.removeFromTop(27);
     auto sourceText = sourceContent.removeFromLeft(360);
-    dropLabel.setBounds(sourceText.removeFromTop(24));
-    sourceLabel.setBounds(sourceText.removeFromTop(20));
+    dropLabel.setBounds({});
+    sourceLabel.setBounds(sourceText.removeFromTop(28));
     auto sourceActions = sourceContent;
     clearButton.setBounds(sourceActions.removeFromRight(122).reduced(0, 5));
     sourceActions.removeFromRight(8);
@@ -609,8 +518,6 @@ void LoopSurgeonAudioProcessorEditor::resized()
 
     auto waveContent = waveformCard.reduced(14);
     waveContent.removeFromTop(27);
-    selectionHelpLabel.setBounds(waveContent.removeFromTop(21));
-    waveContent.removeFromTop(5);
     waveformView.setBounds(waveContent.removeFromTop(166));
     waveContent.removeFromTop(8);
     auto rangeRow = waveContent.removeFromTop(35);
@@ -625,23 +532,33 @@ void LoopSurgeonAudioProcessorEditor::resized()
     candidateBox.setBounds(audition.removeFromTop(34));
     audition.removeFromTop(8);
     auto transport = audition.removeFromTop(38);
-    previewTransportButton.setBounds(transport.removeFromLeft(138));
+    previewTransportButton.setBounds(transport.removeFromLeft(116));
     transport.removeFromLeft(8);
-    originalPreviewButton.setBounds(transport.removeFromLeft(92));
+    originalPreviewButton.setBounds(transport.removeFromLeft(86));
     transport.removeFromLeft(6);
-    loopPreviewButton.setBounds(transport.removeFromLeft(92));
-    audition.removeFromTop(4);
-    previewHelpLabel.setBounds(audition.removeFromTop(22));
+    loopPreviewButton.setBounds(transport.removeFromLeft(104));
+    audition.removeFromTop(10);
+    auto auditionMix = audition.removeFromTop(40);
+    mixLabel.setBounds(auditionMix.removeFromLeft(112));
+    mixSlider.setBounds(auditionMix);
+    audition.removeFromTop(8);
+    regenerateButton.setBounds(audition.removeFromTop(34).removeFromLeft(150));
 
     auto finish = finishCard.reduced(14);
     finish.removeFromTop(28);
-    auto repairRow = finish.removeFromTop(40);
-    crossfadeLabel.setBounds(repairRow.removeFromLeft(148));
-    crossfadeSlider.setBounds(repairRow);
+    auto modeRow = finish.removeFromTop(34);
+    modeLabel.setBounds(modeRow.removeFromLeft(112));
+    generationModeBox.setBounds(modeRow);
     finish.removeFromTop(7);
-    auto mixRow = finish.removeFromTop(40);
-    mixLabel.setBounds(mixRow.removeFromLeft(148));
-    mixSlider.setBounds(mixRow);
+    auto durationRow = finish.removeFromTop(36);
+    durationLabel.setBounds(durationRow.removeFromLeft(112));
+    durationSlider.setBounds(durationRow);
+    finish.removeFromTop(5);
+    auto variationRow = finish.removeFromTop(36);
+    variationLabel.setBounds(variationRow.removeFromLeft(112));
+    variationSlider.setBounds(variationRow);
+    crossfadeLabel.setBounds({});
+    crossfadeSlider.setBounds({});
 
     auto footer = footerArea;
     exportButton.setBounds(footer.removeFromRight(190).reduced(0, 7));
@@ -667,11 +584,10 @@ void LoopSurgeonAudioProcessorEditor::filesDropped(
 void LoopSurgeonAudioProcessorEditor::importFile(const juce::File& file)
 {
     processor.setPreviewPlaying(false);
-    manualLoopEdited = false;
     sourceRangeEdited = false;
     lastMessage = processor.importAudioFile(file);
     if (lastMessage.isEmpty())
-        lastMessage = "Source loaded — adjust the blue search area, then Find Best Loop";
+        lastMessage = "Source loaded";
     updatePrimaryAction();
 }
 
@@ -692,7 +608,7 @@ void LoopSurgeonAudioProcessorEditor::chooseImportFile()
 void LoopSurgeonAudioProcessorEditor::chooseExportFile()
 {
     fileChooser = std::make_unique<juce::FileChooser>(
-        "Export seamless loop",
+        "Export generated audio",
         juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
             .getChildFile("Loop Surgeon.wav"),
         "*.wav");
@@ -706,7 +622,7 @@ void LoopSurgeonAudioProcessorEditor::chooseExportFile()
                                  {
                                      lastMessage = processor.exportLoopFile(file);
                                      if (lastMessage.isEmpty())
-                                         lastMessage = "24-bit loop exported successfully";
+                                         lastMessage = "24-bit WAV exported";
                                  }
                              });
 }
@@ -728,7 +644,6 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
         waveformView.setWaveform(processor.getWaveformPreview());
         waveformView.setSourceRange(0.0f, 1.0f);
         sourceRangeEdited = false;
-        manualLoopEdited = false;
     }
     if (sourceChanged || candidateCount != displayedCandidateCount
         || candidateRevision != displayedCandidateRevision)
@@ -740,12 +655,8 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
             candidateBox.addItem(processor.getCandidateDescription(index), index + 1);
         if (candidateCount > 0)
             candidateBox.setSelectedItemIndex(0, juce::dontSendNotification);
-        if (!sourceChanged && candidateRevision != 0)
-            manualLoopEdited = false;
     }
 
-    waveformView.setLoop(processor.getLoopStartProportion(),
-                         processor.getLoopEndProportion());
     updateRangeLabel();
     updatePrimaryAction();
 
@@ -758,6 +669,9 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     loopPreviewButton.setEnabled(ready);
     analyzeRangeButton.setEnabled(source.isNotEmpty() && state != LoopEngine::State::analysing);
     resetRangeButton.setEnabled(source.isNotEmpty());
+    regenerateButton.setEnabled(ready
+        && processor.getLastUsedGenerationMode()
+               == LoopEngine::GenerationMode::evolvingTexture);
     clearButton.setEnabled(source.isNotEmpty() || ready);
 
     const auto previewMode = processor.getPreviewMode();
@@ -768,6 +682,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     const auto previewing = processor.isPreviewPlaying();
     previewTransportButton.setButtonText(previewing ? juce::String::fromUTF8("■  Stop")
                                                     : juce::String::fromUTF8("▶  Preview"));
+    previewTransportButton.setButtonText(previewing ? "Stop" : "Preview");
     previewTransportButton.setColour(
         juce::TextButton::buttonColourId,
         juce::Colour(previewing ? 0xff8a4949 : 0xff287b60));
@@ -782,7 +697,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
         switch (state)
         {
             case LoopEngine::State::empty:
-                statusLabel.setText("Start by dropping an audio file into the plug-in",
+                statusLabel.setText("No source",
                                     juce::dontSendNotification);
                 break;
             case LoopEngine::State::armed:
@@ -796,7 +711,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
                     juce::dontSendNotification);
                 break;
             case LoopEngine::State::analysing:
-                statusLabel.setText("Testing periods, boundaries and repair windows...",
+                statusLabel.setText("Generating...",
                                     juce::dontSendNotification);
                 break;
             case LoopEngine::State::ready:
@@ -814,31 +729,40 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
         }
     }
 
+    if (state == LoopEngine::State::ready)
+    {
+        const auto texture = processor.getLastUsedGenerationMode()
+                             == LoopEngine::GenerationMode::evolvingTexture;
+        statusLabel.setText(
+            juce::String(texture ? "Evolving texture ready" : "Seam loop ready")
+                + (processor.isLowConfidence() ? " - check transitions" : ""),
+            juce::dontSendNotification);
+    }
+
     qualityView.setScores(processor.getSeamQuality(), processor.getRepairScore(),
                           processor.getSpectrumScore(), processor.getPhaseScore(),
-                          processor.getStereoScore(), processor.getTransientScore());
+                          processor.getStereoScore(), processor.getPeriodicityScore());
     repaint();
 }
 
 void LoopSurgeonAudioProcessorEditor::updateRangeLabel()
 {
     const auto duration = processor.getSourceDurationSeconds();
+    const auto start = duration * waveformView.getSourceIn();
+    const auto end = duration * waveformView.getSourceOut();
     rangeLabel.setText(
-        "SEARCH  " + juce::String(duration * waveformView.getSourceIn(), 2)
-            + " – " + juce::String(duration * waveformView.getSourceOut(), 2)
-            + " s     LOOP  " + juce::String(duration * waveformView.getLoopIn(), 2)
-            + " – " + juce::String(duration * waveformView.getLoopOut(), 2) + " s",
+        "IN  " + juce::String(start, 2) + " s     OUT  " + juce::String(end, 2)
+            + " s     SELECTED  " + juce::String(juce::jmax(0.0, end - start), 2) + " s",
         juce::dontSendNotification);
 }
 
 void LoopSurgeonAudioProcessorEditor::updatePrimaryAction()
 {
-    if (manualLoopEdited)
-        analyzeRangeButton.setButtonText("Use Manual Loop");
-    else if (sourceRangeEdited)
-        analyzeRangeButton.setButtonText("Find Best Loop");
-    else
-        analyzeRangeButton.setButtonText("Find Best Loop");
+    const auto selectedMode = generationModeBox.getSelectedItemIndex();
+    analyzeRangeButton.setButtonText(
+        selectedMode == 2 ? "Find Seam Loop"
+        : selectedMode == 0 ? "Generate (Auto)"
+                            : "Generate Texture");
 }
 
 void LoopSurgeonAudioProcessorEditor::configureSlider(
