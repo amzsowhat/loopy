@@ -83,6 +83,11 @@ void LoopSurgeonAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         loopEngine.setLoopLengthSeconds(juce::jlimit(0.25f, 16.0f, captureLength));
     }
     loopEngine.setCrossfadeMilliseconds(parameters.getRawParameterValue("crossfadeMs")->load());
+    loopEngine.setTextureDurationSeconds(
+        parameters.getRawParameterValue("textureDuration")->load());
+    loopEngine.setTextureVariation(parameters.getRawParameterValue("variation")->load());
+    loopEngine.setGenerationMode(static_cast<LoopEngine::GenerationMode>(juce::jlimit(
+        0, 2, juce::roundToInt(parameters.getRawParameterValue("generationMode")->load()))));
     loopEngine.process(buffer, parameters.getRawParameterValue("mix")->load());
 }
 
@@ -223,6 +228,30 @@ LoopSurgeonAudioProcessor::createParameterLayout()
         1.0f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(
             [] (const float value, int) { return juce::String(juce::roundToInt(value * 100.0f)) + "%"; })));
+
+    layout.push_back(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "generationMode", 1 },
+        "Generation Mode",
+        juce::StringArray { "Auto", "Evolving Texture", "Seam Loop" },
+        1));
+
+    layout.push_back(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "textureDuration", 1 },
+        "Texture Duration",
+        juce::NormalisableRange<float> { 4.0f, 60.0f, 0.5f, 0.6f },
+        24.0f,
+        juce::AudioParameterFloatAttributes().withLabel("s")));
+
+    layout.push_back(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "variation", 1 },
+        "Texture Variation",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
+        0.72f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction(
+            [] (const float value, int)
+            {
+                return juce::String(juce::roundToInt(value * 100.0f)) + "%";
+            })));
 
     return { layout.begin(), layout.end() };
 }
