@@ -1,8 +1,6 @@
-# Loop Surgeon 0.4 Alpha：Windows / REAPER 快速测试
+# Loop Surgeon 0.5 Alpha：Windows / REAPER 快速测试
 
-这是 Windows x64 VST3 效果器测试版。它需要用户提供一段音频素材，再自动寻找、修复并导出无缝 loop。
-
-## 1. 安装
+## 安装
 
 1. 关闭 REAPER。
 2. 解压测试包，将完整的 `Loop Surgeon.vst3` 文件夹复制到：
@@ -12,38 +10,41 @@
    ```
 
 3. 打开 64 位 REAPER，进入 **Options > Preferences > Plug-ins > VST**。
-4. 点击 **Clear cache/re-scan**。
-5. 在 FX 浏览器搜索 `Loop Surgeon`，插入一条音频轨道。
+4. 点击 **Clear cache/re-scan**，在 FX 浏览器搜索 `Loop Surgeon`。
 
-如果扫描不到，请确认使用的是 64 位 REAPER；仍然失败时，安装最新的 Microsoft Visual C++ 2015–2022 x64 Redistributable 后重新扫描。
+## 风声 one-shot 推荐测试
 
-## 2. 推荐操作顺序
+1. 把素材拖进插件。
+2. 用蓝色 **Source In/Out** 圈出允许取材的范围。
+3. Mode 选择 **Evolving Texture**。
+4. Length 先设 20–30 秒，Variation 先用 65–80%。
+5. 点击 **Generate Texture**。
+6. 点击 **Source** 会立即播放所选原素材；点击 **Generated** 会立即播放生成结果。
+   **Preview/Stop** 控制播放和停止。
+7. 在左侧下拉框比较三个版本；选择后会从头播放。**New Variation** 会重新生成三版。
+8. 点击 **Export WAV**，把 WAV 拖回 REAPER，连续播放并重点检查：
+   - 是否还能明显听出同一小段逐遍重复；
+   - 内部颗粒转换是否有抽吸、双影、突变或立体声漂移；
+   - 完整 WAV 从尾部回到头部时是否可闻接缝。
 
-1. 将 WAV、AIFF、FLAC 或 OGG 拖入插件，或点击 **Choose Audio...**。
-2. 在波形上半区拖动蓝色 **SEARCH IN / OUT**，圈定允许自动搜索的素材范围。
-3. 点击 **Find Best Loop**。绿色 **LOOP IN / OUT** 是自动找到的最终循环范围。
-4. 在候选菜单切换 1–3 个结果。
-5. 点击 **Preview** 开始试听；同一个按钮会变为 **Stop**。用 **Original / Loop** 切换原始范围和循环结果。
-6. 如需手动修改，在波形下半区拖动绿色 LOOP 标记。主按钮会变成 **Use Manual Loop**；点击后会保留绿色位置并重新评估接缝，不会跳回自动位置。
-7. **Max Repair Window** 是允许算法使用的最大修复窗口，算法会自动测试更短的窗口；修改后要重新执行 Find Best Loop 或 Use Manual Loop。
-8. 底部质量条显示 Quality、Repair、Spectrum、Phase、Stereo、Transient。低分不是装饰性警告，应切换候选或重新选择蓝色范围。
-9. 满意后点击 **Export Loop WAV**，导出 24-bit WAV，再拖回 REAPER 连续铺排检查。
-10. 保存 REAPER 工程、关闭并重开；已完成的 loop 应随工程恢复。
+## 其他模式
 
-## 3. 建议测试素材
+- **Seam Loop**：适合已经有明显周期的节奏、机械声、持续音；输出仍是传统短 loop。
+- **Auto**：强周期、高置信度素材使用 Seam Loop，其余使用 Evolving Texture。判断错误时请
+  手动选模式，并在反馈里注明素材类型。
 
-- 单声道和立体声各一份；
-- 44.1、48、96 kHz 各一份；
-- 环境声、风雨、机械声、持续音、鼓或节奏素材；
-- 一份难以循环的语音或单次冲击声，确认插件会显示低置信度，而不是假装成功。
+## 工程召回
 
-## 4. 当前 Alpha 限制
+保存并重开 REAPER 工程。已选中的生成音频和参数应恢复，不需要原素材在线；Source
+试听和另外两个未选版本不会完整写入工程。
 
-- 没有波形缩放、时间尺、零交叉/瞬态吸附和键盘逐样本微调；
-- 没有 seam-only、10/30/100 次耐久试听；
-- 工程会保存完成的 loop，但不会完整保存原素材和全部候选；
-- 导出暂未写入 `cue`/`smpl` loop 元数据；
-- 大文件解码和导出仍可能短暂阻塞界面。
+## 反馈需要记录
 
-反馈时请记录 REAPER/Windows 版本、采样率、素材类型、蓝色和绿色范围、候选编号、Max Repair Window，以及问题属于扫描、卡顿、接缝可闻、工程恢复还是导出不一致。
+- REAPER/Windows 版本与工程采样率；
+- 素材类型、长度、单声道/立体声；
+- Mode、Length、Variation、版本编号；
+- 问题发生在内部转换还是整段首尾；
+- 是否属于明显重复、点击、抽吸、相位/立体声变化、生成卡顿、导出或工程恢复。
 
+本版本仍是 Alpha：没有波形缩放/吸附/逐样本编辑、完整频谱相位图、WAV loop 元数据，
+也尚未完成大规模盲听验证。
