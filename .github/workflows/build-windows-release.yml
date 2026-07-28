@@ -41,8 +41,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          & "plugins/loop-surgeon/scripts/package-windows.ps1" -Version "0.4.0-alpha"
-          Copy-Item -LiteralPath "build/packages/Loop-Surgeon-0.4.0-alpha-Windows-x64-VST3.zip" -Destination "Loop-Surgeon-Windows-x64-VST3.zip"
+          & "plugins/loop-surgeon/scripts/package-windows.ps1" -Version "0.5.0-alpha"
+          Copy-Item -LiteralPath "build/packages/Loop-Surgeon-0.5.0-alpha-Windows-x64-VST3.zip" -Destination "Loop-Surgeon-Windows-x64-VST3.zip"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -59,10 +59,10 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $tag = "v0.4.0-alpha"
+          $tag = "v0.5.0-alpha"
           if (-not (gh release view $tag 2>$null)) {
-            gh release create $tag --target $env:GITHUB_SHA --title "Loop Surgeon 0.4 Alpha" --notes "Quality-preview alpha with guided workflow, explicit Preview/Stop, retained manual Loop In-Out, adaptive post-render repair scoring, high-quality resampling, project recall, and WAV export." --prerelease
+            gh release create $tag --target $env:GITHUB_SHA --title "Loop Surgeon 0.5 Alpha" --notes "Adds Evolving Texture synthesis for turning selected one-shots into longer non-sequential circular textures, Auto/Texture/Seam modes, three deterministic variations, immediate Source/Generated audition, project recall, and WAV export." --prerelease
           }
           gh release upload $tag "Loop-Surgeon-Windows-x64-VST3.zip" --clobber
-          git tag "v0.4.0-alpha-windows-ready" $env:GITHUB_SHA
-          git push origin "refs/tags/v0.4.0-alpha-windows-ready" --force
+          git tag "v0.5.0-alpha-windows-ready" $env:GITHUB_SHA
+          git push origin "refs/tags/v0.5.0-alpha-windows-ready" --force
