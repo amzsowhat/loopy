@@ -14,9 +14,10 @@ keeps Codex sessions and CI consistent across machines.
 
 Loop Surgeon builds as both a VST3 effect and a Standalone application. Drop in source audio, limit
 the material with Source In/Out, then choose Auto, Evolving Texture, or Seam Loop. Texture mode
-recombines acoustically compatible long grains into a 4–60 second circular result with three seeded
-variations; Seam Loop retains the explainable period and boundary-repair path for periodic material.
-The selected result is stored in the DAW project and exports as a 24-bit WAV.
+detects the stable body, removes the source's one-shot macro envelope, and recombines the resulting
+timbral carrier into a 4–60 second circular result with three seeded variations; Seam Loop retains
+the explainable period and boundary-repair path for periodic material. The selected result is stored
+in the DAW project and exports as a 24-bit WAV.
 
 ## Build on Windows
 
@@ -36,8 +37,8 @@ Release builds use `vs2022-release` and `build-release`.
 
 ## Download for Windows / Reaper
 
-The 0.5 Alpha texture-engine source is on `main`, but the Windows package is not listed as
-downloadable until the `v0.5.0-alpha-windows-ready` CI marker exists. Earlier binaries do not contain
+The 0.5.1 Alpha texture-engine source is on `main`, but the Windows package is not listed as
+downloadable until the `v0.5.1-alpha-windows-ready` CI marker exists. Earlier binaries do not contain
 Evolving Texture, the three processing modes, or immediate Source/Generated audition.
 
 Unzip the package and copy the complete `Loop Surgeon.vst3` folder to:
@@ -55,7 +56,7 @@ for the smoke-test checklist.
 ### Download the M-series Mac build
 
 The Apple Silicon package is not listed as downloadable until the
-`v0.5.0-alpha-macos-ready` CI marker exists. Earlier binaries are not a valid test of the current
+`v0.5.1-alpha-macos-ready` CI marker exists. Earlier binaries are not a valid test of the current
 workflow or algorithm.
 
 Unzip it and copy `Loop Surgeon.vst3` to `~/Library/Audio/Plug-Ins/VST3/`. If macOS blocks
