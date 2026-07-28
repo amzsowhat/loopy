@@ -2,10 +2,12 @@
 #include "LoopEngine.h"
 #include "TextureSynthesizer.h"
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <iostream>
 #include <thread>
+#include <vector>
 
 namespace
 {
@@ -27,6 +29,52 @@ bool waitForReady(LoopEngine& engine)
         std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     return false;
+}
+
+std::vector<float> blockRms(const juce::AudioBuffer<float>& audio, const int blockSamples)
+{
+    std::vector<float> levels;
+    for (int start = 0; start + blockSamples <= audio.getNumSamples();
+         start += blockSamples)
+    {
+        auto energy = 0.0;
+        for (int sample = 0; sample < blockSamples; ++sample)
+            for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+            {
+                const auto value = audio.getSample(channel, start + sample);
+                energy += static_cast<double>(value) * value;
+            }
+        levels.push_back(std::sqrt(static_cast<float>(
+            energy / static_cast<double>(blockSamples * audio.getNumChannels()))));
+    }
+    return levels;
+}
+
+float percentile(std::vector<float> values, const float proportion)
+{
+    if (values.empty())
+        return 0.0f;
+    std::sort(values.begin(), values.end());
+    const auto index = static_cast<size_t>(juce::roundToInt(
+        proportion * static_cast<float>(values.size() - 1u)));
+    return values[index];
+}
+
+float coefficientOfVariation(const std::vector<float>& values)
+{
+    if (values.empty())
+        return 0.0f;
+    auto mean = 0.0;
+    auto squareTotal = 0.0;
+    for (const auto value : values)
+    {
+        mean += value;
+        squareTotal += static_cast<double>(value) * value;
+    }
+    mean /= static_cast<double>(values.size());
+    const auto variance = juce::jmax(
+        0.0, squareTotal / static_cast<double>(values.size()) - mean * mean);
+    return static_cast<float>(std::sqrt(variance) / juce::jmax(1.0e-7, mean));
 }
 }
 
@@ -168,6 +216,62 @@ int main()
                      "texture path should retain measurable source-position diversity");
     passed &= expect(textureA.closureQuality >= 0.0f && textureA.closureQuality <= 100.0f,
                      "texture circular closure score should be normalized");
+
+    // Regression: a one-shot's single swell/decay must not become a train of new attacks.
+    juce::AudioBuffer<float> envelopedWind(2, 14000);
+    noiseState = 0x51f15e1u;
+    auto colouredLeft = 0.0f;
+    auto colouredRight = 0.0f;
+    for (int sample = 0; sample < envelopedWind.getNumSamples(); ++sample)
+    {
+        noiseState ^= noiseState << 13u;
+        noiseState ^= noiseState >> 17u;
+        noiseState ^= noiseState << 5u;
+        const auto white = static_cast<float>(noiseState & 0xffffu) / 32768.0f - 1.0f;
+        const auto progress = static_cast<float>(sample)
+                              / static_cast<float>(envelopedWind.getNumSamples() - 1);
+        float macroEnvelope = 0.0f;
+        if (progress < 0.20f)
+        {
+            const auto attack = progress / 0.20f;
+            macroEnvelope = attack * attack * (3.0f - 2.0f * attack);
+        }
+        else
+        {
+            const auto decay = (progress - 0.20f) / 0.80f;
+            macroEnvelope = std::pow(juce::jmax(0.0f, 1.0f - decay), 1.65f);
+        }
+        colouredLeft = 0.94f * colouredLeft + 0.06f * white;
+        colouredRight = 0.91f * colouredRight + 0.09f * (0.77f * white
+            + 0.23f * std::sin(0.031f * static_cast<float>(sample)));
+        envelopedWind.setSample(0, sample, macroEnvelope * colouredLeft);
+        envelopedWind.setSample(1, sample, macroEnvelope * colouredRight);
+    }
+    TextureSynthesisSettings stationarySettings;
+    stationarySettings.durationSeconds = 16.0f;
+    stationarySettings.variation = 0.76f;
+    stationarySettings.seed = 0x5a17b33fu;
+    const auto stationaryTexture = TextureSynthesizer::synthesize(
+        envelopedWind, automaticSampleRate, stationarySettings);
+    const auto sourceBlocks = blockRms(envelopedWind, 500);
+    const auto sourceHigh = percentile(sourceBlocks, 0.90f);
+    std::vector<float> activeSourceBlocks;
+    for (const auto level : sourceBlocks)
+        if (level >= sourceHigh * 0.12f)
+            activeSourceBlocks.push_back(level);
+    const auto outputBlocks = blockRms(stationaryTexture.audio, 500);
+    const auto outputLow = percentile(outputBlocks, 0.10f);
+    const auto outputHigh = percentile(outputBlocks, 0.90f);
+    const auto outputRange = outputHigh / juce::jmax(1.0e-7f, outputLow);
+    passed &= expect(outputRange < 1.75f,
+                     "stationary texture must not contain repeated one-shot-sized level humps");
+    passed &= expect(coefficientOfVariation(outputBlocks)
+                         < coefficientOfVariation(activeSourceBlocks) * 0.65f,
+                     "texture synthesis should remove the source macro envelope");
+    passed &= expect(stationaryTexture.macroStability >= 62.0f,
+                     "texture report should reject output with obvious repeated attacks");
+    passed &= expect(stationaryTexture.spectrumPreservation >= 35.0f,
+                     "macro-envelope removal must retain the source timbral fingerprint");
 
     LoopEngine textureEngine;
     textureEngine.prepare(automaticSampleRate, 64, 2);
