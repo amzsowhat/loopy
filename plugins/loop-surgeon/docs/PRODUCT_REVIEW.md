@@ -1,65 +1,58 @@
-# Loop Surgeon product review
+# Loop Surgeon 0.5 product review
 
 ## Product boundary
 
-Loop Surgeon is not a general sampler instrument. It accepts a user-selected section of source
-audio, automatically proposes and repairs seamless loops, lets the user verify or refine the result,
-and exports a reusable loop. Features that do not shorten that path are secondary.
+The product has two intentional outputs:
 
-## Required before a paid beta
+- **Evolving Texture** turns a user-selected one-shot or short recording into a longer stochastic
+  ambience with a circular boundary.
+- **Seam Loop** finds and repairs a conventional period in already-periodic material.
 
-### Implemented in the current alpha
+It is not a general keyboard sampler and does not claim neural generation.
 
-- drag/drop audio import and bounded source memory;
-- draggable Source In/Out selection with selection-only reanalysis;
-- draggable final Loop In/Out with immediate fixed-range evidence recalculation;
-- automatic period proposals using loudness, change-rate, and multi-band feature correlation;
-- whole-selection in/out pair search and single-sample finalist refinement;
-- direct waveform-jump, level, slope, phase, spectrum, stereo, and transient evidence;
-- three selectable candidates and explicit low-confidence failure;
-- guided four-step UI, separate Search/Loop handle lanes, and full-size session controls;
-- explicit stopped-by-default Preview/Stop plus Original/Loop audition;
-- phase-aware repair shared by real-time preview and WAV export;
-- preview/export sample-path parity from the first audible sample;
-- adaptive repair-length selection with post-render boundary scoring;
-- multi-scale 16-band spectral evidence, critical-domain weak-link penalty, and silent-region rejection;
-- overlap-length compensation so repair does not shorten the detected output period;
-- high-order windowed-sinc source and project-state resampling;
-- 24-bit WAV export and finished-loop DAW state restore.
+## Implemented in 0.5
 
-### Still mandatory
+- draggable Source In/Out selection;
+- Auto, Evolving Texture, and Seam Loop modes stored as stable parameters;
+- deterministic 0.45–1.8 second long-grain analysis;
+- head/tail level, derivative, eight-band spectrum, and stereo features;
+- transition ranking with reuse, adjacency, and recent-history penalties;
+- seeded top-ranked path variation and three selectable results;
+- circular overlap-add rendering with normalization and no second export-only seam repair;
+- 4–60 second texture target;
+- Source/Generated controls that select and immediately start audition;
+- explicit Preview/Stop;
+- candidate buffer ownership swapping to avoid duplicating the active long result;
+- generated-audio DAW state restore and 24-bit WAV export;
+- deterministic tests for seed recall, seed difference, non-identical successive windows, output
+  length, circular score bounds, candidate switching, Auto periodic fallback, playback, and state.
 
-1. **Precision editing around the implemented Loop In/Out**: typed time/sample values, keyboard
-   nudging, linked movement, and undo/redo.
-2. **Waveform navigation**: horizontal zoom/pan, overview, and a legible sample/time ruler.
-3. **Snap modes**: off, zero crossing, transient, and host grid. Snapping must be optional because the
-   automatic optimum may intentionally sit away from a zero crossing when a crossfade is superior.
-4. **Seam audition**: Original/Loop level-matched A/B, seam-only repeat, and 10/30/100-repeat endurance.
-5. **Visible repair region**: show the automatically selected repair length on the waveform and add
-   draggable curve/length editing with transient-protection warning. The current result now freezes
-   its chosen repair length until the next Find Best Loop or Use Manual Loop, preventing marker/render
-   desynchronisation.
-6. **Export contract**: WAV plus `cue`/`smpl` loop chunks and sidecar JSON; exported audio must null or
-   closely match the plug-in preview.
-7. **Complete project recall**: source reference/hash, Source In/Out, candidate list, selected result,
-   manual edits, repair settings, and a portable "collect source" option.
-8. **Non-blocking jobs**: decode, windowed-sinc sample-rate conversion, analysis, and export on
-   cancellable workers with progress and deterministic cancellation.
-9. **Quality corpus**: licensed ambience, rain, wind, engines, machines, tonal beds, stereo textures,
-   and adversarial non-loopable material; objective boundary metrics plus blind listening labels.
+## Paid-beta blockers
 
-## Important but not beta-blocking
+1. A licensed quality corpus covering wind, rain, surf, crowds, rooms, engines, machines, drones,
+   stereo ambience, impulsive contamination, speech, and very short sources.
+2. Blind listening comparisons against hand edits and established texture/granular tools, with
+   labels for repetition, transition audibility, phasing, pumping, image motion, and source identity.
+3. Content-aware segmentation so isolated events are not cut or over-repeated.
+4. A second synthesis layer or spectral-resynthesis option for sources where long-grain montage
+   cannot create enough novelty.
+5. Better circular-path optimization. The current final path steps consider closure, but this is
+   not a globally optimal cyclic graph search.
+6. Cancellation/progress for generation, decode, resampling, and export.
+7. Waveform zoom/pan, optional transient/zero-crossing snapping, typed positions, keyboard nudge,
+   and undo/redo.
+8. Full spectrum/phase/correlation inspection and seam-solo/endurance audition.
+9. Export `cue`/`smpl` metadata and a portable source/recipe option.
+10. Verified Windows/Reaper and Apple Silicon/Reaper compatibility, project recall, and sample-rate
+    transitions on real hosts.
 
-- event-map detection and constrained rearrangement to reduce long-term repetition;
-- multiple rendered variants and long-timeline export;
-- optional M/S and local STFT repair for candidates that time-domain repair cannot solve;
-- a true spectrum/phase inspector rather than quality bars alone;
-- tempo/BPM inference and fixed musical-length search;
-- batch processing and standalone queue.
+## Honest quality assessment
 
-## Explicit non-goals
+0.5 fixes the product-definition error in 0.4: Evolving Texture no longer exports one selected
+segment that simply repeats with a crossfade. It builds a longer non-sequential trajectory from the
+source and closes the full trajectory as a circle.
 
-- eight-layer instrument sampling, keyboard mapping, synthesis, filters, modulation, or time-stretch
-  sound design in the style of CR8;
-- claiming every source is loopable;
-- hiding a low-confidence result behind a polished score or marketing copy.
+That is a meaningful algorithmic step, but it is not yet evidence of commercial audio quality.
+Long-grain montage can still reveal source identities, reordered events, phasing, or pumping. A
+fixed WAV also necessarily repeats once its complete 4–60 second duration ends. These constraints
+must remain visible until corpus and blind-listening results justify stronger claims.
