@@ -8,15 +8,15 @@ keeps Codex sessions and CI consistent across machines.
 
 | Product | Directory | Status |
 | --- | --- | --- |
-| P2 Loop Surgeon | [`plugins/loop-surgeon`](plugins/loop-surgeon) | File-first automatic seamless-loop alpha |
+| P2 Loop Surgeon | [`plugins/loop-surgeon`](plugins/loop-surgeon) | One-shot texture and seamless-loop alpha |
 
 ## Demo capabilities
 
 Loop Surgeon builds as both a VST3 effect and a Standalone application. Drop in source audio, limit
-the material with Source In/Out, and let the worker search multiple period and seam candidates using
-waveform, level, slope, spectrum, phase, transient, and stereo evidence. The final Loop In/Out remains
-draggable, Original/Loop A/B is built in, the finished loop is stored in the DAW project, and a
-preview-matched repair can be exported as a 24-bit WAV.
+the material with Source In/Out, then choose Auto, Evolving Texture, or Seam Loop. Texture mode
+recombines acoustically compatible long grains into a 4–60 second circular result with three seeded
+variations; Seam Loop retains the explainable period and boundary-repair path for periodic material.
+The selected result is stored in the DAW project and exports as a 24-bit WAV.
 
 ## Build on Windows
 
@@ -36,9 +36,9 @@ Release builds use `vs2022-release` and `build-release`.
 
 ## Download for Windows / Reaper
 
-The 0.4 Alpha quality-preview source is on `main`, but the Windows package is not listed as
-downloadable until the `v0.4.0-alpha-windows-ready` CI marker exists. Earlier binaries do not contain
-the retained manual range, Preview/Stop, redesigned workflow, or adaptive repair scoring.
+The 0.5 Alpha texture-engine source is on `main`, but the Windows package is not listed as
+downloadable until the `v0.5.0-alpha-windows-ready` CI marker exists. Earlier binaries do not contain
+Evolving Texture, the three processing modes, or immediate Source/Generated audition.
 
 Unzip the package and copy the complete `Loop Surgeon.vst3` folder to:
 
@@ -55,7 +55,7 @@ for the smoke-test checklist.
 ### Download the M-series Mac build
 
 The Apple Silicon package is not listed as downloadable until the
-`v0.4.0-alpha-macos-ready` CI marker exists. Earlier binaries are not a valid test of the current
+`v0.5.0-alpha-macos-ready` CI marker exists. Earlier binaries are not a valid test of the current
 workflow or algorithm.
 
 Unzip it and copy `Loop Surgeon.vst3` to `~/Library/Audio/Plug-Ins/VST3/`. If macOS blocks
