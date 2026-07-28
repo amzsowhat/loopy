@@ -35,6 +35,8 @@ public:
     void setCrossfadeMilliseconds(float milliseconds) noexcept;
     void setPreviewMode(PreviewMode mode) noexcept { previewMode.store(mode); }
     [[nodiscard]] PreviewMode getPreviewMode() const noexcept { return previewMode.load(); }
+    void setPreviewPlaying(bool shouldPlay) noexcept;
+    [[nodiscard]] bool isPreviewPlaying() const noexcept { return previewPlaying.load(); }
 
     void beginCapture(int startDelaySamples = 0) noexcept;
     void submitSource(juce::AudioBuffer<float> source, juce::String sourceName);
@@ -54,6 +56,7 @@ public:
     [[nodiscard]] float getStereoScore() const noexcept;
     [[nodiscard]] float getTransientScore() const noexcept;
     [[nodiscard]] float getPeriodicityScore() const noexcept;
+    [[nodiscard]] float getRepairScore() const noexcept;
     [[nodiscard]] bool isLowConfidence() const noexcept;
     [[nodiscard]] int getCapturedSampleCount() const noexcept;
     [[nodiscard]] juce::String getSourceName() const;
@@ -138,6 +141,7 @@ private:
     std::atomic<float> stereoScore { 0.0f };
     std::atomic<float> transientScore { 0.0f };
     std::atomic<float> periodicityScore { 0.0f };
+    std::atomic<float> repairScore { 0.0f };
     std::atomic<bool> lowConfidence { false };
     std::atomic<int> selectedStartSample { 0 };
     std::atomic<int> selectedEndSample { 0 };
@@ -145,6 +149,8 @@ private:
     std::atomic<int> analysisRangeStartSample { 0 };
     std::atomic<int> analysisRangeEndSample { 0 };
     std::atomic<PreviewMode> previewMode { PreviewMode::loop };
+    std::atomic<bool> previewPlaying { false };
+    std::atomic<bool> previewRestartRequested { false };
     std::atomic<uint64_t> candidateRevision { 0 };
     std::atomic<uint64_t> sourceRevision { 0 };
 };
