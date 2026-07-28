@@ -54,15 +54,15 @@ jobs:
       - name: Publish alpha release download
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: v0.5.1-alpha
+          RELEASE_TAG: v0.5.2-alpha
         shell: bash
         run: |
           set -euo pipefail
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" \
               --target "$GITHUB_SHA" \
-              --title "Loop Surgeon 0.5.1 Alpha" \
-              --notes "Turns selected one-shots into source-coloured stationary textures with stable-body detection, attack/decay removal, circular macro-level stabilization, deterministic variations, project recall, and WAV export. Ad-hoc signed for private Apple Silicon testing." \
+              --title "Loop Surgeon 0.5.2 Alpha" \
+              --notes "Replaces correlated long-grain looping with source-modelled spectral texture synthesis, removing copied pass-by trajectories and comb-like tonal artifacts. Adds explicit Direct Seam Loop bounds, deterministic variations, project recall, and WAV export. Ad-hoc signed for private Apple Silicon testing." \
               --prerelease
           fi
           gh release upload "$RELEASE_TAG" "Loop-Surgeon-macOS-arm64-VST3.zip" --clobber
