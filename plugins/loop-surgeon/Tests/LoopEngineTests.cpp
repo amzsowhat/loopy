@@ -1,5 +1,6 @@
 #include "LoopAnalyzer.h"
 #include "LoopEngine.h"
+#include "TextureSynthesizer.h"
 
 #include <chrono>
 #include <cmath>
@@ -19,7 +20,7 @@ bool expect(const bool condition, const char* message)
 
 bool waitForReady(LoopEngine& engine)
 {
-    for (int attempt = 0; attempt < 200; ++attempt)
+    for (int attempt = 0; attempt < 1000; ++attempt)
     {
         if (engine.getState() == LoopEngine::State::ready)
             return true;
@@ -112,8 +113,128 @@ int main()
         passed &= expect(silenceTrapReport.candidates.front().startSample >= truePeriod / 2,
                          "silence activity penalty should prevent a perfect-score silent loop");
 
+    juce::AudioBuffer<float> windOneShot(2, 16000);
+    uint32_t noiseState = 0x1234567u;
+    auto previousNoise = 0.0f;
+    for (int sample = 0; sample < windOneShot.getNumSamples(); ++sample)
+    {
+        noiseState ^= noiseState << 13u;
+        noiseState ^= noiseState >> 17u;
+        noiseState ^= noiseState << 5u;
+        const auto white = static_cast<float>(noiseState & 0xffffu) / 32768.0f - 1.0f;
+        const auto gust = 0.35f + 0.28f * std::sin(
+            juce::MathConstants<float>::twoPi * static_cast<float>(sample) / 5300.0f);
+        previousNoise = 0.92f * previousNoise + 0.08f * white;
+        windOneShot.setSample(0, sample, gust * previousNoise);
+        windOneShot.setSample(1, sample, gust * (0.82f * previousNoise + 0.06f * white));
+    }
+    TextureSynthesisSettings textureSettings;
+    textureSettings.durationSeconds = 12.0f;
+    textureSettings.variation = 0.82f;
+    textureSettings.seed = 0xabc123u;
+    const auto textureA = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, textureSettings);
+    const auto textureARepeat = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, textureSettings);
+    textureSettings.seed += 17u;
+    const auto textureB = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, textureSettings);
+    passed &= expect(textureA.audio.getNumSamples() == 24000,
+                     "texture synthesis should create the requested long output");
+    passed &= expect(textureA.audio.getNumSamples() > windOneShot.getNumSamples(),
+                     "one-shot texture output should be longer than its source");
+    passed &= expect(textureA.sourceGrainStarts.size() > 4,
+                     "texture output should be assembled from multiple long grains");
+    auto deterministicError = 0.0;
+    auto seedDifference = 0.0;
+    for (int sample = 0; sample < textureA.audio.getNumSamples(); ++sample)
+    {
+        deterministicError += std::abs(textureA.audio.getSample(0, sample)
+                                       - textureARepeat.audio.getSample(0, sample));
+        seedDifference += std::abs(textureA.audio.getSample(0, sample)
+                                   - textureB.audio.getSample(0, sample));
+    }
+    passed &= expect(deterministicError < 1.0e-6,
+                     "same seed must reproduce the exact texture for DAW recall");
+    passed &= expect(seedDifference > 1.0,
+                     "new variation seed should create audibly different sample data");
+    auto repeatedWindowError = 0.0;
+    for (int sample = 0; sample < 2000; ++sample)
+        repeatedWindowError += std::abs(textureA.audio.getSample(0, sample)
+                                        - textureA.audio.getSample(0, sample + 2000));
+    passed &= expect(repeatedWindowError > 0.5,
+                     "successive output windows must not be identical copies");
+    passed &= expect(textureA.diversity > 30.0f,
+                     "texture path should retain measurable source-position diversity");
+    passed &= expect(textureA.closureQuality >= 0.0f && textureA.closureQuality <= 100.0f,
+                     "texture circular closure score should be normalized");
+
+    LoopEngine textureEngine;
+    textureEngine.prepare(automaticSampleRate, 64, 2);
+    textureEngine.setGenerationMode(LoopEngine::GenerationMode::evolvingTexture);
+    textureEngine.setTextureDurationSeconds(6.0f);
+    textureEngine.setTextureVariation(0.8f);
+    textureEngine.submitSource(windOneShot, "wind-one-shot.wav");
+    passed &= expect(waitForReady(textureEngine),
+                     "evolving texture mode should finish in the background");
+    passed &= expect(textureEngine.getLastUsedGenerationMode()
+                         == LoopEngine::GenerationMode::evolvingTexture,
+                     "explicit texture selection should be retained");
+    passed &= expect(textureEngine.getCandidateCount() == 3,
+                     "texture mode should offer three seeded variations");
+    const auto engineTexture = textureEngine.createRenderedLoop();
+    passed &= expect(engineTexture.getNumSamples() == 12000,
+                     "engine should publish the requested generated texture length");
+    textureEngine.selectCandidate(1);
+    const auto secondTexture = textureEngine.createRenderedLoop();
+    auto candidateDifference = 0.0;
+    for (int sample = 0; sample < secondTexture.getNumSamples(); ++sample)
+        candidateDifference += std::abs(engineTexture.getSample(0, sample)
+                                        - secondTexture.getSample(0, sample));
+    passed &= expect(candidateDifference > 1.0,
+                     "selecting another texture candidate should swap in different audio");
+    passed &= expect(textureEngine.getCandidateDescription(0).contains("6.0 s")
+                         && textureEngine.getCandidateDescription(1).contains("6.0 s"),
+                     "active and inactive memory-swapped variants should retain valid descriptions");
+    textureEngine.selectCandidate(0);
+    const auto restoredFirstTexture = textureEngine.createRenderedLoop();
+    auto restoredCandidateError = 0.0;
+    for (int sample = 0; sample < restoredFirstTexture.getNumSamples(); ++sample)
+        restoredCandidateError += std::abs(engineTexture.getSample(0, sample)
+                                           - restoredFirstTexture.getSample(0, sample));
+    passed &= expect(restoredCandidateError < 1.0e-6,
+                     "candidate switching should preserve earlier audio without duplicate buffers");
+    textureEngine.setPreviewMode(LoopEngine::PreviewMode::loop);
+    textureEngine.setPreviewPlaying(true);
+    juce::AudioBuffer<float> texturePreview(2, 64);
+    texturePreview.clear();
+    textureEngine.process(texturePreview, 1.0f);
+    passed &= expect(texturePreview.getMagnitude(0, 0, 64) > 0.0f,
+                     "Generated audition should start playback immediately");
+
+    LoopEngine automaticModeEngine;
+    automaticModeEngine.prepare(automaticSampleRate, 64, 2);
+    automaticModeEngine.setGenerationMode(LoopEngine::GenerationMode::automatic);
+    automaticModeEngine.submitSource(repeatedMaterial, "periodic-material.wav");
+    passed &= expect(waitForReady(automaticModeEngine),
+                     "Auto mode should finish analysing periodic material");
+    passed &= expect(automaticModeEngine.getLastUsedGenerationMode()
+                         == LoopEngine::GenerationMode::seamLoop,
+                     "Auto mode should keep a strongly periodic source as a seam loop");
+    LoopEngine automaticWindEngine;
+    automaticWindEngine.prepare(automaticSampleRate, 64, 2);
+    automaticWindEngine.setGenerationMode(LoopEngine::GenerationMode::automatic);
+    automaticWindEngine.setTextureDurationSeconds(6.0f);
+    automaticWindEngine.submitSource(windOneShot, "wind-auto.wav");
+    passed &= expect(waitForReady(automaticWindEngine),
+                     "Auto mode should finish analysing stochastic material");
+    passed &= expect(automaticWindEngine.getLastUsedGenerationMode()
+                         == LoopEngine::GenerationMode::evolvingTexture,
+                     "Auto mode should route stochastic wind material to texture synthesis");
+
     LoopEngine rangeEngine;
     rangeEngine.prepare(automaticSampleRate, 64, 2);
+    rangeEngine.setGenerationMode(LoopEngine::GenerationMode::seamLoop);
     rangeEngine.submitSource(repeatedMaterial, "repeated-material.wav");
     passed &= expect(waitForReady(rangeEngine), "imported source should be analysed in background");
     passed &= expect(rangeEngine.getCandidateCount() > 0,
