@@ -114,18 +114,13 @@ juce::String LoopSurgeonAudioProcessor::importAudioFile(const juce::File& file)
     const auto targetSamples = juce::jmax(32, juce::roundToInt(
         static_cast<double>(sourceSamples) * currentSampleRate / reader->sampleRate));
     juce::AudioBuffer<float> resampled(channels, targetSamples);
+    const auto speedRatio = reader->sampleRate / currentSampleRate;
     for (int channel = 0; channel < channels; ++channel)
     {
-        for (int index = 0; index < targetSamples; ++index)
-        {
-            const auto position = static_cast<double>(index) * reader->sampleRate / currentSampleRate;
-            const auto lower = juce::jlimit(0, sourceSamples - 1, static_cast<int>(position));
-            const auto upper = juce::jmin(sourceSamples - 1, lower + 1);
-            const auto fraction = static_cast<float>(position - static_cast<double>(lower));
-            const auto first = decoded.getSample(channel, lower);
-            resampled.setSample(channel, index,
-                                first + fraction * (decoded.getSample(channel, upper) - first));
-        }
+        juce::WindowedSincInterpolator interpolator;
+        interpolator.process(speedRatio, decoded.getReadPointer(channel),
+                             resampled.getWritePointer(channel), targetSamples,
+                             sourceSamples, 0);
     }
 
     loopEngine.submitSource(std::move(resampled), file.getFileName());
