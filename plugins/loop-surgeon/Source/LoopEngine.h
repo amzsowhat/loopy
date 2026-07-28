@@ -4,6 +4,7 @@
 #include <juce_core/juce_core.h>
 
 #include "LoopAnalyzer.h"
+#include "TextureSynthesizer.h"
 
 #include <atomic>
 #include <condition_variable>
@@ -24,6 +25,7 @@ public:
     };
 
     enum class PreviewMode { original, loop };
+    enum class GenerationMode { automatic = 0, evolvingTexture = 1, seamLoop = 2 };
 
     LoopEngine() = default;
     ~LoopEngine();
@@ -33,6 +35,18 @@ public:
 
     void setLoopLengthSeconds(float seconds) noexcept;
     void setCrossfadeMilliseconds(float milliseconds) noexcept;
+    void setTextureDurationSeconds(float seconds) noexcept;
+    void setTextureVariation(float amount) noexcept;
+    void setGenerationMode(GenerationMode mode) noexcept { generationMode.store(mode); }
+    [[nodiscard]] GenerationMode getGenerationMode() const noexcept
+    {
+        return generationMode.load();
+    }
+    [[nodiscard]] GenerationMode getLastUsedGenerationMode() const noexcept
+    {
+        return lastUsedGenerationMode.load();
+    }
+    bool regenerateTexture(float startProportion, float endProportion);
     void setPreviewMode(PreviewMode mode) noexcept { previewMode.store(mode); }
     [[nodiscard]] PreviewMode getPreviewMode() const noexcept { return previewMode.load(); }
     void setPreviewPlaying(bool shouldPlay) noexcept;
@@ -87,9 +101,10 @@ private:
     void resetScores() noexcept;
 
     static constexpr float maximumLoopSeconds = 16.0f;
+    static constexpr float maximumTextureSeconds = 60.0f;
     static constexpr float searchRadiusSeconds = 0.15f;
     static constexpr int stateMagic = 0x4c535032;
-    static constexpr int stateVersion = 1;
+    static constexpr int stateVersion = 2;
 
     juce::AudioBuffer<float> captureBuffer;
     juce::AudioBuffer<float> loopBuffer;
@@ -99,6 +114,7 @@ private:
     juce::String pendingSourceName;
     juce::String currentSourceName;
     std::vector<LoopAnalysisResult> sourceCandidates;
+    std::vector<TextureSynthesisResult> textureVariants;
     std::vector<float> waveformPreview;
     int pendingSourceOffset = 0;
     int pendingFullSourceSamples = 0;
@@ -107,6 +123,9 @@ private:
     double sampleRate = 44100.0;
     float loopLengthSeconds = 4.0f;
     std::atomic<float> crossfadeMilliseconds { 25.0f };
+    std::atomic<float> textureDurationSeconds { 24.0f };
+    std::atomic<float> textureVariation { 0.72f };
+    std::atomic<uint32_t> textureSeed { 0x4c535501u };
     std::atomic<int> effectiveCrossfadeSamples { 0 };
     int captureWritePosition = 0;
     int scheduledCaptureDelay = 0;
@@ -149,8 +168,11 @@ private:
     std::atomic<int> analysisRangeStartSample { 0 };
     std::atomic<int> analysisRangeEndSample { 0 };
     std::atomic<PreviewMode> previewMode { PreviewMode::loop };
+    std::atomic<GenerationMode> generationMode { GenerationMode::evolvingTexture };
+    std::atomic<GenerationMode> lastUsedGenerationMode { GenerationMode::evolvingTexture };
     std::atomic<bool> previewPlaying { false };
     std::atomic<bool> previewRestartRequested { false };
     std::atomic<uint64_t> candidateRevision { 0 };
     std::atomic<uint64_t> sourceRevision { 0 };
+    std::atomic<int> activeTextureVariant { -1 };
 };
