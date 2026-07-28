@@ -1,6 +1,6 @@
 # P2 Loop Surgeon
 
-Current target: **0.5 Alpha texture engine**.
+Current target: **0.5.1 Alpha stationary-texture engine**.
 
 Loop Surgeon is a Windows/macOS VST3 effect and Standalone application for turning a user-selected
 piece of audio into either a long evolving texture or a conventional repaired loop. File import is
@@ -9,10 +9,10 @@ the primary workflow; DAW-input capture is secondary.
 ## Processing modes
 
 - **Evolving Texture** is the default for wind, rain, room tone, machinery, drones, and other
-  reasonably stationary material. It rearranges different long grains from the selected source,
-  scores transitions by level, change rate, spectrum, and stereo correlation, penalizes recently
-  reused or adjacent source positions, and renders the path with circular overlap-add. The result is
-  a new 4–60 second file whose internal sequence is not one short section copied on every pass.
+  reasonably stationary material. It detects the stable active body, removes the source one-shot's
+  slow attack/decay envelope, rearranges compatible long grains from that timbral carrier, and
+  stabilizes residual slow output movement. The intended result behaves like source-coloured
+  noise: continuously varying without a train of copied attacks or one short repeated pass.
 - **Seam Loop** is for rhythmic, mechanical, tonal, or already-periodic material. It searches for a
   stable period and start/end pair, then evaluates multiple repair windows.
 - **Auto** first runs periodicity and seam analysis. A strong, high-confidence period uses Seam
@@ -39,19 +39,27 @@ is limited to 16 seconds.
 
 The texture engine is an offline, deterministic long-grain synthesizer:
 
-1. The selected source is divided into overlapping candidate grains. Grain duration adapts between
-   roughly 0.45 and 1.8 seconds to preserve recognizable environmental events and avoid the
-   “blender” character of very short granular clouds.
-2. Each candidate head and tail receives an RMS, derivative, stereo-correlation, and eight-band
+1. A 160 ms RMS envelope detects near-silence, the attack, the decay tail, and the reasonably stable
+   active body. Unstable candidates are rejected; a documented relaxed fallback handles very short
+   or continuously changing sources.
+2. A smoothly inverted shared-channel gain removes the original slow one-shot envelope while
+   preserving the carrier's microdynamics and stereo relationship.
+3. The stable carrier is divided into overlapping candidate grains. Grain duration adapts between
+   roughly 0.42 and 1.35 seconds to preserve environmental timbre without making a dense cloud of
+   short granular attacks.
+4. Each candidate head and tail receives an RMS, derivative, stereo-correlation, and eight-band
    spectral signature.
-3. A seeded path search ranks the next grain by acoustic transition cost. Variation widens the
+5. A seeded path search ranks the next grain by acoustic transition cost. Variation widens the
    top-ranked choice pool while penalties discourage immediate reuse, recent reuse, near-identical
    positions, and simply continuing through the source in order.
-4. The final path steps also consider the transition back to the first grain.
-5. Long grains are rendered around a circular output buffer with equal-power-style overlap windows
+6. The final path steps also consider the transition back to the first grain.
+7. Long grains are rendered around a circular output buffer with equal-power-style overlap windows
    and per-sample normalization. Because the render is circular, export and playback use the same
    samples and need no second seam crossfade.
-6. Three seeds provide alternate results. The seed is deterministic for repeatable project recall;
+8. A circular 360 ms macro-envelope correction suppresses residual periodic pumping while allowing
+   natural short-term movement. The displayed Stability score measures the corrected slow level
+   range and variation.
+9. Three seeds provide alternate results. The seed is deterministic for repeatable project recall;
    **New Variation** deliberately advances it.
 
 This is signal-processing texture synthesis, not a generative neural model. A fixed exported WAV
@@ -94,8 +102,12 @@ recombined and evolving rather than one identical short pass repeated continuous
   spectral resynthesis, neural inpainting, or phase-vocoder morphing yet.
 - Source In/Out has no waveform zoom, pan, typed sample entry, snapping, undo/redo, or keyboard
   nudge.
-- Quality bars summarize closure, transition, spectrum, circularity, stereo, and diversity; there
+- Quality bars summarize closure, transition, spectrum, circularity, stereo, and macro stability;
+  there
   is not yet a full spectrum/phase inspector.
+- The 0.5.1 carrier stage normalizes a broadband slow envelope; it is not yet a multiband
+  statistical noise model. A source whose spectrum itself changes dramatically over time can still
+  reveal reordered spectral events even when its volume is stable.
 - Export does not yet add WAV `cue`/`smpl` chunks or a sidecar recipe.
 - Project state restores the selected generated audio and parameters, not the entire source and all
   alternate variations.
