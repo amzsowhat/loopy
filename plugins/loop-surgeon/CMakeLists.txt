@@ -1,5 +1,5 @@
 juce_add_plugin(LoopSurgeon
-    VERSION 0.5.1
+    VERSION 0.5.2
     COMPANY_NAME "Sound VST Project"
     BUNDLE_ID com.amzsowhat.loopsurgeon
     PLUGIN_MANUFACTURER_CODE SVst
@@ -71,6 +71,7 @@ if(SOUND_VST_BUILD_TESTS)
     target_link_libraries(LoopSurgeonTests
         PRIVATE
             juce::juce_audio_basics
+            juce::juce_dsp
         PUBLIC
             juce::juce_recommended_config_flags
             juce::juce_recommended_warning_flags
@@ -81,4 +82,29 @@ if(SOUND_VST_BUILD_TESTS)
     endif()
 
     add_test(NAME LoopSurgeon.Engine COMMAND LoopSurgeonTests)
+
+    juce_add_console_app(LoopSurgeonTextureRender
+        PRODUCT_NAME "Loop Surgeon Texture Render")
+
+    target_sources(LoopSurgeonTextureRender
+        PRIVATE
+            Source/TextureSynthesizer.cpp
+            Source/TextureSynthesizer.h
+            Tools/TextureRender.cpp
+    )
+
+    target_include_directories(LoopSurgeonTextureRender PRIVATE Source)
+
+    target_link_libraries(LoopSurgeonTextureRender
+        PRIVATE
+            juce::juce_audio_formats
+            juce::juce_dsp
+        PUBLIC
+            juce::juce_recommended_config_flags
+            juce::juce_recommended_warning_flags
+    )
+
+    if(MSVC)
+        target_compile_options(LoopSurgeonTextureRender PRIVATE /utf-8)
+    endif()
 endif()
