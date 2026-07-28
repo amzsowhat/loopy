@@ -1,4 +1,4 @@
-# Loop Surgeon 0.5.1 Alpha：Windows / REAPER 快速测试
+# Loop Surgeon 0.5.2 Alpha：Windows / REAPER 快速测试
 
 ## 安装
 
@@ -16,7 +16,7 @@
 
 1. 把素材拖进插件。
 2. 用蓝色 **Source In/Out** 圈出允许取材的范围。
-3. Mode 选择 **Evolving Texture**。
+3. Mode 选择 **Stationary Texture**。
 4. Length 先设 20–30 秒，Variation 先用 65–80%。
 5. 点击 **Generate Texture**。
 6. 点击 **Source** 会立即播放所选原素材；点击 **Generated** 会立即播放生成结果。
@@ -26,13 +26,15 @@
    - 是否还能明显听出同一小段逐遍重复；
    - 原素材只有一次渐强/衰减时，结果是否错误地产生一串周期性鼓包或重新起音；
    - 结果是否主要保持原素材的音色颜色，同时像持续噪声一样自然微动；
-   - 内部颗粒转换是否有抽吸、双影、突变或立体声漂移；
+   - 是否仍能听出原 one-shot 的 pass-by、rise、fall 等时间轨迹；
+   - 是否出现固定电音、梳状滤波、周期性频段塌陷或立体声漂移；
    - 完整 WAV 从尾部回到头部时是否可闻接缝。
 
 ## 其他模式
 
-- **Seam Loop**：适合已经有明显周期的节奏、机械声、持续音；输出仍是传统短 loop。
-- **Auto**：强周期、高置信度素材使用 Seam Loop，其余使用 Evolving Texture。判断错误时请
+- **Direct Seam Loop**：适合已经有明显周期的节奏、机械声、持续音；输出就是传统短
+  loop。检查绿色 Loop In/Out 必须完全落在蓝色 Source In/Out 内。
+- **Auto**：强周期、高置信度素材使用 Direct Seam Loop，其余使用 Stationary Texture。判断错误时请
   手动选模式，并在反馈里注明素材类型。
 
 ## 工程召回
