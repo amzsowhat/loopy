@@ -1,4 +1,5 @@
 juce_add_plugin(LoopSurgeon
+    VERSION 0.4.0
     COMPANY_NAME "Sound VST Project"
     BUNDLE_ID com.amzsowhat.loopsurgeon
     PLUGIN_MANUFACTURER_CODE SVst
@@ -45,6 +46,10 @@ target_link_libraries(LoopSurgeon
         juce::juce_recommended_warning_flags
 )
 
+if(MSVC)
+    target_compile_options(LoopSurgeon PRIVATE /utf-8)
+endif()
+
 if(SOUND_VST_BUILD_TESTS)
     juce_add_console_app(LoopSurgeonTests PRODUCT_NAME "Loop Surgeon Tests")
 
@@ -66,6 +71,10 @@ if(SOUND_VST_BUILD_TESTS)
             juce::juce_recommended_config_flags
             juce::juce_recommended_warning_flags
     )
+
+    if(MSVC)
+        target_compile_options(LoopSurgeonTests PRIVATE /utf-8)
+    endif()
 
     add_test(NAME LoopSurgeon.Engine COMMAND LoopSurgeonTests)
 endif()
