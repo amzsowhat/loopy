@@ -96,6 +96,33 @@ void LoopSurgeonAudioProcessor::beginCapture() noexcept
     captureRequested.store(true, std::memory_order_release);
 }
 
+void LoopSurgeonAudioProcessor::syncGenerationControlsForAnalysis() noexcept
+{
+    loopEngine.setCrossfadeMilliseconds(
+        parameters.getRawParameterValue("crossfadeMs")->load());
+    loopEngine.setTextureDurationSeconds(
+        parameters.getRawParameterValue("textureDuration")->load());
+    loopEngine.setTextureVariation(
+        parameters.getRawParameterValue("variation")->load());
+    loopEngine.setGenerationMode(static_cast<LoopEngine::GenerationMode>(juce::jlimit(
+        0, 2, juce::roundToInt(
+                  parameters.getRawParameterValue("generationMode")->load()))));
+}
+
+bool LoopSurgeonAudioProcessor::analyzeSourceRange(const float start, const float end)
+{
+    // Generate may be clicked while the DAW transport is stopped, so processBlock()
+    // is not guaranteed to have propagated the latest UI parameters.
+    syncGenerationControlsForAnalysis();
+    return loopEngine.reanalyzeSourceRange(start, end);
+}
+
+bool LoopSurgeonAudioProcessor::regenerateTexture(const float start, const float end)
+{
+    syncGenerationControlsForAnalysis();
+    return loopEngine.regenerateTexture(start, end);
+}
+
 juce::String LoopSurgeonAudioProcessor::importAudioFile(const juce::File& file)
 {
     auto reader = std::unique_ptr<juce::AudioFormatReader>(formatManager.createReaderFor(file));
@@ -232,7 +259,7 @@ LoopSurgeonAudioProcessor::createParameterLayout()
     layout.push_back(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID { "generationMode", 1 },
         "Generation Mode",
-        juce::StringArray { "Auto", "Evolving Texture", "Seam Loop" },
+        juce::StringArray { "Auto", "Stationary Texture", "Direct Seam Loop" },
         1));
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
