@@ -1,49 +1,46 @@
 # Loop Surgeon algorithms
 
-## Evolving Texture
+## Stationary Texture
 
-This is the default imported-source path for wind, rain, room tone, drones, and other reasonably
-stationary material.
+This is the default path for wind, rain, room tone, drones, and other noise-like material.
 
-1. Resample imported mono/stereo audio to the host rate and limit it to 60 seconds.
-2. Use only the user-selected Source In/Out range.
-3. Estimate a 160 ms slow RMS envelope. Reject near-silent, attack, decay-tail, and strongly
-   changing candidate regions so a one-shot's macro envelope is not copied repeatedly.
-4. Smoothly invert that envelope with bounded gain, shared by all channels. This creates a
-   stationary timbral carrier while preserving short-term noise detail and stereo relationships.
-5. Adapt a long grain size from about 0.42 to 1.35 seconds. Long grains preserve environmental
-   timbre better than a dense cloud of 10–100 ms grains.
-6. Measure each candidate head/tail using level, derivative energy, stereo correlation, and an
-   eight-band spectral signature.
-7. Build a seeded path. Acoustic transition distance ranks candidates; Variation widens the
-   top-ranked choice set. Penalties discourage immediate reuse, recent reuse, near-identical source
-   positions, and simply continuing through the source in order.
-8. Include transition-back-to-start cost near the end of the path.
-9. Render every grain into a circular output buffer with overlapping windows and per-sample
-   normalization. The full 4–60 second result is therefore the loop, not a short segment repeated
-   until the requested duration.
-10. Measure the circular output with a 360 ms envelope and apply a bounded, circularly smoothed
-    correction. This suppresses repeated macro swells without flattening microtexture.
-11. Generate three deterministic seeds. Candidate switching swaps buffer ownership instead of
-   duplicating the active long buffer.
+1. Resample mono/stereo input to the host rate and use only Source In/Out.
+2. Sample at most 256 distributed 4096-point frames; discard silence and extreme level outliers.
+3. Convert stereo to Mid/Side and calculate log-magnitude spectra.
+4. Take the temporal median at every bin. Ordered rise/fall/pass-by trajectories are therefore not
+   part of the model.
+5. Lightly smooth across log frequency while retaining 75% of the measured bin detail.
+6. Draw seeded Gaussian complex spectra around the Mid and Side models. Random phase makes
+   neighbouring frames non-coherent and prevents the comb filtering created by overlapping copied
+   grains.
+7. Apply no more than subtle slow drift across ten broad frequency bands. Variation controls that
+   drift, not source-event order.
+8. Inverse-transform sine-windowed frames with 50% overlap directly into a circular output buffer.
+   Wrapped frames straddle the end/start boundary and per-sample squared-window normalization keeps
+   variance stable.
+9. Reconstruct Left/Right, match active source RMS, cap peaks, and score the actual output.
 
-## Seam Loop
+## Direct Seam Loop
 
-This path remains for strongly periodic material.
+This is intentionally a conventional short-loop path for strongly periodic material.
 
 1. Build 100 Hz loudness, change-rate, and four-band spectral feature frames.
 2. Normalize the streams and use multivariate autocorrelation to propose periods.
-3. Search Source In/Out for start/end pairs near each period.
+3. Search strictly inside Source In/Out for start/end pairs near each period.
 4. Score waveform jump, level, slope, phase, stereo, transient, repair, and period evidence.
 5. Re-evaluate finalists using short/long windows and a 16-band spectral signature.
-6. Test several repair lengths up to the configured maximum against the actual rendered boundary.
-7. Apply weak-link and activity penalties, then refine boundaries at single-sample resolution.
+6. Test repair lengths up to the configured maximum against the rendered boundary.
+7. Apply weak-link and activity penalties, refine at single-sample resolution, and expose the
+   adopted bounds as green Loop In/Out markers.
+
+Direct Seam Loop does not remove a pass-by, pitch sweep, or other event inside the chosen short
+segment. Stationary Texture is the required mode when those event trajectories must disappear.
 
 ## Auto
 
-Auto runs the periodic analysis first. It keeps Seam Loop only when the leading candidate has strong
-periodicity, transient continuity, overall quality, and high confidence; otherwise it selects
-Evolving Texture. The chosen mode is reported by the engine and can be overridden by the user.
+Auto runs periodic analysis first. It keeps Direct Seam Loop only when the leading candidate has
+strong periodicity, transient continuity, overall quality, and high confidence; otherwise it uses
+Stationary Texture.
 
 Both paths are deterministic explainable DSP, not trained perceptual models. Commercial claims
-remain blocked on a licensed corpus and blind listening tests.
+remain blocked on a larger licensed corpus and blind listening tests.
