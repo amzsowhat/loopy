@@ -456,7 +456,173 @@ void LoopEngine::selectCandidate(const int index)
             result = sourceCandidates[static_cast<size_t>(index)];
             const auto samples = result.endSample - result.startSample;
             selectedAudio.setSize(currentSourceBuffer.getNumChannels(), samples,
-           …1837 tokens truncated…to crossfadeIndex = playbackPosition - (loopSamples - crossfadeSamples);
+                                  false, false, false);
+            for (int channel = 0; channel < selectedAudio.getNumChannels(); ++channel)
+                selectedAudio.copyFrom(channel, 0, currentSourceBuffer, channel,
+                                       result.startSample, samples);
+        }
+    }
+    if (selectedTexture)
+    {
+        capturedSampleCount.store(textureSamples);
+        effectiveCrossfadeSamples.store(0);
+        playbackPosition = 0;
+        seamQuality.store(textureClosure);
+        waveformScore.store(textureTransition);
+        levelScore.store(textureTransition);
+        slopeScore.store(textureTransient);
+        spectrumScore.store(textureSpectrum);
+        phaseScore.store(textureClosure);
+        stereoScore.store(textureStereo);
+        transientScore.store(textureTransient);
+        periodicityScore.store(textureStability);
+        repairScore.store(textureTransition);
+        lowConfidence.store(textureClosure < 55.0f
+                            || textureDiversity < 30.0f
+                            || textureStability < 62.0f);
+        lastUsedGenerationMode.store(GenerationMode::evolvingTexture);
+        previewMode.store(PreviewMode::loop);
+        previewRestartRequested.store(true, std::memory_order_release);
+        state.store(State::ready, std::memory_order_release);
+        return;
+    }
+
+    {
+        const std::scoped_lock loopLock(loopDataMutex);
+        loopBuffer = std::move(selectedAudio);
+    }
+    capturedSampleCount.store(result.endSample - result.startSample);
+    selectedStartSample.store(result.startSample);
+    const auto repairSamples = result.repairOverlapSamples;
+    effectiveCrossfadeSamples.store(repairSamples);
+    playbackPosition = repairSamples;
+    selectedEndSample.store(result.endSample - repairSamples);
+    waveformScore.store(result.waveform);
+    levelScore.store(result.level);
+    slopeScore.store(result.slope);
+    spectrumScore.store(result.spectrum);
+    phaseScore.store(result.phase);
+    stereoScore.store(result.stereo);
+    transientScore.store(result.transient);
+    periodicityScore.store(result.periodicity);
+    repairScore.store(result.repair);
+    seamQuality.store(result.overall);
+    lowConfidence.store(result.overall < 62.0f || result.repair < 55.0f);
+    lastUsedGenerationMode.store(GenerationMode::seamLoop);
+    state.store(State::ready, std::memory_order_release);
+}
+
+std::vector<float> LoopEngine::getWaveformPreview() const
+{
+    const std::scoped_lock lock(sourceDataMutex);
+    return waveformPreview;
+}
+
+float LoopEngine::getLoopStartProportion() const noexcept
+{
+    return static_cast<float>(selectedStartSample.load())
+           / static_cast<float>(juce::jmax(1, selectedSourceSamples.load()));
+}
+
+float LoopEngine::getLoopEndProportion() const noexcept
+{
+    return static_cast<float>(selectedEndSample.load())
+           / static_cast<float>(juce::jmax(1, selectedSourceSamples.load()));
+}
+
+juce::AudioBuffer<float> LoopEngine::createRenderedLoop() const
+{
+    const std::scoped_lock lock(loopDataMutex);
+    const auto samples = loopBuffer.getNumSamples();
+    const auto channels = loopBuffer.getNumChannels();
+    if (samples < 2 || channels < 1)
+        return {};
+
+    const auto fade = juce::jlimit(0, samples / 3,
+                                   effectiveCrossfadeSamples.load(std::memory_order_relaxed));
+    if (fade == 0)
+        return loopBuffer;
+
+    juce::AudioBuffer<float> rendered(channels, samples - fade);
+    const auto middle = samples - 2 * fade;
+    const auto useLinearFade = phaseScore.load() >= 75.0f;
+    for (int channel = 0; channel < channels; ++channel)
+    {
+        if (middle > 0)
+            rendered.copyFrom(channel, 0, loopBuffer, channel, fade, middle);
+        for (int index = 0; index < fade; ++index)
+        {
+            const auto phase = static_cast<float>(index + 1) / static_cast<float>(fade + 1);
+            const auto tailGain = useLinearFade ? 1.0f - phase
+                                                : std::cos(phase * juce::MathConstants<float>::halfPi);
+            const auto headGain = useLinearFade ? phase
+                                                : std::sin(phase * juce::MathConstants<float>::halfPi);
+            const auto tail = loopBuffer.getSample(channel, samples - fade + index);
+            const auto head = loopBuffer.getSample(channel, index);
+            rendered.setSample(channel, middle + index,
+                               tailGain * tail + headGain * head);
+        }
+    }
+    return rendered;
+}
+
+void LoopEngine::applyPendingRequests() noexcept
+{
+    if (clearRequested.exchange(false, std::memory_order_acq_rel))
+    {
+        generation.fetch_add(1, std::memory_order_acq_rel);
+        captureWritePosition = 0;
+        playbackPosition = 0;
+        sourcePlaybackPosition = 0;
+        capturedSampleCount.store(0);
+        captureProgress.store(0.0f);
+        effectiveCrossfadeSamples.store(0, std::memory_order_relaxed);
+        previewPlaying.store(false, std::memory_order_release);
+        resetScores();
+        state.store(State::empty, std::memory_order_release);
+    }
+
+    if (!captureRequested.exchange(false, std::memory_order_acq_rel)
+        || state.load(std::memory_order_acquire) == State::analysing
+        || captureBuffer.getNumSamples() == 0)
+        return;
+
+    generation.fetch_add(1, std::memory_order_acq_rel);
+    requestedLoopSamples = juce::jlimit(1,
+                                       captureBuffer.getNumSamples(),
+                                       juce::roundToInt(sampleRate * loopLengthSeconds));
+    searchRadiusSamples = juce::jmin(juce::roundToInt(sampleRate * searchRadiusSeconds),
+                                    (captureBuffer.getNumSamples() - requestedLoopSamples) / 2);
+    captureSampleCount = juce::jmin(captureBuffer.getNumSamples(),
+                                    requestedLoopSamples + 2 * searchRadiusSamples);
+    captureWritePosition = 0;
+    scheduledCaptureDelay = requestedStartDelay.load(std::memory_order_relaxed);
+    captureProgress.store(0.0f);
+    resetScores();
+    state.store(scheduledCaptureDelay > 0 ? State::armed : State::capturing,
+                std::memory_order_release);
+}
+
+void LoopEngine::finishCapture() noexcept
+{
+    captureWritePosition = captureSampleCount;
+    captureProgress.store(1.0f);
+    state.store(State::analysing, std::memory_order_release);
+    analysisPending.store(true, std::memory_order_release);
+    analysisCondition.notify_one();
+}
+
+float LoopEngine::readLoopSample(const int channel) const noexcept
+{
+    const auto loopSamples = capturedSampleCount.load(std::memory_order_relaxed);
+    const auto maximumCrossfade = juce::jmax(0, loopSamples / 2);
+    const auto crossfadeSamples = juce::jlimit(
+        0, maximumCrossfade, effectiveCrossfadeSamples.load(std::memory_order_relaxed));
+
+    if (crossfadeSamples == 0 || playbackPosition < loopSamples - crossfadeSamples)
+        return loopBuffer.getSample(channel, playbackPosition);
+
+    const auto crossfadeIndex = playbackPosition - (loopSamples - crossfadeSamples);
     const auto alpha = static_cast<float>(crossfadeIndex + 1)
                        / static_cast<float>(crossfadeSamples + 1);
     const auto useLinearFade = phaseScore.load(std::memory_order_relaxed) >= 75.0f;
