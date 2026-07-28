@@ -58,6 +58,7 @@ public:
     [[nodiscard]] juce::String getSourceName() const { return loopEngine.getSourceName(); }
     [[nodiscard]] double getSourceDurationSeconds() const { return loopEngine.getSourceDurationSeconds(); }
     bool analyzeSourceRange(float start, float end) { return loopEngine.reanalyzeSourceRange(start, end); }
+    bool regenerateTexture(float start, float end) { return loopEngine.regenerateTexture(start, end); }
     bool setManualLoopRange(float start, float end) { return loopEngine.setManualLoopRange(start, end); }
     [[nodiscard]] int getCandidateCount() const { return loopEngine.getCandidateCount(); }
     [[nodiscard]] uint64_t getCandidateRevision() const noexcept { return loopEngine.getCandidateRevision(); }
@@ -67,6 +68,10 @@ public:
     [[nodiscard]] std::vector<float> getWaveformPreview() const { return loopEngine.getWaveformPreview(); }
     [[nodiscard]] float getLoopStartProportion() const noexcept { return loopEngine.getLoopStartProportion(); }
     [[nodiscard]] float getLoopEndProportion() const noexcept { return loopEngine.getLoopEndProportion(); }
+    [[nodiscard]] LoopEngine::GenerationMode getLastUsedGenerationMode() const noexcept
+    {
+        return loopEngine.getLastUsedGenerationMode();
+    }
 
     juce::AudioProcessorValueTreeState& getParameterState() noexcept { return parameters; }
 
