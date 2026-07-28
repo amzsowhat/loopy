@@ -17,6 +17,7 @@ struct LoopAnalysisResult
     float stereo = 0.0f;
     float transient = 0.0f;
     float periodicity = 0.0f;
+    float repair = 0.0f;
     int repairOverlapSamples = 0;
 };
 
@@ -50,5 +51,6 @@ public:
         const juce::AudioBuffer<float>& sourceAudio,
         double sampleRate,
         int startSample,
-        int endSample);
+        int endSample,
+        int repairOverlapSamples = 0);
 };
