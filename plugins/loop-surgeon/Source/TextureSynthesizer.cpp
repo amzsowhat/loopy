@@ -2,7 +2,9 @@
 
 #include <algorithm>
 #include <array>
+#include <cstddef>
 #include <cmath>
+#include <limits>
 #include <numeric>
 
 namespace
@@ -22,6 +24,22 @@ struct Grain
     int start = 0;
     BoundaryFeature head;
     BoundaryFeature tail;
+};
+
+struct GrainEnvelopeStats
+{
+    float mean = 0.0f;
+    float minimum = 0.0f;
+    float maximum = 0.0f;
+    float coefficientOfVariation = 0.0f;
+    float activeFraction = 0.0f;
+};
+
+struct PreparedSource
+{
+    juce::AudioBuffer<float> carrier;
+    std::vector<float> slowEnvelope;
+    float activeThreshold = 0.0f;
 };
 
 class DeterministicRandom
@@ -162,6 +180,243 @@ BoundaryFeature analyseWhole(const juce::AudioBuffer<float>& audio)
 {
     return analyseBoundary(audio, 0, audio.getNumSamples());
 }
+
+double samplePower(const juce::AudioBuffer<float>& audio, const int sample)
+{
+    auto power = 0.0;
+    for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+    {
+        const auto value = audio.getSample(channel, sample);
+        power += static_cast<double>(value) * value;
+    }
+    return power / static_cast<double>(juce::jmax(1, audio.getNumChannels()));
+}
+
+std::vector<float> calculateSlowEnvelope(const juce::AudioBuffer<float>& audio,
+                                         const double sampleRate,
+                                         const float windowSeconds,
+                                         const bool circular)
+{
+    const auto sampleCount = audio.getNumSamples();
+    std::vector<float> envelope(static_cast<size_t>(sampleCount), 0.0f);
+    if (sampleCount == 0)
+        return envelope;
+
+    const auto window = juce::jlimit(
+        1, sampleCount, juce::roundToInt(sampleRate * windowSeconds));
+    const auto before = window / 2;
+    const auto after = window - before - 1;
+
+    if (circular)
+    {
+        const auto wrap = [sampleCount] (int sample)
+        {
+            sample %= sampleCount;
+            return sample < 0 ? sample + sampleCount : sample;
+        };
+        auto sum = 0.0;
+        for (int offset = -before; offset <= after; ++offset)
+            sum += samplePower(audio, wrap(offset));
+
+        for (int sample = 0; sample < sampleCount; ++sample)
+        {
+            envelope[static_cast<size_t>(sample)] = std::sqrt(
+                static_cast<float>(juce::jmax(0.0, sum)
+                                   / static_cast<double>(window)));
+            sum -= samplePower(audio, wrap(sample - before));
+            sum += samplePower(audio, wrap(sample + after + 1));
+        }
+        return envelope;
+    }
+
+    auto left = 0;
+    auto right = juce::jmin(sampleCount - 1, after);
+    auto sum = 0.0;
+    for (int sample = left; sample <= right; ++sample)
+        sum += samplePower(audio, sample);
+
+    for (int sample = 0; sample < sampleCount; ++sample)
+    {
+        const auto wantedLeft = juce::jmax(0, sample - before);
+        const auto wantedRight = juce::jmin(sampleCount - 1, sample + after);
+        while (left < wantedLeft)
+            sum -= samplePower(audio, left++);
+        while (right < wantedRight)
+            sum += samplePower(audio, ++right);
+        envelope[static_cast<size_t>(sample)] = std::sqrt(
+            static_cast<float>(juce::jmax(0.0, sum)
+                               / static_cast<double>(right - left + 1)));
+    }
+    return envelope;
+}
+
+float sampledPercentile(const std::vector<float>& values, const float proportion)
+{
+    if (values.empty())
+        return 0.0f;
+
+    std::vector<float> samples;
+    const auto stride = juce::jmax<size_t>(1, values.size() / 8192u);
+    samples.reserve(values.size() / stride + 1u);
+    for (size_t index = 0; index < values.size(); index += stride)
+        samples.push_back(values[index]);
+    const auto position = static_cast<size_t>(juce::roundToInt(
+        juce::jlimit(0.0f, 1.0f, proportion)
+        * static_cast<float>(samples.size() - 1u)));
+    std::nth_element(samples.begin(), samples.begin() + static_cast<ptrdiff_t>(position),
+                     samples.end());
+    return samples[position];
+}
+
+PreparedSource prepareStationaryCarrier(const juce::AudioBuffer<float>& source,
+                                         const double sampleRate)
+{
+    PreparedSource prepared;
+    prepared.slowEnvelope = calculateSlowEnvelope(source, sampleRate, 0.16f, false);
+    const auto highLevel = sampledPercentile(prepared.slowEnvelope, 0.98f);
+    prepared.activeThreshold = juce::jmax(1.0e-5f, highLevel * 0.11f);
+
+    std::vector<float> activeLevels;
+    const auto stride = juce::jmax<size_t>(1, prepared.slowEnvelope.size() / 8192u);
+    for (size_t index = 0; index < prepared.slowEnvelope.size(); index += stride)
+        if (prepared.slowEnvelope[index] >= prepared.activeThreshold)
+            activeLevels.push_back(prepared.slowEnvelope[index]);
+    const auto targetLevel = juce::jmax(
+        prepared.activeThreshold, sampledPercentile(activeLevels, 0.62f));
+
+    // Convert the detected one-shot macro envelope into a slow, shared channel gain.
+    // A common gain preserves the source's inter-channel image.
+    for (auto& level : prepared.slowEnvelope)
+    {
+        const auto denominator = juce::jmax(level, prepared.activeThreshold);
+        level = juce::jlimit(0.38f, 3.2f, targetLevel / denominator);
+    }
+
+    const auto smoothing = std::exp(
+        -1.0f / static_cast<float>(juce::jmax(1.0, sampleRate * 0.075)));
+    auto state = prepared.slowEnvelope.front();
+    for (auto& gain : prepared.slowEnvelope)
+    {
+        state = smoothing * state + (1.0f - smoothing) * gain;
+        gain = state;
+    }
+    state = prepared.slowEnvelope.back();
+    for (auto iterator = prepared.slowEnvelope.rbegin();
+         iterator != prepared.slowEnvelope.rend(); ++iterator)
+    {
+        state = smoothing * state + (1.0f - smoothing) * *iterator;
+        *iterator = state;
+    }
+
+    prepared.carrier.setSize(source.getNumChannels(), source.getNumSamples(),
+                             false, true, false);
+    for (int channel = 0; channel < source.getNumChannels(); ++channel)
+        for (int sample = 0; sample < source.getNumSamples(); ++sample)
+            prepared.carrier.setSample(
+                channel, sample,
+                source.getSample(channel, sample)
+                    * prepared.slowEnvelope[static_cast<size_t>(sample)]);
+
+    // The original envelope is still needed for stable-body selection, so restore it.
+    prepared.slowEnvelope = calculateSlowEnvelope(source, sampleRate, 0.16f, false);
+    return prepared;
+}
+
+GrainEnvelopeStats analyseGrainEnvelope(const std::vector<float>& envelope,
+                                        const int start,
+                                        const int sampleCount,
+                                        const float activeThreshold)
+{
+    GrainEnvelopeStats stats;
+    stats.minimum = std::numeric_limits<float>::max();
+    constexpr int observations = 64;
+    auto squareTotal = 0.0f;
+    auto active = 0;
+    for (int observation = 0; observation < observations; ++observation)
+    {
+        const auto offset = observation * juce::jmax(0, sampleCount - 1)
+                            / juce::jmax(1, observations - 1);
+        const auto level = envelope[static_cast<size_t>(start + offset)];
+        stats.mean += level;
+        squareTotal += level * level;
+        stats.minimum = juce::jmin(stats.minimum, level);
+        stats.maximum = juce::jmax(stats.maximum, level);
+        active += level >= activeThreshold ? 1 : 0;
+    }
+    stats.mean /= static_cast<float>(observations);
+    const auto variance = juce::jmax(
+        0.0f, squareTotal / static_cast<float>(observations) - stats.mean * stats.mean);
+    stats.coefficientOfVariation = std::sqrt(variance) / juce::jmax(1.0e-6f, stats.mean);
+    stats.activeFraction = static_cast<float>(active) / static_cast<float>(observations);
+    return stats;
+}
+
+void smoothCircular(std::vector<float>& values, const int requestedWindow)
+{
+    if (values.empty())
+        return;
+    const auto size = static_cast<int>(values.size());
+    const auto window = juce::jlimit(1, size, requestedWindow);
+    const auto before = window / 2;
+    const auto after = window - before - 1;
+    const auto wrap = [size] (int position)
+    {
+        position %= size;
+        return position < 0 ? position + size : position;
+    };
+    std::vector<float> smoothed(values.size(), 0.0f);
+    auto sum = 0.0;
+    for (int offset = -before; offset <= after; ++offset)
+        sum += values[static_cast<size_t>(wrap(offset))];
+    for (int sample = 0; sample < size; ++sample)
+    {
+        smoothed[static_cast<size_t>(sample)] = static_cast<float>(
+            sum / static_cast<double>(window));
+        sum -= values[static_cast<size_t>(wrap(sample - before))];
+        sum += values[static_cast<size_t>(wrap(sample + after + 1))];
+    }
+    values.swap(smoothed);
+}
+
+float stabiliseCircularMacroEnvelope(juce::AudioBuffer<float>& audio,
+                                     const double sampleRate)
+{
+    auto envelope = calculateSlowEnvelope(audio, sampleRate, 0.36f, true);
+    const auto target = juce::jmax(1.0e-6f, sampledPercentile(envelope, 0.50f));
+    for (auto& gain : envelope)
+    {
+        const auto ratio = target / juce::jmax(target * 0.28f, gain);
+        gain = juce::jlimit(0.55f, 1.80f, std::pow(ratio, 0.86f));
+    }
+    smoothCircular(envelope, juce::roundToInt(sampleRate * 0.11));
+    for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+        for (int sample = 0; sample < audio.getNumSamples(); ++sample)
+            audio.setSample(channel, sample,
+                            audio.getSample(channel, sample)
+                                * envelope[static_cast<size_t>(sample)]);
+
+    const auto corrected = calculateSlowEnvelope(audio, sampleRate, 0.36f, true);
+    const auto low = juce::jmax(1.0e-7f, sampledPercentile(corrected, 0.10f));
+    const auto high = juce::jmax(low, sampledPercentile(corrected, 0.90f));
+    const auto rangeDecibels = 20.0f * std::log10(high / low);
+    auto mean = 0.0;
+    auto squareTotal = 0.0;
+    const auto stride = juce::jmax<size_t>(1, corrected.size() / 8192u);
+    auto count = 0;
+    for (size_t index = 0; index < corrected.size(); index += stride)
+    {
+        mean += corrected[index];
+        squareTotal += static_cast<double>(corrected[index]) * corrected[index];
+        ++count;
+    }
+    mean /= static_cast<double>(juce::jmax(1, count));
+    const auto variance = juce::jmax(
+        0.0, squareTotal / static_cast<double>(juce::jmax(1, count)) - mean * mean);
+    const auto coefficientOfVariation = static_cast<float>(
+        std::sqrt(variance) / juce::jmax(1.0e-7, mean));
+    return 100.0f * std::exp(
+        -0.11f * rangeDecibels - 1.8f * coefficientOfVariation);
+}
 }
 
 TextureSynthesisResult TextureSynthesizer::synthesize(
@@ -179,8 +434,10 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
 
     const auto sourceSamples = source.getNumSamples();
     const auto sourceSeconds = static_cast<float>(sourceSamples / sampleRate);
+    auto prepared = prepareStationaryCarrier(source, sampleRate);
+    const auto& synthesisSource = prepared.carrier;
     const auto desiredGrainSeconds = juce::jlimit(
-        0.45f, 1.8f, 0.55f + sourceSeconds * 0.14f);
+        0.42f, 1.35f, 0.50f + sourceSeconds * 0.08f);
     const auto grainSamples = juce::jlimit(
         128, juce::jmax(128, sourceSamples - 1),
         juce::jmin(juce::roundToInt(sampleRate * desiredGrainSeconds),
@@ -195,24 +452,62 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     const auto candidateHop = juce::jmax(
         1, juce::jmax(juce::roundToInt(sampleRate * 0.075), availableStart / 95));
 
-    std::vector<Grain> grains;
+    struct CandidateSite
+    {
+        int start = 0;
+        GrainEnvelopeStats envelope;
+    };
+    std::vector<CandidateSite> sites;
     for (int start = 0; start <= availableStart; start += candidateHop)
+        sites.push_back({ start, analyseGrainEnvelope(
+            prepared.slowEnvelope, start, grainSamples, prepared.activeThreshold) });
+    if (sites.empty() || sites.back().start != availableStart)
+        sites.push_back({ availableStart, analyseGrainEnvelope(
+            prepared.slowEnvelope, availableStart, grainSamples,
+            prepared.activeThreshold) });
+
+    std::vector<Grain> grains;
+    const auto collectGrains = [&] (const bool relaxed)
     {
-        Grain grain;
-        grain.start = start;
-        grain.head = analyseBoundary(source, start, featureSamples);
-        grain.tail = analyseBoundary(source, start + grainSamples - featureSamples,
-                                     featureSamples);
-        grains.push_back(grain);
-    }
-    if (grains.empty() || grains.back().start != availableStart)
+        grains.clear();
+        for (const auto& site : sites)
+        {
+            const auto levelRatio = site.envelope.maximum
+                / juce::jmax(1.0e-6f, site.envelope.minimum);
+            const auto acceptable = relaxed
+                ? (site.envelope.activeFraction >= 0.72f
+                   && levelRatio <= 3.0f
+                   && site.envelope.coefficientOfVariation <= 0.34f)
+                : (site.envelope.activeFraction >= 0.90f
+                   && site.envelope.mean >= prepared.activeThreshold * 1.12f
+                   && levelRatio <= 1.85f
+                   && site.envelope.coefficientOfVariation <= 0.20f);
+            if (!acceptable)
+                continue;
+            Grain grain;
+            grain.start = site.start;
+            grain.head = analyseBoundary(synthesisSource, site.start, featureSamples);
+            grain.tail = analyseBoundary(
+                synthesisSource, site.start + grainSamples - featureSamples,
+                featureSamples);
+            grains.push_back(grain);
+        }
+    };
+    collectGrains(false);
+    if (grains.size() < 6u)
+        collectGrains(true);
+    if (grains.empty())
     {
-        Grain grain;
-        grain.start = availableStart;
-        grain.head = analyseBoundary(source, availableStart, featureSamples);
-        grain.tail = analyseBoundary(source, availableStart + grainSamples - featureSamples,
-                                     featureSamples);
-        grains.push_back(grain);
+        for (const auto& site : sites)
+        {
+            Grain grain;
+            grain.start = site.start;
+            grain.head = analyseBoundary(synthesisSource, site.start, featureSamples);
+            grain.tail = analyseBoundary(
+                synthesisSource, site.start + grainSamples - featureSamples,
+                featureSamples);
+            grains.push_back(grain);
+        }
     }
 
     const auto targetSamples = juce::jmax(
@@ -317,7 +612,7 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
             normalisation[static_cast<size_t>(outputPosition)] += window * window;
             for (int channel = 0; channel < result.audio.getNumChannels(); ++channel)
                 result.audio.addSample(channel, outputPosition,
-                                       gain * window * source.getSample(
+                                       gain * window * synthesisSource.getSample(
                                            channel, sourceStart + offset));
         }
     }
@@ -330,6 +625,8 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
             result.audio.setSample(channel, sample,
                                    result.audio.getSample(channel, sample) * scale);
     }
+
+    result.macroStability = stabiliseCircularMacroEnvelope(result.audio, sampleRate);
 
     auto outputPeak = 0.0f;
     for (int channel = 0; channel < result.audio.getNumChannels(); ++channel)
