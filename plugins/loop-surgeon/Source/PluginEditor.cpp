@@ -219,7 +219,7 @@ void LoopQualityView::setScores(const float quality, const float repair,
 void LoopQualityView::paint(juce::Graphics& graphics)
 {
     constexpr std::array<const char*, 6> labels {
-        "CLOSURE", "TRANSITION", "SPECTRUM", "CIRCULAR", "STEREO", "DIVERSITY"
+        "CLOSURE", "TRANSITION", "SPECTRUM", "CIRCULAR", "STEREO", "STABILITY"
     };
     auto row = getLocalBounds();
     const auto gap = 7;
@@ -262,7 +262,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
     addAndMakeVisible(titleLabel);
 
-    versionLabel.setText("0.5 TEXTURE ENGINE", juce::dontSendNotification);
+    versionLabel.setText("0.5.1 TEXTURE ENGINE", juce::dontSendNotification);
     versionLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     versionLabel.setJustificationType(juce::Justification::centredRight);
     versionLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
