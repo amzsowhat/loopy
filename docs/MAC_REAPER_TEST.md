@@ -6,15 +6,18 @@ Use native Apple Silicon Reaper. Install `Loop Surgeon.vst3` under
 ## Functional test
 
 1. Drag a WAV/AIFF/FLAC source into Loop Surgeon.
-2. Move blue Search In/Out, click **Find Best Loop**, and confirm every candidate remains inside.
-3. Start and stop **Preview**, then compare **Original** and **Loop**.
-4. Drag green Loop In/Out, click **Use Manual Loop**, and confirm the markers do not reset.
-5. Adjust **Max Repair Window**, re-run Find/Use Manual, and listen for clicks, flams, image jumps,
-   or bumps while watching Repair/Spectrum/Phase/Stereo/Transient quality bars.
-6. Export the 24-bit WAV and compare repeated playback with the plug-in preview.
-7. Save, close, and reopen the Reaper project; verify the finished loop returns.
-8. Repeat with mono/stereo material at 44.1, 48, and 96 kHz and common buffer sizes.
-9. Test the secondary **Record DAW Input** path and confirm it does not select uncaptured silence.
+2. Move Source In/Out, select **Evolving Texture**, set 20–30 seconds and 65–80% Variation, then
+   generate.
+3. Confirm **Source** and **Generated** each switch the audition and immediately start it;
+   **Preview/Stop** must stop and restart cleanly.
+4. Compare all three generated variations and use **New Variation**.
+5. Listen for short repeated identities, transition clicks, pumping, phase/image drift, and the
+   full-file tail-to-head boundary.
+6. Repeat in **Seam Loop** with periodic material, then verify **Auto** selects an appropriate path.
+7. Export the 24-bit WAV and compare it with plug-in playback.
+8. Save, close, and reopen the project; verify the selected generated result returns.
+9. Repeat with mono/stereo audio at 44.1, 48, and 96 kHz and common buffer sizes.
+10. Test the secondary **Record DAW Input** path.
 
-Record Reaper version, macOS version, buffer size, sample rate, source file, failing candidate, and a
-minimal project when reporting a problem.
+Record Reaper version, macOS version, buffer size, sample rate, source file, mode, length, variation,
+candidate, and a minimal project when reporting a problem.
