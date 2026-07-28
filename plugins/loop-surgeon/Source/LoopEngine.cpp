@@ -1,6 +1,7 @@
 #include "LoopEngine.h"
 
 #include <cmath>
+#include <utility>
 
 LoopEngine::~LoopEngine()
 {
@@ -56,6 +57,29 @@ void LoopEngine::setCrossfadeMilliseconds(const float milliseconds) noexcept
                                 std::memory_order_relaxed);
 }
 
+void LoopEngine::setTextureDurationSeconds(const float seconds) noexcept
+{
+    textureDurationSeconds.store(
+        juce::jlimit(4.0f, maximumTextureSeconds, seconds), std::memory_order_relaxed);
+}
+
+void LoopEngine::setTextureVariation(const float amount) noexcept
+{
+    textureVariation.store(juce::jlimit(0.0f, 1.0f, amount),
+                           std::memory_order_relaxed);
+}
+
+bool LoopEngine::regenerateTexture(const float startProportion,
+                                   const float endProportion)
+{
+    auto seed = textureSeed.load(std::memory_order_relaxed);
+    seed += 0x9e3779b9u;
+    if (seed == 0)
+        seed = 1;
+    textureSeed.store(seed, std::memory_order_relaxed);
+    return reanalyzeSourceRange(startProportion, endProportion);
+}
+
 void LoopEngine::setPreviewPlaying(const bool shouldPlay) noexcept
 {
     if (shouldPlay)
@@ -80,7 +104,14 @@ void LoopEngine::submitSource(juce::AudioBuffer<float> source, juce::String sour
     while (activeAudioReaders.load(std::memory_order_acquire) != 0)
         std::this_thread::yield();
     {
+        const std::scoped_lock lock(loopDataMutex);
+        loopBuffer.setSize(0, 0);
+    }
+    {
         const std::scoped_lock lock(sourceDataMutex);
+        sourceCandidates.clear();
+        textureVariants.clear();
+        activeTextureVariant.store(-1, std::memory_order_relaxed);
         constexpr auto previewBins = 320;
         waveformPreview.assign(previewBins, 0.0f);
         for (int bin = 0; bin < previewBins; ++bin)
@@ -112,9 +143,16 @@ bool LoopEngine::reanalyzeSourceRange(const float startProportion, const float e
     previewPlaying.store(false, std::memory_order_release);
     while (activeAudioReaders.load(std::memory_order_acquire) != 0)
         std::this_thread::yield();
+    {
+        const std::scoped_lock lock(loopDataMutex);
+        loopBuffer.setSize(0, 0);
+    }
 
     {
         const std::scoped_lock lock(sourceDataMutex);
+        sourceCandidates.clear();
+        textureVariants.clear();
+        activeTextureVariant.store(-1, std::memory_order_relaxed);
         const auto total = currentSourceBuffer.getNumSamples();
         const auto start = juce::jlimit(0, juce::jmax(0, total - 32),
                                         juce::roundToInt(startProportion * total));
@@ -329,6 +367,8 @@ double LoopEngine::getSourceDurationSeconds() const
 int LoopEngine::getCandidateCount() const
 {
     const std::scoped_lock lock(sourceDataMutex);
+    if (!textureVariants.empty())
+        return static_cast<int>(textureVariants.size());
     return static_cast<int>(sourceCandidates.size());
 }
 
@@ -338,6 +378,16 @@ uint64_t LoopEngine::getSourceRevision() const noexcept { return sourceRevision.
 juce::String LoopEngine::getCandidateDescription(const int index) const
 {
     const std::scoped_lock lock(sourceDataMutex);
+    if (juce::isPositiveAndBelow(index, static_cast<int>(textureVariants.size())))
+    {
+        const auto& variant = textureVariants[static_cast<size_t>(index)];
+        const auto samples = index == activeTextureVariant.load(std::memory_order_relaxed)
+            ? capturedSampleCount.load(std::memory_order_relaxed)
+            : variant.audio.getNumSamples();
+        const auto seconds = static_cast<double>(samples) / sampleRate;
+        return "Texture " + juce::String(index + 1) + "  |  " + juce::String(seconds, 1)
+               + " s  |  diversity " + juce::String(variant.diversity, 0);
+    }
     if (!juce::isPositiveAndBelow(index, static_cast<int>(sourceCandidates.size())))
         return {};
     const auto& candidate = sourceCandidates[static_cast<size_t>(index)];
@@ -356,20 +406,83 @@ void LoopEngine::selectCandidate(const int index)
         std::this_thread::yield();
 
     LoopAnalysisResult result;
+    auto selectedTexture = false;
+    auto textureSamples = 0;
+    auto textureTransition = 0.0f;
+    auto textureClosure = 0.0f;
+    auto textureSpectrum = 0.0f;
+    auto textureStereo = 0.0f;
+    auto textureDiversity = 0.0f;
+    auto textureTransient = 0.0f;
     juce::AudioBuffer<float> selectedAudio;
     {
         const std::scoped_lock sourceLock(sourceDataMutex);
-        if (!juce::isPositiveAndBelow(index, static_cast<int>(sourceCandidates.size())))
+        if (juce::isPositiveAndBelow(index, static_cast<int>(textureVariants.size())))
         {
-            state.store(State::ready, std::memory_order_release);
-            return;
+            selectedTexture = true;
+            auto& texture = textureVariants[static_cast<size_t>(index)];
+            textureTransition = texture.transitionQuality;
+            textureClosure = texture.closureQuality;
+            textureSpectrum = texture.spectrumPreservation;
+            textureStereo = texture.stereoPreservation;
+            textureDiversity = texture.diversity;
+            textureTransient = texture.transientPreservation;
+            const auto previous = activeTextureVariant.load(std::memory_order_relaxed);
+            if (index != previous)
+            {
+                const std::scoped_lock loopLock(loopDataMutex);
+                std::swap(loopBuffer, texture.audio);
+                if (juce::isPositiveAndBelow(
+                        previous, static_cast<int>(textureVariants.size())))
+                    std::swap(textureVariants[static_cast<size_t>(previous)].audio,
+                              texture.audio);
+                textureSamples = loopBuffer.getNumSamples();
+                activeTextureVariant.store(index, std::memory_order_relaxed);
+            }
+            else
+            {
+                textureSamples = capturedSampleCount.load(std::memory_order_relaxed);
+            }
         }
-        result = sourceCandidates[static_cast<size_t>(index)];
-        const auto samples = result.endSample - result.startSample;
-        selectedAudio.setSize(currentSourceBuffer.getNumChannels(), samples, false, false, false);
-        for (int channel = 0; channel < selectedAudio.getNumChannels(); ++channel)
-            selectedAudio.copyFrom(channel, 0, currentSourceBuffer, channel, result.startSample, samples);
+        else
+        {
+            if (!juce::isPositiveAndBelow(index, static_cast<int>(sourceCandidates.size())))
+            {
+                state.store(State::ready, std::memory_order_release);
+                return;
+            }
+            result = sourceCandidates[static_cast<size_t>(index)];
+            const auto samples = result.endSample - result.startSample;
+            selectedAudio.setSize(currentSourceBuffer.getNumChannels(), samples,
+                                  false, false, false);
+            for (int channel = 0; channel < selectedAudio.getNumChannels(); ++channel)
+                selectedAudio.copyFrom(channel, 0, currentSourceBuffer, channel,
+                                       result.startSample, samples);
+        }
     }
+    if (selectedTexture)
+    {
+        capturedSampleCount.store(textureSamples);
+        effectiveCrossfadeSamples.store(0);
+        playbackPosition = 0;
+        seamQuality.store(textureClosure);
+        waveformScore.store(textureTransition);
+        levelScore.store(textureTransition);
+        slopeScore.store(textureTransient);
+        spectrumScore.store(textureSpectrum);
+        phaseScore.store(textureClosure);
+        stereoScore.store(textureStereo);
+        transientScore.store(textureTransient);
+        periodicityScore.store(textureDiversity);
+        repairScore.store(textureTransition);
+        lowConfidence.store(textureClosure < 55.0f || textureDiversity < 42.0f);
+        lastUsedGenerationMode.store(GenerationMode::evolvingTexture);
+        previewMode.store(PreviewMode::loop);
+        previewRestartRequested.store(true, std::memory_order_release);
+        state.store(State::ready, std::memory_order_release);
+        return;
+    }
+
     {
         const std::scoped_lock loopLock(loopDataMutex);
         loopBuffer = std::move(selectedAudio);
@@ -391,6 +504,7 @@ void LoopEngine::selectCandidate(const int index)
     repairScore.store(result.repair);
     seamQuality.store(result.overall);
     lowConfidence.store(result.overall < 62.0f || result.repair < 55.0f);
+    lastUsedGenerationMode.store(GenerationMode::seamLoop);
     state.store(State::ready, std::memory_order_release);
 }
 
@@ -597,28 +711,63 @@ void LoopEngine::analysisLoop()
 
         LoopAnalysisResult result;
         LoopAnalysisReport importedReport;
+        std::vector<TextureSynthesisResult> generatedTextures;
         juce::AudioBuffer<float> capturedSourceView;
         bool resultLowConfidence = false;
+        auto selectedMode = generationMode.load(std::memory_order_relaxed);
+        auto useTexture = imported && selectedMode == GenerationMode::evolvingTexture;
         const auto* analysisSource = &captureBuffer;
         if (imported)
         {
             analysisSource = &importedSource;
-            const auto minimum = juce::jmin(importedSource.getNumSamples() / 2,
-                                             juce::roundToInt(sampleRate * 0.25));
-            const auto maximum = juce::jmin(importedSource.getNumSamples() - 1,
-                                             juce::roundToInt(sampleRate * maximumLoopSeconds));
-            importedRepairOverlap = juce::jlimit(0, minimum / 2,
-                juce::jmin(importedSource.getNumSamples() / 4,
-                    juce::roundToInt(sampleRate
-                        * crossfadeMilliseconds.load(std::memory_order_relaxed) * 0.001)));
-            importedReport = LoopAnalyzer::analyzeSource(importedSource, sampleRate,
-                                                          minimum, maximum, 3, importedRepairOverlap);
-            if (!importedReport.candidates.empty())
-                result = importedReport.candidates.front();
-            resultLowConfidence = importedReport.lowConfidence;
+            if (selectedMode != GenerationMode::evolvingTexture)
+            {
+                const auto minimum = juce::jmin(importedSource.getNumSamples() / 2,
+                                                 juce::roundToInt(sampleRate * 0.25));
+                const auto maximum = juce::jmin(importedSource.getNumSamples() - 1,
+                                                 juce::roundToInt(sampleRate * maximumLoopSeconds));
+                importedRepairOverlap = juce::jlimit(0, minimum / 2,
+                    juce::jmin(importedSource.getNumSamples() / 4,
+                        juce::roundToInt(sampleRate
+                            * crossfadeMilliseconds.load(std::memory_order_relaxed) * 0.001)));
+                importedReport = LoopAnalyzer::analyzeSource(
+                    importedSource, sampleRate, minimum, maximum, 3, importedRepairOverlap);
+                if (!importedReport.candidates.empty())
+                    result = importedReport.candidates.front();
+                resultLowConfidence = importedReport.lowConfidence;
+            }
+
+            if (selectedMode == GenerationMode::automatic)
+            {
+                const auto confidentlyPeriodic = !importedReport.candidates.empty()
+                    && !importedReport.lowConfidence
+                    && result.periodicity >= 72.0f
+                    && result.transient >= 58.0f
+                    && result.overall >= 68.0f;
+                useTexture = !confidentlyPeriodic;
+                selectedMode = useTexture ? GenerationMode::evolvingTexture
+                                          : GenerationMode::seamLoop;
+            }
+
+            if (useTexture)
+            {
+                TextureSynthesisSettings settings;
+                settings.durationSeconds = textureDurationSeconds.load(
+                    std::memory_order_relaxed);
+                settings.variation = textureVariation.load(std::memory_order_relaxed);
+                const auto baseSeed = textureSeed.load(std::memory_order_relaxed);
+                generatedTextures.reserve(3);
+                for (uint32_t variant = 0; variant < 3; ++variant)
+                {
+                    settings.seed = baseSeed + variant * 0x85ebca6bu;
+                    generatedTextures.push_back(TextureSynthesizer::synthesize(
+                        importedSource, sampleRate, settings));
+                }
+            }
         }
         else
         {
+            selectedMode = GenerationMode::seamLoop;
             capturedSourceView.setDataToReferTo(captureBuffer.getArrayOfWritePointers(),
                                                 captureBuffer.getNumChannels(),
                                                 captureSampleCount);
@@ -630,19 +779,76 @@ void LoopEngine::analysisLoop()
             || state.load(std::memory_order_acquire) != State::analysing)
             continue;
 
-        if (imported && importedReport.candidates.empty())
+        const auto textureFailed = useTexture
+            && (generatedTextures.empty()
+                || generatedTextures.front().audio.getNumSamples() == 0);
+        const auto loopFailed = imported && !useTexture && importedReport.candidates.empty();
+        if (imported && (textureFailed || loopFailed))
         {
             const std::scoped_lock lock(sourceDataMutex);
             if (importedReplacesCurrentSource)
                 currentSourceBuffer = std::move(importedSource);
             currentSourceName = importedName;
             sourceCandidates.clear();
+            textureVariants.clear();
             candidateRevision.fetch_add(1, std::memory_order_release);
             if (importedReplacesCurrentSource)
                 sourceRevision.fetch_add(1, std::memory_order_release);
             capturedSampleCount.store(0);
             lowConfidence.store(true);
             state.store(State::failed, std::memory_order_release);
+            continue;
+        }
+
+        const auto sourceSampleCount = analysisSource->getNumSamples();
+        if (useTexture)
+        {
+            const auto primarySamples = generatedTextures.front().audio.getNumSamples();
+            const auto primaryTransition = generatedTextures.front().transitionQuality;
+            const auto primaryClosure = generatedTextures.front().closureQuality;
+            const auto primarySpectrum = generatedTextures.front().spectrumPreservation;
+            const auto primaryStereo = generatedTextures.front().stereoPreservation;
+            const auto primaryDiversity = generatedTextures.front().diversity;
+            const auto primaryTransient = generatedTextures.front().transientPreservation;
+            {
+                const std::scoped_lock lock(sourceDataMutex);
+                currentSourceName = importedName;
+                if (importedReplacesCurrentSource)
+                    currentSourceBuffer = std::move(importedSource);
+                sourceCandidates.clear();
+                textureVariants = std::move(generatedTextures);
+                {
+                    const std::scoped_lock loopLock(loopDataMutex);
+                    std::swap(loopBuffer, textureVariants.front().audio);
+                }
+                activeTextureVariant.store(0, std::memory_order_relaxed);
+                candidateRevision.fetch_add(1, std::memory_order_release);
+                if (importedReplacesCurrentSource)
+                    sourceRevision.fetch_add(1, std::memory_order_release);
+            }
+            capturedSampleCount.store(primarySamples);
+            effectiveCrossfadeSamples.store(0);
+            playbackPosition = 0;
+            previewMode.store(PreviewMode::loop);
+            waveformScore.store(primaryTransition);
+            levelScore.store(primaryTransition);
+            slopeScore.store(primaryTransient);
+            spectrumScore.store(primarySpectrum);
+            phaseScore.store(primaryClosure);
+            stereoScore.store(primaryStereo);
+            transientScore.store(primaryTransient);
+            periodicityScore.store(primaryDiversity);
+            repairScore.store(primaryTransition);
+            seamQuality.store(primaryClosure);
+            lowConfidence.store(primaryClosure < 55.0f || primaryDiversity < 42.0f);
+            selectedStartSample.store(importedOffset);
+            selectedEndSample.store(importedOffset + sourceSampleCount);
+            selectedSourceSamples.store(importedFullSourceSamples);
+            analysisRangeStartSample.store(importedOffset);
+            analysisRangeEndSample.store(importedOffset + sourceSampleCount);
+            sourcePlaybackPosition = importedOffset;
+            lastUsedGenerationMode.store(GenerationMode::evolvingTexture);
+            state.store(State::ready, std::memory_order_release);
             continue;
         }
 
@@ -656,7 +862,6 @@ void LoopEngine::analysisLoop()
                                     result.startSample, selectedSamples);
         }
 
-        const auto sourceSampleCount = analysisSource->getNumSamples();
         if (imported)
         {
             const std::scoped_lock lock(sourceDataMutex);
@@ -664,6 +869,7 @@ void LoopEngine::analysisLoop()
             if (importedReplacesCurrentSource)
                 currentSourceBuffer = std::move(importedSource);
             sourceCandidates = importedReport.candidates;
+            textureVariants.clear();
             for (auto& candidate : sourceCandidates)
             {
                 candidate.startSample += importedOffset;
@@ -690,6 +896,7 @@ void LoopEngine::analysisLoop()
         periodicityScore.store(result.periodicity);
         repairScore.store(result.repair);
         lowConfidence.store(resultLowConfidence);
+        lastUsedGenerationMode.store(GenerationMode::seamLoop);
         seamQuality.store(result.overall);
         selectedStartSample.store(result.startSample + (imported ? importedOffset : 0));
         selectedEndSample.store(result.endSample - (imported ? result.repairOverlapSamples : 0)
@@ -733,6 +940,7 @@ juce::MemoryBlock LoopEngine::createLoopState() const
         compressed.writeInt(stateMagic);
         compressed.writeInt(stateVersion);
         compressed.writeDouble(sampleRate);
+        compressed.writeInt(static_cast<int>(lastUsedGenerationMode.load()));
         compressed.writeInt(loopBuffer.getNumChannels());
         compressed.writeInt(loopBuffer.getNumSamples());
         compressed.writeFloat(seamQuality.load());
@@ -755,14 +963,20 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
 
     juce::MemoryInputStream source(data, size, false);
     juce::GZIPDecompressorInputStream decompressed(&source, false);
-    if (decompressed.readInt() != stateMagic || decompressed.readInt() != stateVersion)
+    if (decompressed.readInt() != stateMagic)
         return false;
 
+    const auto savedVersion = decompressed.readInt();
+    if (savedVersion < 1 || savedVersion > stateVersion)
+        return false;
     const auto savedSampleRate = decompressed.readDouble();
+    const auto savedMode = savedVersion >= 2
+        ? static_cast<GenerationMode>(decompressed.readInt())
+        : GenerationMode::seamLoop;
     const auto channels = decompressed.readInt();
     const auto samples = decompressed.readInt();
     if (savedSampleRate <= 0.0 || channels < 1 || channels > 2 || samples < 1
-        || samples > juce::roundToInt(savedSampleRate * maximumLoopSeconds))
+        || samples > juce::roundToInt(savedSampleRate * maximumTextureSeconds))
         return false;
 
     const auto savedOverall = decompressed.readFloat();
@@ -784,7 +998,7 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
     while (activeAudioReaders.load(std::memory_order_acquire) != 0)
         std::this_thread::yield();
     const auto targetSamples = juce::jlimit(1,
-                                           juce::roundToInt(sampleRate * maximumLoopSeconds),
+                                           juce::roundToInt(sampleRate * maximumTextureSeconds),
                                            juce::roundToInt(static_cast<double>(samples)
                                                             * sampleRate / savedSampleRate));
     {
@@ -801,9 +1015,10 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
     }
 
     capturedSampleCount.store(targetSamples);
-    effectiveCrossfadeSamples.store(juce::jlimit(0, targetSamples / 3,
-        juce::roundToInt(sampleRate
-            * crossfadeMilliseconds.load(std::memory_order_relaxed) * 0.001)));
+    effectiveCrossfadeSamples.store(savedMode == GenerationMode::evolvingTexture ? 0
+        : juce::jlimit(0, targetSamples / 3,
+            juce::roundToInt(sampleRate
+                * crossfadeMilliseconds.load(std::memory_order_relaxed) * 0.001)));
     playbackPosition = effectiveCrossfadeSamples.load(std::memory_order_relaxed);
     seamQuality.store(savedOverall);
     levelScore.store(savedLevel);
@@ -812,6 +1027,7 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
     phaseScore.store(savedPhase);
     stereoScore.store(savedStereo);
     repairScore.store(savedOverall);
+    lastUsedGenerationMode.store(savedMode);
     captureProgress.store(1.0f);
     previewPlaying.store(false, std::memory_order_release);
     state.store(State::ready, std::memory_order_release);
