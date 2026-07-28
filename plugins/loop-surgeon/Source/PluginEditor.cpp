@@ -77,8 +77,13 @@ void LoopWaveformView::setWaveform(std::vector<float> newPeaks)
 
 void LoopWaveformView::setLoop(const float newStart, const float newEnd)
 {
-    loopStart = juce::jlimit(0.0f, 1.0f, newStart);
-    loopEnd = juce::jlimit(loopStart, 1.0f, newEnd);
+    const auto start = juce::jlimit(0.0f, 1.0f, newStart);
+    const auto end = juce::jlimit(start, 1.0f, newEnd);
+    if (loopStart == start && loopEnd == end)
+        return;
+    loopStart = start;
+    loopEnd = end;
+    repaint();
 }
 
 void LoopWaveformView::setSourceRange(const float newStart, const float newEnd)
@@ -138,6 +143,15 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
     graphics.setColour(juce::Colour(0xffa4b3c3).withAlpha(0.88f));
     graphics.strokePath(waveform, juce::PathStrokeType(1.0f));
 
+    if (loopEnd - loopStart > 0.001f)
+    {
+        const auto loopX = bounds.getX() + bounds.getWidth() * loopStart;
+        const auto loopRight = bounds.getX() + bounds.getWidth() * loopEnd;
+        graphics.setColour(juce::Colour(loopGreen).withAlpha(0.10f));
+        graphics.fillRect(juce::Rectangle<float>(
+            loopX, bounds.getY(), loopRight - loopX, bounds.getHeight()));
+    }
+
     const auto drawMarker = [&] (const float proportion, const juce::String& label,
                                  const juce::Colour colour)
     {
@@ -162,6 +176,11 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
 
     drawMarker(sourceIn, "SOURCE IN", juce::Colour(searchBlue));
     drawMarker(sourceOut, "SOURCE OUT", juce::Colour(searchBlue));
+    if (loopEnd - loopStart > 0.001f)
+    {
+        drawMarker(loopStart, "LOOP IN", juce::Colour(loopGreen));
+        drawMarker(loopEnd, "LOOP OUT", juce::Colour(loopGreen));
+    }
 }
 
 void LoopWaveformView::mouseDown(const juce::MouseEvent& event)
@@ -216,11 +235,23 @@ void LoopQualityView::setScores(const float quality, const float repair,
     repaint();
 }
 
+void LoopQualityView::setTextureMode(const bool shouldUseTextureLabels)
+{
+    if (textureMode == shouldUseTextureLabels)
+        return;
+    textureMode = shouldUseTextureLabels;
+    repaint();
+}
+
 void LoopQualityView::paint(juce::Graphics& graphics)
 {
-    constexpr std::array<const char*, 6> labels {
-        "CLOSURE", "TRANSITION", "SPECTRUM", "CIRCULAR", "STEREO", "STABILITY"
+    constexpr std::array<const char*, 6> textureLabels {
+        "CLOSURE", "STATIONARY", "TIMBRE", "CIRCULAR", "STEREO", "STABILITY"
     };
+    constexpr std::array<const char*, 6> seamLabels {
+        "SEAM", "REPAIR", "SPECTRUM", "PHASE", "STEREO", "PERIOD"
+    };
+    const auto& labels = textureMode ? textureLabels : seamLabels;
     auto row = getLocalBounds();
     const auto gap = 7;
     const auto width = (row.getWidth() - gap * 5) / 6;
@@ -262,7 +293,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
     addAndMakeVisible(titleLabel);
 
-    versionLabel.setText("0.5.1 TEXTURE ENGINE", juce::dontSendNotification);
+    versionLabel.setText("0.5.2 SPECTRAL TEXTURE", juce::dontSendNotification);
     versionLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     versionLabel.setJustificationType(juce::Justification::centredRight);
     versionLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
@@ -405,7 +436,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     configureSlider(durationSlider, durationLabel, "LENGTH");
     configureSlider(variationSlider, variationLabel, "VARIATION");
     crossfadeSlider.setTooltip(
-        "Maximum repair window used by Seam Loop mode");
+        "Maximum repair window used by Direct Seam Loop mode");
     auto& parameters = processor.getParameterState();
     crossfadeAttachment = std::make_unique<SliderAttachment>(
         parameters, "crossfadeMs", crossfadeSlider);
@@ -420,8 +451,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     modeLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
     addAndMakeVisible(modeLabel);
     generationModeBox.addItem("Auto", 1);
-    generationModeBox.addItem("Evolving Texture", 2);
-    generationModeBox.addItem("Seam Loop", 3);
+    generationModeBox.addItem("Stationary Texture", 2);
+    generationModeBox.addItem("Direct Seam Loop", 3);
     generationModeBox.onChange = [this]
     {
         updatePrimaryAction();
@@ -643,6 +674,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
         displayedSourceRevision = sourceRevision;
         waveformView.setWaveform(processor.getWaveformPreview());
         waveformView.setSourceRange(0.0f, 1.0f);
+        waveformView.setLoop(0.0f, 0.0f);
         sourceRangeEdited = false;
     }
     if (sourceChanged || candidateCount != displayedCandidateCount
@@ -662,6 +694,16 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
 
     const auto state = processor.getLoopState();
     const auto ready = state == LoopEngine::State::ready;
+    const auto textureResult = ready
+        && processor.getLastUsedGenerationMode()
+               == LoopEngine::GenerationMode::evolvingTexture;
+    const auto selectedTextureMode = generationModeBox.getSelectedItemIndex() != 2;
+    qualityView.setTextureMode(ready ? textureResult : selectedTextureMode);
+    if (ready && !textureResult)
+        waveformView.setLoop(processor.getLoopStartProportion(),
+                             processor.getLoopEndProportion());
+    else
+        waveformView.setLoop(0.0f, 0.0f);
     exportButton.setEnabled(ready);
     candidateBox.setEnabled(ready);
     previewTransportButton.setEnabled(ready);
@@ -731,10 +773,9 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
 
     if (state == LoopEngine::State::ready)
     {
-        const auto texture = processor.getLastUsedGenerationMode()
-                             == LoopEngine::GenerationMode::evolvingTexture;
         statusLabel.setText(
-            juce::String(texture ? "Evolving texture ready" : "Seam loop ready")
+            juce::String(textureResult ? "Stationary texture ready"
+                                       : "Direct seam loop ready")
                 + (processor.isLowConfidence() ? " - check transitions" : ""),
             juce::dontSendNotification);
     }
@@ -760,7 +801,7 @@ void LoopSurgeonAudioProcessorEditor::updatePrimaryAction()
 {
     const auto selectedMode = generationModeBox.getSelectedItemIndex();
     analyzeRangeButton.setButtonText(
-        selectedMode == 2 ? "Find Seam Loop"
+        selectedMode == 2 ? "Find Direct Loop"
         : selectedMode == 0 ? "Generate (Auto)"
                             : "Generate Texture");
 }
