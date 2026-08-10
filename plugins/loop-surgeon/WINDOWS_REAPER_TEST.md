@@ -1,4 +1,4 @@
-# Loop Surgeon 0.6.0-pre：Windows / REAPER 测试说明
+# Loop Surgeon 0.6.1-pre：Windows / REAPER 测试说明
 
 这是本机生成的 Windows x64 测试包。本地 Release 编译与确定性测试已经通过；尚未完成
 Plugin Validator、完整素材库试听和多采样率 REAPER 验证，因此仍是测试版本。GitHub
@@ -41,6 +41,10 @@ Actions 自动触发保持关闭，未消耗远端构建额度。
    - 是否一耳朵听出短周期复制粘贴；
    - 原音色、响度、左右位置和声道关系是否仍合理；
    - 完整 WAV 尾到头是否无明显接点。
+
+0.6.1 已移除旧版随机相位频谱噪声重合成。Texture 应能保留源素材的局部相位、窄带
+共振和可辨认材质；如果结果仍只能听成 pink/brown noise，应视为失败并保留源文件、
+导出文件及全部参数。
 
 ## 交付与召回
 
