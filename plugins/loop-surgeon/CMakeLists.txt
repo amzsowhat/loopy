@@ -1,5 +1,5 @@
 juce_add_plugin(LoopSurgeon
-    VERSION 0.5.2
+    VERSION 0.6.0
     COMPANY_NAME "Sound VST Project"
     BUNDLE_ID com.amzsowhat.loopsurgeon
     PLUGIN_MANUFACTURER_CODE SVst
@@ -22,6 +22,8 @@ target_sources(LoopSurgeon
         Source/LoopEngine.h
         Source/LoopAnalyzer.cpp
         Source/LoopAnalyzer.h
+        Source/RenderQuality.cpp
+        Source/RenderQuality.h
         Source/TextureSynthesizer.cpp
         Source/TextureSynthesizer.h
         Source/PluginEditor.cpp
@@ -61,6 +63,8 @@ if(SOUND_VST_BUILD_TESTS)
             Source/LoopEngine.h
             Source/LoopAnalyzer.cpp
             Source/LoopAnalyzer.h
+            Source/RenderQuality.cpp
+            Source/RenderQuality.h
             Source/TextureSynthesizer.cpp
             Source/TextureSynthesizer.h
             Tests/LoopEngineTests.cpp
@@ -90,6 +94,8 @@ if(SOUND_VST_BUILD_TESTS)
         PRIVATE
             Source/TextureSynthesizer.cpp
             Source/TextureSynthesizer.h
+            Source/RenderQuality.cpp
+            Source/RenderQuality.h
             Tools/TextureRender.cpp
     )
 
