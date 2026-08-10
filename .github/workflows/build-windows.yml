@@ -1,9 +1,7 @@
 name: Build Windows VST3
 
 on:
-  push:
-    branches: [main, "agent/**", "codex/**"]
-  pull_request:
+  workflow_dispatch:
 
 jobs:
   build:
