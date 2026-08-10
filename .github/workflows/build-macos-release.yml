@@ -44,18 +44,18 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Publish alpha release download
+      - name: Publish pre-release download
         env:
           GH_TOKEN: ${{ github.token }}
-          RELEASE_TAG: v0.5.2-alpha
+          RELEASE_TAG: v0.6.0-pre
         shell: bash
         run: |
           set -euo pipefail
           if ! gh release view "$RELEASE_TAG" >/dev/null 2>&1; then
             gh release create "$RELEASE_TAG" \
               --target "$GITHUB_SHA" \
-              --title "Loop Surgeon 0.5.2 Alpha" \
-              --notes "Replaces correlated long-grain looping with source-modelled spectral texture synthesis, removing copied pass-by trajectories and comb-like tonal artifacts. Adds explicit Direct Seam Loop bounds, deterministic variations, project recall, and WAV export. Ad-hoc signed for private Apple Silicon testing." \
+              --title "Loop Surgeon 0.6.0 Pre-release" \
+              --notes "Adds equal Rotate & Repair and Texture Loop workflows, Flatten and Source Match, circular true-peak/QC, analysis views, portable recall, and DAW drag. Ad-hoc signed for private Apple Silicon testing; requires host validation before sale." \
               --prerelease
           fi
           gh release upload "$RELEASE_TAG" "Loop-Surgeon-macOS-arm64-VST3.zip" --clobber
