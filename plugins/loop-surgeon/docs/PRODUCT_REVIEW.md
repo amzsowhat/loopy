@@ -1,79 +1,70 @@
-# Loop Surgeon 0.5.2 product review
+# Loop Surgeon 0.6.0 pre-release review
 
-## Product boundary
+## Product correction
 
-Loop Surgeon has two deliberately different outputs:
+The old short-period Direct Seam path did not represent the sound-design workflow. It could return
+a tiny repeated fragment even when the user supplied a complete ten-second ambience. The product
+now has two explicit, equally weighted modes:
 
-- **Stationary Texture** turns the timbre of a selected one-shot or short recording into a longer,
-  circular sound bed. It is intended for wind, noise, rooms, drones, machinery, water, and other
-  sustained sound-design material. The source's attack, decay, pass-by, rise, and hit trajectory
-  should not be copied into the result.
-- **Direct Seam Loop** is a conventional short-loop tool for already-periodic or steady material.
-  It searches only inside the blue Source In/Out range, exposes the chosen green Loop In/Out range,
-  and repairs that boundary. It does not invent ongoing variation.
+- **Rotate & Repair** automates the established long-loop edit: keep the complete selected ambience,
+  rotate at a naturally continuous internal point, and repair the moved old head/tail seam.
+- **Texture Loop** creates an exact-length stationary or gently moving layer from source material
+  while discarding the source's ordered ADSR/pass-by timeline.
 
-The product is not a keyboard sampler, a neural generator, or a promise that every tonal, speech,
-or transient source can become a natural ambience.
+There is no Auto mode. The user selects the treatment appropriate to the source.
 
-## Implemented in 0.5.2
+## Implemented in source
 
-- draggable Source In/Out selection used as a hard analysis boundary;
-- visible Loop In/Out markers for Direct Seam Loop;
-- Auto, Stationary Texture, and Direct Seam Loop stored under the existing stable parameter ID;
-- mode and generation controls synchronised when Generate is clicked, including while DAW playback
-  is stopped;
-- distributed source-frame analysis with silence and extreme-hit rejection;
-- Mid/Side 4096-point FFT model built from temporal median log magnitudes;
-- mostly unsmoothed source spectral detail plus light log-frequency regularisation;
-- seeded non-coherent Gaussian spectra and random phase, avoiding correlated grain overlap;
-- subtle slow multiband drift controlled by Variation;
-- circular overlap-add synthesis with per-sample window-power normalisation;
-- three deterministic variations, project recall, generated/source audition, Stop, and 24-bit WAV
-  export;
-- mode-specific quality labels instead of presenting seam metrics as texture quality;
-- deterministic regression tests for recall, seed difference, circular closure, pass-by reduction,
-  hidden-cycle rejection, source-range bounds, candidate switching, playback, and state.
+- fixed blue Source In/Out and one draggable green Loop Start;
+- load-only file import followed by an explicit Generate action, so mode and range are chosen before
+  expensive processing starts;
+- full-selection forward-only Rotate & Repair with adaptive internal seam overlap;
+- Texture Loop temporal-median spectral modelling, isolated-peak smoothing, random complex spectra,
+  circular multiscale drift and circular overlap-add;
+- explicit Flatten and Source Match controls;
+- active-frame gated K-weighted loudness matching, stereo correlation/width and left/right position
+  matching with one user Source Match depth;
+- DC/non-finite repair and a -1 dBTP circular oversampled peak ceiling;
+- repeat-risk, closure, timbre, loudness, phase, position and stability gates that block export;
+- real source/output spectrum overlay, phase scope, correlation and position display;
+- two retained deterministic alternatives instead of three, reducing persistent maximum texture
+  memory by about one third;
+- Preview/Stop, Source/Generated A/B, immediate Clear Result, 24-bit Save WAV and external Drag Loop
+  to DAW;
+- project state that embeds the active output, source, range and Loop Start for portable recall;
+- automatic GitHub Actions triggers removed from all three workflows so source synchronization does
+  not consume the exhausted account quota.
 
-## Evidence from the supplied wind whoosh
+## What has not been verified
 
-The old long-grain render repeated spectral groups and retained the source pass-by trajectory. Its
-copied-window correlations were about 0.37 for spectral centroid and 0.47 for RMS, and correlated
-overlaps created comb-like tonal prominence.
+This revision was intentionally not built. No compiler result, deterministic-test result, plug-in
+validator result, packaged VST3 or REAPER session exists for 0.6.0 yet. All items above mean
+implemented in source and statically inspected, not proven working.
 
-Using the first 5.85 seconds of the supplied source, the 0.5.2 C++ spectral render reduced those
-same repeat correlations to about 0.07 and 0.07. Its circular boundary jump was below the median
-ordinary adjacent-sample difference in both channels. This is strong evidence that the particular
-repeated pass-by pattern and old boundary fault were removed; it is not yet a broad commercial
-quality claim.
+The earlier 0.5.2 wind experiment showed that spectral reconstruction could reduce copied pass-by
+correlation substantially, but those figures cannot validate the new code. The new loudness,
+spatial, state and Rotate & Repair paths require fresh measurements.
 
-## Paid-beta blockers
+## Remaining commercial blockers
 
-1. A licensed evaluation corpus covering wind, rain, surf, crowds, rooms, engines, machines,
-   drones, tonal beds, stereo ambience, impulsive contamination, speech, and very short sources.
-2. Blind comparisons against hand edits and established texture/granular tools, scored for source
-   identity, electronic tonality, repetition, pumping, image motion, and boundary audibility.
-3. Frequency-dependent stereo-coherence modelling. The current Mid/Side statistical model can
-   preserve broad width but not every band-specific spatial relationship.
-4. Content classification and clearer rejection guidance for melody, speech, hard transients, and
-   sources with insufficient stationary material.
-5. A better Direct Seam Loop audition mode that solos several boundary crossings and makes its
-   intentionally short, periodic nature obvious before export.
-6. Cancellation and progress reporting for analysis, decoding, resampling, and export.
-7. Waveform zoom/pan, typed positions, optional transient or zero-crossing snapping, keyboard
-   nudge, and undo/redo.
-8. Full spectrum, phase, and correlation inspection plus long-duration audition.
-9. Export `cue`/`smpl` metadata and a portable source/recipe option.
-10. Verified Windows/Reaper and Apple Silicon/Reaper compatibility, project recall, and sample-rate
-    transitions across a wider real-host matrix.
+1. Compile and run deterministic tests on Windows and Apple Silicon after build capacity is
+   available, then fix all compiler/test failures.
+2. Validate the K-weighting and true-peak results against trusted reference meters.
+3. Test the supplied whoosh plus a licensed multi-category corpus; include blind manual-loop A/B,
+   repeated-boundary listening and at least 44.1/48/96 kHz.
+4. Measure frequency-dependent stereo/phase preservation. The current model combines band-specific
+   Mid/Side energy with broadband position/correlation correction; moving spatial trajectories are
+   intentionally removed and detailed cross-spectral covariance is not yet reconstructed.
+5. Measure peak persistent and temporary memory, DAW project size, save latency and restore latency
+   at the 60-second ceiling.
+6. Add cancellation inside a single synthesis render and move import/export/state serialization to
+   cancellable background jobs. Current cancellation occurs only between candidate attempts.
+7. Add waveform zoom, typed/sample positions, snapping, keyboard nudge, undo/redo and WAV
+   `cue`/`smpl` metadata.
+8. Complete Windows REAPER and native Apple Silicon REAPER host matrices before signing or selling.
 
-## Honest quality assessment
+## Current quality verdict
 
-0.5.2 removes the core architectural mistake in 0.5.0/0.5.1: Stationary Texture no longer assembles
-copied long grains. It models the selected source's spectral distribution and synthesises a new
-circular signal, which is the correct direction for making a source-coloured sustained bed without
-replaying its time trajectory.
-
-Direct Seam Loop remains intentionally conventional. On non-periodic wind it can still sound like
-a short repeated fragment; Stationary Texture is the intended mode for that use case. A generated
-WAV also repeats when its complete duration ends. Commercial readiness still depends on corpus
-testing and blind listening, particularly for stereo behaviour and tonal or structured sources.
+The architecture now matches the two stated sound-design jobs and removes the old conceptual error.
+The code is still a pre-release candidate. Calling it commercially finished before compilation,
+meter comparison and real listening would be unsupported.
