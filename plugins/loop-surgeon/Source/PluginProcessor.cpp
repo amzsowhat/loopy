@@ -86,8 +86,10 @@ void LoopSurgeonAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     loopEngine.setTextureDurationSeconds(
         parameters.getRawParameterValue("textureDuration")->load());
     loopEngine.setTextureVariation(parameters.getRawParameterValue("variation")->load());
+    loopEngine.setTextureFlatten(parameters.getRawParameterValue("flatten")->load());
+    loopEngine.setTextureSourceMatch(parameters.getRawParameterValue("sourceMatch")->load());
     loopEngine.setGenerationMode(static_cast<LoopEngine::GenerationMode>(juce::jlimit(
-        0, 2, juce::roundToInt(parameters.getRawParameterValue("generationMode")->load()))));
+        0, 1, juce::roundToInt(parameters.getRawParameterValue("generationMode")->load()))));
     loopEngine.process(buffer, parameters.getRawParameterValue("mix")->load());
 }
 
@@ -104,8 +106,12 @@ void LoopSurgeonAudioProcessor::syncGenerationControlsForAnalysis() noexcept
         parameters.getRawParameterValue("textureDuration")->load());
     loopEngine.setTextureVariation(
         parameters.getRawParameterValue("variation")->load());
+    loopEngine.setTextureFlatten(
+        parameters.getRawParameterValue("flatten")->load());
+    loopEngine.setTextureSourceMatch(
+        parameters.getRawParameterValue("sourceMatch")->load());
     loopEngine.setGenerationMode(static_cast<LoopEngine::GenerationMode>(juce::jlimit(
-        0, 2, juce::roundToInt(
+        0, 1, juce::roundToInt(
                   parameters.getRawParameterValue("generationMode")->load()))));
 }
 
@@ -125,6 +131,7 @@ bool LoopSurgeonAudioProcessor::regenerateTexture(const float start, const float
 
 juce::String LoopSurgeonAudioProcessor::importAudioFile(const juce::File& file)
 {
+    syncGenerationControlsForAnalysis();
     auto reader = std::unique_ptr<juce::AudioFormatReader>(formatManager.createReaderFor(file));
     if (reader == nullptr)
         return "Unsupported or unreadable audio file";
@@ -161,6 +168,8 @@ juce::String LoopSurgeonAudioProcessor::importAudioFile(const juce::File& file)
 
 juce::String LoopSurgeonAudioProcessor::exportLoopFile(const juce::File& requestedFile) const
 {
+    if (!loopEngine.hasPassedQualityGate())
+        return "Result is blocked by quality control; regenerate or adjust the source range";
     auto audio = loopEngine.createRenderedLoop();
     if (audio.getNumSamples() == 0)
         return "No analysed loop is ready to export";
@@ -196,7 +205,7 @@ void LoopSurgeonAudioProcessor::getStateInformation(juce::MemoryBlock& destData)
 {
     auto state = parameters.copyState();
     const auto loopState = loopEngine.createLoopState();
-    state.setProperty("stateVersion", 1, nullptr);
+    state.setProperty("stateVersion", 2, nullptr);
     if (!loopState.isEmpty())
         state.setProperty("capturedLoop", juce::var(loopState), nullptr);
 
@@ -259,8 +268,8 @@ LoopSurgeonAudioProcessor::createParameterLayout()
     layout.push_back(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID { "generationMode", 1 },
         "Generation Mode",
-        juce::StringArray { "Auto", "Stationary Texture", "Direct Seam Loop" },
-        1));
+        juce::StringArray { "Rotate & Repair", "Texture Loop" },
+        0));
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "textureDuration", 1 },
@@ -274,6 +283,28 @@ LoopSurgeonAudioProcessor::createParameterLayout()
         "Texture Variation",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
         0.72f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction(
+            [] (const float value, int)
+            {
+                return juce::String(juce::roundToInt(value * 100.0f)) + "%";
+            })));
+
+    layout.push_back(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "flatten", 1 },
+        "Texture Flatten",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
+        0.72f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction(
+            [] (const float value, int)
+            {
+                return juce::String(juce::roundToInt(value * 100.0f)) + "%";
+            })));
+
+    layout.push_back(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "sourceMatch", 1 },
+        "Texture Source Match",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
+        0.85f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(
             [] (const float value, int)
             {
