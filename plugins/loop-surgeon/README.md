@@ -1,8 +1,7 @@
 # P2 Loop Surgeon
 
-Current target: **0.6.0 pre-release source**. This revision has not been built or host-validated
-because automatic GitHub Actions builds are intentionally disabled while the account quota is
-exhausted.
+Current target: **0.6.1 pre-release**. Windows x64 Release compilation and deterministic tests are
+run locally. Automatic GitHub Actions builds remain disabled while the account quota is exhausted.
 
 Loop Surgeon is one VST3 effect/Standalone product with two equally important processing modes.
 File import is the primary workflow; DAW-input capture is secondary.
@@ -15,9 +14,10 @@ File import is the primary workflow; DAW-input capture is secondary.
   the two forward-running parts, and crossfades the old end/start seam after moving it inside the
   result. It never searches for or repeats a short period.
 - **Texture Loop** is for turning a one-shot or changing source into a sustained layer made from
-  that source's material. It builds a robust spectral model, discards the ordered ADSR/pass-by
-  timeline, and synthesizes an exact-length circular stochastic result. **Flatten** controls how
-  much measured macro movement remains; **Source Match** controls loudness, stereo position and
+  that source's material. It rearranges stable, forward-running source exemplars at matched
+  boundaries, discards the ordered ADSR/pass-by timeline, and builds an exact-length circular
+  result while retaining local phase, resonances and microstructure. **Flatten** controls how much
+  measured macro movement remains; **Source Match** controls loudness, stereo position and
   inter-channel phase/correlation matching.
 
 ## Workflow
@@ -42,20 +42,21 @@ chosen overlap; the UI reports both selected and actual output length.
 ## Texture Loop algorithm
 
 1. Resample only Source In/Out to the host rate and inspect up to 256 distributed active frames.
-2. Reject silence and extreme hit-level outliers, then build 4096-point temporal-median Mid/Side
-   magnitude models. This removes ordered rise, fall and pass-by trajectories.
-3. Smooth isolated narrow peaks more strongly than broad source colour to reduce fixed electronic
-   tones.
-4. Draw seeded non-coherent Gaussian complex spectra and add bounded multi-band circular drift.
-   No source chunk is copied, reversed, alternated or time-stretched.
-5. Reconstruct an exact-length circular buffer by wrapped overlap-add. Flatten applies a new
-   circular macro envelope derived from the source's measured active range, not its original time
-   order.
+2. Reject silence and extreme hit-level outliers, then retain stable source exemplars rather than
+   reducing the material to a median magnitude curve.
+3. Keep each exemplar forward-running with its original waveform phase, narrow resonances,
+   modulation and stereo relationship intact. No reversal or time-stretch is used.
+4. Build a non-repeating transition path by matching each exemplar tail to candidate heads while
+   penalising recent reuse, chronological pass-by continuation and repeatedly selected material.
+5. Place transitions at deliberately non-uniform intervals and reconstruct an exact-length
+   circular buffer with complementary crossfades. Flatten performs circular gain riding on the
+   assembled material, removing the one-shot macro envelope without whitening its spectrum.
 6. Source Match applies active-frame gated K-weighted loudness matching, broadband inter-channel
    correlation, Mid/Side width and left/right position matching at the requested depth. Silent
    one-shot tails do not become the target level.
 7. Remove DC/non-finite samples, enforce a -1 dBTP circular true-peak ceiling, and reject results
-   that fail closure, timbre, loudness, phase, position, stability or repeat-risk gates.
+   that fail closure, source-frame timbre identity, loudness, phase, position, stability or
+   repeat-risk gates. Coarse spectrum matching alone cannot pass the timbre gate.
 
 ## Rotate & Repair algorithm
 
@@ -79,7 +80,7 @@ chosen overlap; the UI reports both selected and actual output length.
 | `mix` | 0–100% | 100% | Audition dry/generated mix only |
 | `generationMode` | Rotate & Repair / Texture Loop | Rotate & Repair | Processing mode |
 | `textureDuration` | 4–60 s | 24 s | Exact Texture Loop length |
-| `variation` | 0–100% | 72% | Internal spectral movement depth |
+| `variation` | 0–100% | 72% | Exemplar order, transition and interval variation |
 | `flatten` | 0–100% | 72% | Removal of source macro dynamics/motion |
 | `sourceMatch` | 0–100% | 85% | Loudness and spatial matching depth |
 
@@ -95,8 +96,10 @@ chosen overlap; the UI reports both selected and actual output length.
 
 ## Unfinished release evidence
 
-- This source revision has only static review. No compiler, unit test, VST3 validator, Windows
-  REAPER, or Apple Silicon REAPER result exists yet.
+- Windows x64 Release compilation and deterministic engine tests pass locally. VST3 Validator,
+  Windows REAPER re-test of 0.6.1, and Apple Silicon REAPER remain outstanding.
+- The supplied underwater ice impact has been rendered through the offline 0.6.1 path and clears
+  the new source-frame timbre metric; subjective material identity still requires listening review.
 - The K-weighted loudness and four-point circular true-peak implementations need numerical
   comparison with trusted meters before release.
 - Spatial matching preserves robust band energy plus broadband position/correlation; it does not
