@@ -1,9 +1,12 @@
-# Loop Surgeon 0.5.2 Alpha：Windows / REAPER 快速测试
+# Loop Surgeon 0.6.0：Windows / REAPER 测试说明
 
-## 安装
+当前 0.6.0 只有源码，尚未构建测试包。GitHub Actions 自动触发已关闭，避免继续消耗已
+用完的额度；旧 0.5.2 VST3 不能用于判断这里的新算法。
+
+## 有新测试包后的安装
 
 1. 关闭 REAPER。
-2. 解压测试包，将完整的 `Loop Surgeon.vst3` 文件夹复制到：
+2. 将完整的 `Loop Surgeon.vst3` 文件夹复制到：
 
    ```text
    C:\Program Files\Common Files\VST3\
@@ -12,43 +15,43 @@
 3. 打开 64 位 REAPER，进入 **Options > Preferences > Plug-ins > VST**。
 4. 点击 **Clear cache/re-scan**，在 FX 浏览器搜索 `Loop Surgeon`。
 
-## 风声 one-shot 推荐测试
+## 模式一：Rotate & Repair
 
-1. 把素材拖进插件。
-2. 用蓝色 **Source In/Out** 圈出允许取材的范围。
-3. Mode 选择 **Stationary Texture**。
-4. Length 先设 20–30 秒，Variation 先用 65–80%。
-5. 点击 **Generate Texture**。
-6. 点击 **Source** 会立即播放所选原素材；点击 **Generated** 会立即播放生成结果。
-   **Preview/Stop** 控制播放和停止。
-7. 在左侧下拉框比较三个版本；选择后会从头播放。**New Variation** 会重新生成三版。
-8. 点击 **Export WAV**，把 WAV 拖回 REAPER，连续播放并重点检查：
-   - 是否还能明显听出同一小段逐遍重复；
-   - 原素材只有一次渐强/衰减时，结果是否错误地产生一串周期性鼓包或重新起音；
-   - 结果是否主要保持原素材的音色颜色，同时像持续噪声一样自然微动；
-   - 是否仍能听出原 one-shot 的 pass-by、rise、fall 等时间轨迹；
-   - 是否出现固定电音、梳状滤波、周期性频段塌陷或立体声漂移；
-   - 完整 WAV 从尾部回到头部时是否可闻接缝。
+1. 使用一段已经接近成品、整体平稳但原首尾接不上的十几秒氛围或环境音。
+2. 选择 **Rotate & Repair**，拖入素材，用蓝色 **Source In/Out** 保留整段目标内容。
+3. **Seam Repair** 先用 25–80 ms，点击 **Repair Selected Loop**。
+4. 生成结果的长度应接近整段蓝色范围，不能退化成一个很短的重复片段。
+5. 绿色 **Loop Start** 是成品从哪里开始；拖动它后再次试听。完整循环的尾到头应是原
+   素材中本来相邻的采样，旧首尾的交叉修复位于循环内部。
+6. 连听至少十次循环，检查内部修复点和最终尾到头两个位置；记录抽吸、相位摆动、音量
+   凹陷、点击或内容顺序错误。
 
-## 其他模式
+## 模式二：Texture Loop
 
-- **Direct Seam Loop**：适合已经有明显周期的节奏、机械声、持续音；输出就是传统短
-  loop。检查绿色 Loop In/Out 必须完全落在蓝色 Source In/Out 内。
-- **Auto**：强周期、高置信度素材使用 Direct Seam Loop，其余使用 Stationary Texture。判断错误时请
-  手动选模式，并在反馈里注明素材类型。
+1. 使用带一次性 ADSR、pass-by、rise/fall 或明显动态起伏的风声等素材。
+2. 选择 **Texture Loop**，用蓝色 Source In/Out 限定允许建模的材料。
+3. 设定精确 **Output Length**；**Flatten** 控制动态/运动被压平多少，**Source Match** 控制
+   响度、左右方位、声道相关性和相位关系匹配深度。
+4. 点击 **Generate Texture Loop**，比较两个候选；**New Variation** 再生成两个。
+5. 用 **Source / Generated** 选择试听对象，**Preview / Stop** 控制开始和停止。
+6. 检查真实频谱叠图、Phase、Correlation 和 Position，再重点听：
+   - 原 one-shot 的攻击、衰减和 pass-by 是否消失；
+   - 是否出现固定电音、窄带啸叫、倒放感或颗粒式多次 attack；
+   - 是否一耳朵听出短周期复制粘贴；
+   - 原音色、响度、左右位置和声道关系是否仍合理；
+   - 完整 WAV 尾到头是否无明显接点。
 
-## 工程召回
+## 交付与召回
 
-保存并重开 REAPER 工程。已选中的生成音频和参数应恢复，不需要原素材在线；Source
-试听和另外两个未选版本不会完整写入工程。
+- 拖 **Drag Loop to DAW** 到 REAPER 时间线，或使用 **Save WAV...**。
+- 两条路径必须产生与插件试听一致的 24-bit WAV。
+- 保存并重开工程后，Active Result、源音频、Source In/Out、Loop Start 和参数都应恢复；
+  未选中的另一个候选无需恢复。
 
-## 反馈需要记录
+## 每次反馈记录
 
-- REAPER/Windows 版本与工程采样率；
-- 素材类型、长度、单声道/立体声；
-- Mode、Length、Variation、版本编号；
-- 问题发生在内部转换还是整段首尾；
-- 是否属于明显重复、点击、抽吸、相位/立体声变化、生成卡顿、导出或工程恢复。
-
-本版本仍是 Alpha：没有波形缩放/吸附/逐样本编辑、完整频谱相位图、WAV loop 元数据，
-也尚未完成大规模盲听验证。
+- 插件版本、REAPER/Windows 版本、工程采样率和缓冲；
+- 素材类型、长度、采样率、单/双声道；
+- 模式与全部模式参数；
+- 问题发生在内部修复点、整段尾到头、长时重复、频段、响度、相位还是方位；
+- 导出/拖放、工程保存和重开是否一致。
