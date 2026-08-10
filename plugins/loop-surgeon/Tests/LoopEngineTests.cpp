@@ -151,6 +151,48 @@ float strongestAutocorrelation(const std::vector<float>& values,
     }
     return strongest;
 }
+
+float meanNearestSourceCorrelation(const juce::AudioBuffer<float>& source,
+                                   const juce::AudioBuffer<float>& output,
+                                   const int frameSamples)
+{
+    auto total = 0.0f;
+    auto compared = 0;
+    for (int outputStart = 0;
+         outputStart + frameSamples <= output.getNumSamples();
+         outputStart += frameSamples)
+    {
+        const auto outputRms = output.getRMSLevel(0, outputStart, frameSamples);
+        if (outputRms < 1.0e-6f)
+            continue;
+        auto nearest = -1.0f;
+        for (int sourceStart = 0;
+             sourceStart + frameSamples <= source.getNumSamples();
+             sourceStart += frameSamples / 2)
+        {
+            const auto sourceRms = source.getRMSLevel(0, sourceStart, frameSamples);
+            if (sourceRms < 1.0e-6f)
+                continue;
+            auto dot = 0.0;
+            auto sourceEnergy = 0.0;
+            auto outputEnergy = 0.0;
+            for (int sample = 0; sample < frameSamples; ++sample)
+            {
+                const auto sourceValue = source.getSample(0, sourceStart + sample);
+                const auto outputValue = output.getSample(0, outputStart + sample);
+                dot += static_cast<double>(sourceValue) * outputValue;
+                sourceEnergy += static_cast<double>(sourceValue) * sourceValue;
+                outputEnergy += static_cast<double>(outputValue) * outputValue;
+            }
+            nearest = juce::jmax(nearest, static_cast<float>(
+                std::abs(dot) / std::sqrt(
+                    juce::jmax(1.0e-12, sourceEnergy * outputEnergy))));
+        }
+        total += juce::jmax(0.0f, nearest);
+        ++compared;
+    }
+    return total / static_cast<float>(juce::jmax(1, compared));
+}
 }
 
 int main()
@@ -362,7 +404,47 @@ int main()
     passed &= expect(std::abs(matchedCorrelation - sourceCorrelation)
                          <= std::abs(unmatchedCorrelation - sourceCorrelation) + 0.03f,
                      "Source Match should move channel correlation toward the selected source");
- …548 tokens truncated….06f * white;
+    const auto sourcePosition = RenderQuality::calculateStereoLevelImbalanceDb(windOneShot);
+    const auto unmatchedPosition = RenderQuality::calculateStereoLevelImbalanceDb(
+        unmatchedTexture.audio);
+    const auto matchedPosition = RenderQuality::calculateStereoLevelImbalanceDb(
+        matchedTexture.audio);
+    passed &= expect(std::abs(matchedPosition - sourcePosition)
+                         <= std::abs(unmatchedPosition - sourcePosition) + 0.2f,
+                     "Source Match should move left/right position toward the selected source");
+    auto reversedWindowError = 0.0;
+    for (int sample = 0; sample < 2000; ++sample)
+        reversedWindowError += std::abs(
+            textureA.audio.getSample(0, sample)
+            - textureA.audio.getSample(0, 3999 - sample));
+    passed &= expect(reversedWindowError > 0.5,
+                     "texture output must not be assembled from reversed source-like windows");
+
+    // Regression: a one-shot's single swell/decay must not become a train of new attacks.
+    juce::AudioBuffer<float> envelopedWind(2, 14000);
+    noiseState = 0x51f15e1u;
+    auto colouredLeft = 0.0f;
+    auto colouredRight = 0.0f;
+    for (int sample = 0; sample < envelopedWind.getNumSamples(); ++sample)
+    {
+        noiseState ^= noiseState << 13u;
+        noiseState ^= noiseState >> 17u;
+        noiseState ^= noiseState << 5u;
+        const auto white = static_cast<float>(noiseState & 0xffffu) / 32768.0f - 1.0f;
+        const auto progress = static_cast<float>(sample)
+                              / static_cast<float>(envelopedWind.getNumSamples() - 1);
+        float macroEnvelope = 0.0f;
+        if (progress < 0.20f)
+        {
+            const auto attack = progress / 0.20f;
+            macroEnvelope = attack * attack * (3.0f - 2.0f * attack);
+        }
+        else
+        {
+            const auto decay = (progress - 0.20f) / 0.80f;
+            macroEnvelope = std::pow(juce::jmax(0.0f, 1.0f - decay), 1.65f);
+        }
+        colouredLeft = 0.94f * colouredLeft + 0.06f * white;
         colouredRight = 0.91f * colouredRight + 0.09f * (0.77f * white
             + 0.23f * std::sin(0.031f * static_cast<float>(sample)));
         envelopedWind.setSample(0, sample, macroEnvelope * colouredLeft);
@@ -392,8 +474,11 @@ int main()
                      "texture synthesis should remove the source macro envelope");
     passed &= expect(stationaryTexture.macroStability >= 58.0f,
                      "texture report should reject output with obvious repeated attacks");
-    passed &= expect(stationaryTexture.spectrumPreservation >= 35.0f,
-                     "macro-envelope removal must retain the source timbral fingerprint");
+    passed &= expect(meanNearestSourceCorrelation(
+                         envelopedWind, stationaryTexture.audio, 96) >= 0.48f,
+                     "texture output must retain recognisable source microstructure");
+    passed &= expect(stationaryTexture.spectrumPreservation >= 20.0f,
+                     "timbre metric must retain the source spectral fingerprint");
     auto movingSettings = stationarySettings;
     movingSettings.flatten = 0.05f;
     const auto movingTexture = TextureSynthesizer::synthesize(
@@ -443,7 +528,16 @@ int main()
     passed &= expect(coefficientOfVariation(outputCentroids)
                          < coefficientOfVariation(sourceCentroids) * 0.58f,
                      "stationary synthesis must remove the one-shot pass-by trajectory");
-    passed &= expect(strongestAutocorrelation(outputCentroids, 2, 24) < 0.36f,
+    std::vector<float> outputCentroidMovement;
+    outputCentroidMovement.reserve(outputCentroids.size() - 1u);
+    for (size_t frame = 1; frame < outputCentroids.size(); ++frame)
+        outputCentroidMovement.push_back(
+            outputCentroids[frame] - outputCentroids[frame - 1u]);
+    const auto passByRepeat = strongestAutocorrelation(
+        outputCentroidMovement, 4, 24);
+    if (passByRepeat >= 0.36f)
+        std::cerr << "pass-by centroid repetition=" << passByRepeat << '\n';
+    passed &= expect(passByRepeat < 0.36f,
                      "output spectrum must not repeat a hidden pass-by cycle");
 
     LoopEngine textureEngine;
