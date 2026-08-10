@@ -1,113 +1,109 @@
 # P2 Loop Surgeon
 
-Current target: **0.5.2 Alpha spectral-texture engine**.
+Current target: **0.6.0 pre-release source**. This revision has not been built or host-validated
+because automatic GitHub Actions builds are intentionally disabled while the account quota is
+exhausted.
 
-Loop Surgeon is a Windows/macOS VST3 effect and Standalone application for turning a user-selected
-piece of audio into either a long source-coloured stationary texture or a conventional repaired
-short loop. File import is the primary workflow; DAW-input capture is secondary.
+Loop Surgeon is one VST3 effect/Standalone product with two equally important processing modes.
+File import is the primary workflow; DAW-input capture is secondary.
 
 ## Processing modes
 
-- **Stationary Texture** is for wind, rain, room tone, machinery, drones, and other noise-like
-  material. It learns the median spectral colour and Mid/Side width inside Source In/Out, then
-  synthesizes a new continuous stochastic signal. It intentionally removes the source's attack,
-  decay, pass-by direction, and other copied time trajectories.
-- **Direct Seam Loop** is explicitly a traditional short loop. It searches only inside Source
-  In/Out for a period and start/end pair, repairs the boundary, and repeats that chosen audio.
-  Green Loop In/Out markers show the exact adopted segment. It does not turn a one-shot event into a
-  new stationary texture.
-- **Auto** keeps Direct Seam Loop only for strongly periodic, high-confidence material; otherwise
-  it uses Stationary Texture. The user can override this choice.
+- **Rotate & Repair** is for a longer ambience or environment edit that already has the desired
+  content and duration but whose original head and tail do not join. It keeps the complete blue
+  Source In/Out selection, chooses an internal natural cut as the new green **Loop Start**, rotates
+  the two forward-running parts, and crossfades the old end/start seam after moving it inside the
+  result. It never searches for or repeats a short period.
+- **Texture Loop** is for turning a one-shot or changing source into a sustained layer made from
+  that source's material. It builds a robust spectral model, discards the ordered ADSR/pass-by
+  timeline, and synthesizes an exact-length circular stochastic result. **Flatten** controls how
+  much measured macro movement remains; **Source Match** controls loudness, stereo position and
+  inter-channel phase/correlation matching.
 
 ## Workflow
 
-1. Drop a WAV, AIFF, FLAC, or OGG file onto the plug-in, or use **Choose Audio...**.
-2. Drag blue **Source In/Out** markers. This is a hard analysis boundary in every mode.
-3. Choose **Auto**, **Stationary Texture**, or **Direct Seam Loop**.
-4. For texture mode set **Length** and **Variation**, then press **Generate Texture**. Three
-   deterministic variations are generated on the background analysis thread.
-5. **Source** and **Generated** both select the audition source and start playback immediately.
-   **Preview/Stop** remains the explicit transport.
-6. Use **New Variation** for three new deterministic results, or export the selected result as a
-   24-bit WAV.
-7. The selected generated audio is embedded in DAW project state and restored with the project.
+1. Choose a mode, then drop a WAV, AIFF, FLAC, or OGG file or click **Choose Audio...**.
+2. Drag blue **Source In/Out**. This is a hard processing boundary in both modes.
+3. In Rotate & Repair, set the maximum **Seam Repair** overlap and click **Repair Selected Loop**.
+   Drag the green **Loop Start** to change where the completed loop begins without creating a new
+   discontinuity.
+4. In Texture Loop, set exact **Output Length**, **Flatten**, and **Source Match**, then click
+   **Generate Texture Loop**. Two deterministic candidates are retained; **New Variation** creates
+   another pair.
+5. Use **Source**, **Generated**, and **Preview/Stop** for controlled A/B audition.
+6. Inspect the source/output spectrum overlay, phase scope, correlation and position readouts.
+7. Drag an approved 24-bit WAV directly to the DAW, or use **Save WAV...**.
 
-Imported source is limited to 60 seconds. Stationary Texture output is 4–60 seconds; Direct Seam
-Loop output is limited to 16 seconds.
+The active result, source audio, source range, loop-start marker and parameters are embedded in DAW
+project state. Alternate generated candidates are not embedded. Imported source and Texture Loop
+output are each limited to 60 seconds. Rotate & Repair output equals the selected duration minus the
+chosen overlap; the UI reports both selected and actual output length.
 
-## Stationary Texture algorithm
+## Texture Loop algorithm
 
-The 0.5.2 engine replaces the correlated long-grain montage used in 0.5.0/0.5.1:
+1. Resample only Source In/Out to the host rate and inspect up to 256 distributed active frames.
+2. Reject silence and extreme hit-level outliers, then build 4096-point temporal-median Mid/Side
+   magnitude models. This removes ordered rise, fall and pass-by trajectories.
+3. Smooth isolated narrow peaks more strongly than broad source colour to reduce fixed electronic
+   tones.
+4. Draw seeded non-coherent Gaussian complex spectra and add bounded multi-band circular drift.
+   No source chunk is copied, reversed, alternated or time-stretched.
+5. Reconstruct an exact-length circular buffer by wrapped overlap-add. Flatten applies a new
+   circular macro envelope derived from the source's measured active range, not its original time
+   order.
+6. Source Match applies active-frame gated K-weighted loudness matching, broadband inter-channel
+   correlation, Mid/Side width and left/right position matching at the requested depth. Silent
+   one-shot tails do not become the target level.
+7. Remove DC/non-finite samples, enforce a -1 dBTP circular true-peak ceiling, and reject results
+   that fail closure, timbre, loudness, phase, position, stability or repeat-risk gates.
 
-1. Resample the selected Source In/Out range to the host rate.
-2. Measure up to 256 distributed analysis frames. Reject silence and extreme hit-level outliers.
-3. Convert stereo input to Mid/Side and calculate a 4096-point spectral model for each active
-   frame.
-4. Take the per-bin median over time. This retains recurring spectral colour while discarding a
-   one-shot's ordered rise, fall, or pass-by trajectory.
-5. Apply light log-frequency smoothing to suppress isolated bin artefacts without replacing the
-   source's broad-band tonal balance.
-6. Generate deterministic, non-coherent Gaussian spectra around the learned Mid/Side models.
-   Independent random phase prevents the comb filtering and fixed electronic tones caused by
-   overlapping correlated source grains.
-7. Add bounded, slowly varying broad-band drift controlled by **Variation**. This supplies natural
-   movement without replaying a source event.
-8. Inverse-transform sine-windowed frames into the requested circular buffer with per-sample energy
-   normalization. Frames wrap through the buffer boundary, so the boundary has ordinary adjacent
-   noise continuity rather than a special crossfade event.
-9. Match the active source RMS, preserve Mid/Side energy, cap peaks, and report closure,
-   stationarity, timbre, stereo, and macro-stability scores.
+## Rotate & Repair algorithm
 
-The output is signal-processing texture synthesis, not a generative neural model. A fixed exported
-WAV repeats after its full 4–60 second length, but it contains no copied short pass and no preserved
-source-event timeline.
+1. Treat the complete Source In/Out selection as the intended long loop.
+2. Evaluate several overlap lengths for the bad original end-to-start seam using waveform, level,
+   slope, spectrum, phase, transient and stereo evidence.
+3. Scan internal cuts and prefer a stable, non-transient location for the new Loop Start.
+4. Render `[Loop Start ... old end]`, repair the old end/start inside the result, then append
+   `[old start ... Loop Start]`. The exported loop boundary is therefore an originally adjacent
+   pair of source samples.
+5. Remove DC/non-finite samples and enforce the same -1 dBTP circular true-peak ceiling.
 
-## Stable parameters
+## Parameters
 
 | ID | Range | Default | Purpose |
 | --- | --- | --- | --- |
 | `loopLength` | 0.25–16 s | 4 s | Secondary DAW-capture duration |
 | `syncToHost` | off/on | on | Secondary capture alignment |
 | `bars` | 1/2/4/8 | 1 | Secondary capture size |
-| `crossfadeMs` | 1–250 ms | 25 ms | Direct Seam Loop repair limit |
-| `mix` | 0–100% | 100% | Audition mix |
-| `generationMode` | Auto/Texture/Seam | Texture | Imported-source algorithm |
-| `textureDuration` | 4–60 s | 24 s | Generated texture length |
-| `variation` | 0–100% | 72% | Bounded spectral drift amount |
+| `crossfadeMs` | 1–250 ms | 25 ms | Rotate & Repair overlap limit |
+| `mix` | 0–100% | 100% | Audition dry/generated mix only |
+| `generationMode` | Rotate & Repair / Texture Loop | Rotate & Repair | Processing mode |
+| `textureDuration` | 4–60 s | 24 s | Exact Texture Loop length |
+| `variation` | 0–100% | 72% | Internal spectral movement depth |
+| `flatten` | 0–100% | 72% | Removal of source macro dynamics/motion |
+| `sourceMatch` | 0–100% | 85% | Loudness and spatial matching depth |
 
 ## Real-time and memory rules
 
-- Decode, resampling, FFT analysis, synthesis, state compression, and WAV writing never run on the
-  audio thread.
-- The audio thread does not allocate, lock, perform file I/O, or format log messages.
-- Imported source uses windowed-sinc resampling and is bounded to 60 seconds.
-- Analysis uses at most 256 source frames. Temporary spectral models are bounded independently of
-  source duration.
-- The three long variants use buffer ownership swaps when selected; the active result is not
-  duplicated merely for audition. Previous variants are released before new generation.
-- At the maximum 60-second, 48 kHz stereo setting, source plus three float variants are roughly
-  92 MB before framework and bounded FFT/model workspaces. This remains an alpha ceiling rather
-  than sampler-grade streaming.
+- Decode, resampling, analysis, synthesis, state compression and WAV writing stay off the audio
+  thread. The audio thread does not allocate, lock, perform file I/O or format logs.
+- Two long texture candidates are retained using ownership swaps. At 60 seconds/48 kHz/stereo,
+  source plus two float results are about 69 MB, excluding bounded workspaces and the capture
+  buffer. Generation can temporarily use more while comparing a replacement candidate.
+- Project state embeds the active output and source for portable recall; long sessions therefore
+  increase DAW project size and save time.
 
-## Known alpha limitations
+## Unfinished release evidence
 
-- The supplied whoosh/pass-by regression and deterministic synthetic corpus now cover copied
-  attacks, repeated spectral trajectories, circular closure, stereo width, and recall. A larger
-  licensed wind/rain/ambience corpus and blind commercial comparison are still required before
-  claiming commercial quality.
-- Stationary Texture deliberately removes event identity. It is inappropriate when the desired
-  result must preserve speech, melody, a recognizable impact, pitch motion, or the original
-  direction of travel; use Direct Seam Loop or another product for those cases.
-- Median spectral modelling preserves recurring colour, not the original short-time phase.
-  Extremely tonal material can sound more noise-like, and very short sources provide a weaker
-  statistical estimate.
-- The model preserves global Mid/Side energy but does not yet reproduce frequency-dependent stereo
-  coherence or moving spatial trajectories.
-- Source In/Out has no waveform zoom, pan, typed sample entry, snapping, undo/redo, or keyboard
-  nudge.
-- Export does not yet add WAV `cue`/`smpl` chunks or a sidecar recipe.
-- Project state restores the selected generated audio and parameters, not the entire source and all
-  alternate variations.
-- Decode/resampling and WAV writing are still synchronous UI jobs; a long file may briefly freeze
-  the editor. Texture synthesis itself runs on the background analysis thread.
-- Apple Silicon/Reaper and Windows/Reaper still require hands-on DAW validation for this revision.
+- This source revision has only static review. No compiler, unit test, VST3 validator, Windows
+  REAPER, or Apple Silicon REAPER result exists yet.
+- The K-weighted loudness and four-point circular true-peak implementations need numerical
+  comparison with trusted meters before release.
+- Spatial matching preserves robust band energy plus broadband position/correlation; it does not
+  reproduce every frequency-dependent moving phase trajectory.
+- A licensed multi-category corpus, blind comparisons with competent manual loops, long-duration
+  listening and 44.1/48/96 kHz host coverage are still mandatory.
+- Waveform zoom, typed/sample-level positions, snapping, nudge, undo/redo and WAV `cue`/`smpl`
+  metadata remain unfinished.
+- File decode/resampling, state compression and WAV export are synchronous UI/host-state jobs and
+  can pause briefly on maximum-length files.
