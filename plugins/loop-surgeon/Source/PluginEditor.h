@@ -21,24 +21,31 @@ class LoopWaveformView final : public juce::Component
 {
 public:
     void setWaveform(std::vector<float> newPeaks);
-    void setLoop(float newStart, float newEnd);
+    void setRotation(float proportion);
     void setSourceRange(float newStart, float newEnd);
     [[nodiscard]] float getSourceIn() const noexcept { return sourceIn; }
     [[nodiscard]] float getSourceOut() const noexcept { return sourceOut; }
-    [[nodiscard]] float getLoopIn() const noexcept { return loopStart; }
-    [[nodiscard]] float getLoopOut() const noexcept { return loopEnd; }
+    [[nodiscard]] float getRotation() const noexcept { return rotation; }
+    [[nodiscard]] bool isEditingRotation() const noexcept;
     void paint(juce::Graphics&) override;
     void mouseDown(const juce::MouseEvent&) override;
     void mouseDrag(const juce::MouseEvent&) override;
     void mouseUp(const juce::MouseEvent&) override;
 
     std::function<void()> onSourceRangeEdited;
+    std::function<void()> onRotationCommitted;
 
 private:
-    enum class DragTarget { none, sourceIn, sourceOut, sourceRange };
+    enum class DragTarget
+    {
+        none,
+        sourceIn,
+        sourceOut,
+        sourceRange,
+        rotation
+    };
     std::vector<float> peaks;
-    float loopStart = 0.0f;
-    float loopEnd = 0.0f;
+    float rotation = -1.0f;
     float sourceIn = 0.0f;
     float sourceOut = 1.0f;
     float dragAnchor = 0.0f;
@@ -58,6 +65,32 @@ public:
 private:
     std::array<float, 6> scores {};
     bool textureMode = true;
+};
+
+class SignalAnalysisView final : public juce::Component
+{
+public:
+    void setSnapshot(RenderQuality::SignalSnapshot next);
+    void paint(juce::Graphics&) override;
+
+private:
+    RenderQuality::SignalSnapshot snapshot;
+};
+
+class RenderDragButton final : public juce::TextButton
+{
+public:
+    RenderDragButton();
+
+    void mouseDown(const juce::MouseEvent&) override;
+    void mouseDrag(const juce::MouseEvent&) override;
+    void mouseUp(const juce::MouseEvent&) override;
+
+    std::function<juce::File()> prepareFile;
+    std::function<void(const juce::String&)> reportStatus;
+
+private:
+    bool dragStarted = false;
 };
 
 class LoopSurgeonAudioProcessorEditor final : public juce::AudioProcessorEditor,
@@ -81,6 +114,7 @@ private:
     void importFile(const juce::File& file);
     void chooseImportFile();
     void chooseExportFile();
+    juce::File prepareDawDragFile();
     void configureSlider(juce::Slider&, juce::Label&, const juce::String&);
     void updateRangeLabel();
     void updatePrimaryAction();
@@ -95,6 +129,7 @@ private:
     juce::Label sourceLabel;
     juce::Label statusLabel;
     LoopWaveformView waveformView;
+    SignalAnalysisView signalAnalysisView;
     LoopQualityView qualityView;
     juce::ComboBox candidateBox;
     juce::Label rangeLabel;
@@ -105,23 +140,27 @@ private:
     juce::TextButton originalPreviewButton { "Source" };
     juce::TextButton loopPreviewButton { "Generated" };
     juce::TextButton importButton { "Choose Audio..." };
-    juce::TextButton exportButton { "Export WAV" };
+    RenderDragButton dragToDawButton;
+    juce::TextButton exportButton { "Save WAV..." };
     juce::TextButton captureButton { "Record DAW Input" };
-    juce::TextButton clearButton { "Clear Session" };
+    juce::TextButton clearButton { "Clear Result" };
     juce::Slider crossfadeSlider;
     juce::Slider mixSlider;
     juce::Slider durationSlider;
-    juce::Slider variationSlider;
+    juce::Slider flattenSlider;
+    juce::Slider sourceMatchSlider;
     juce::ComboBox generationModeBox;
     juce::Label crossfadeLabel;
     juce::Label mixLabel;
     juce::Label durationLabel;
-    juce::Label variationLabel;
+    juce::Label flattenLabel;
+    juce::Label sourceMatchLabel;
     juce::Label modeLabel;
     std::unique_ptr<SliderAttachment> crossfadeAttachment;
     std::unique_ptr<SliderAttachment> mixAttachment;
     std::unique_ptr<SliderAttachment> durationAttachment;
-    std::unique_ptr<SliderAttachment> variationAttachment;
+    std::unique_ptr<SliderAttachment> flattenAttachment;
+    std::unique_ptr<SliderAttachment> sourceMatchAttachment;
     std::unique_ptr<ComboBoxAttachment> modeAttachment;
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::String lastMessage;
@@ -129,7 +168,6 @@ private:
     int displayedCandidateCount = -1;
     uint64_t displayedCandidateRevision = 0;
     uint64_t displayedSourceRevision = 0;
-    bool sourceRangeEdited = false;
 
     juce::Rectangle<int> sourceCard;
     juce::Rectangle<int> waveformCard;
