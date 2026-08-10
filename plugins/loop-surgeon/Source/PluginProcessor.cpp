@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠#include "PluginProcessor.h"
+#include "PluginProcessor.h"
 
 #include "PluginEditor.h"
 

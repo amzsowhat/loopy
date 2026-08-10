@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠# Loop Surgeon commercial product contract
+# Loop Surgeon commercial product contract
 
 This document is the release boundary. Both modes are first-class parts of one plug-in. A version
 is not called sale-ready until every mandatory item has objective checks and hands-on DAW listening

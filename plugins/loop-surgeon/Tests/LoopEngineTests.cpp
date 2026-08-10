@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠#include "LoopAnalyzer.h"
+#include "LoopAnalyzer.h"
 #include "LoopEngine.h"
 #include "RenderQuality.h"
 #include "TextureSynthesizer.h"
@@ -323,4 +323,465 @@ int main()
     juce::AudioBuffer<float> windOneShot(2, 16000);
     uint32_t noiseState = 0x1234567u;
     auto previousNoise = 0.0f;
-    for (int sample = 0; sample < windOneShot.getNumSamples(); +ﬂæˆ∂âûÀk∫wµÁeÈî†(ÄÄÄÄÄÄÄÅ¡ÖÕÕ	Â=πïM°Ω–∞ÅÖ’—ΩµÖ—•çMÖµ¡±ïIÖ—î∞Å¡ÖÕÕ	ÂMï——•πùÃ§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕΩ’…çïïπ—…Ω•ëÃÄÙÅÕ¡ïç—…Ö±ïπ—…Ω•ëÃ†(ÄÄÄÄÄÄÄÅ¡ÖÕÕ	Â=πïM°Ω–∞ÅÖ’—ΩµÖ—•çMÖµ¡±ïIÖ—î∞Ä»‘ÿ§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅΩ’—¡’—ïπ—…Ω•ëÃÄÙÅÕ¡ïç—…Ö±ïπ—…Ω•ëÃ†(ÄÄÄÄÄÄÄÅ¡ÖÕÕ	ÂQï·—’…îπÖ’ë•º∞ÅÖ’—ΩµÖ—•çMÖµ¡±ïIÖ—î∞Ä»‘ÿ§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°çΩïôô•ç•ïπ—=ôYÖ…•Ö—•Ω∏°Ω’—¡’—ïπ—…Ω•ëÃ§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅçΩïôô•ç•ïπ—=ôYÖ…•Ö—•Ω∏°ÕΩ’…çïïπ—…Ω•ëÃ§Ä®Ä¿∏‘·ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÕ—Ö—•ΩπÖ…‰ÅÕÂπ—°ïÕ•ÃÅµ’Õ–Å…ïµΩŸîÅ—°îÅΩπîµÕ°Ω–Å¡ÖÕÃµâ‰Å—…Ö©ïç—Ω…‰à§Ï(ÄÄÄÅÕ—êËÈŸïç—Ω»Òô±ΩÖ–¯ÅΩ’—¡’—ïπ—…Ω•ë5ΩŸïµïπ–Ï(ÄÄÄÅΩ’—¡’—ïπ—…Ω•ë5ΩŸïµïπ–π…ïÕï…Ÿî°Ω’—¡’—ïπ—…Ω•ëÃπÕ•Èî†§Ä¥Ä≈‘§Ï(ÄÄÄÅôΩ»Ä°Õ•Èï}–Åô…ÖµîÄÙÄƒÏÅô…ÖµîÄÅΩ’—¡’—ïπ—…Ω•ëÃπÕ•Èî†§ÏÄ¨≠ô…Öµî§(ÄÄÄÄÄÄÄÅΩ’—¡’—ïπ—…Ω•ë5ΩŸïµïπ–π¡’Õ°}âÖç¨†(ÄÄÄÄÄÄÄÄÄÄÄÅΩ’—¡’—ïπ—…Ω•ëÕmô…ÖµïtÄ¥ÅΩ’—¡’—ïπ—…Ω•ëÕmô…ÖµîÄ¥Ä≈’t§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ¡ÖÕÕ	ÂIï¡ïÖ–ÄÙÅÕ—…ΩπùïÕ—’—ΩçΩ……ï±Ö—•Ω∏†(ÄÄÄÄÄÄÄÅΩ’—¡’—ïπ—…Ω•ë5ΩŸïµïπ–∞Ä–∞Ä»–§Ï(ÄÄÄÅ•òÄ°¡ÖÕÕ	ÂIï¡ïÖ–Ä¯ÙÄ¿∏ÃŸò§(ÄÄÄÄÄÄÄÅÕ—êËÈçï…»ÄÄâ¡ÖÕÃµâ‰Åçïπ—…Ω•êÅ…ï¡ï—•—•Ω∏ÙàÄÅ¡ÖÕÕ	ÂIï¡ïÖ–ÄÄùq∏úÏ(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°¡ÖÕÕ	ÂIï¡ïÖ–ÄÄ¿∏ÃŸò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâΩ’—¡’–ÅÕ¡ïç—…’¥Åµ’Õ–ÅπΩ–Å…ï¡ïÖ–ÅÑÅ°•ëëï∏Å¡ÖÕÃµâ‰ÅçÂç±îà§Ï((ÄÄÄÅ1ΩΩ¡πù•πîÅ—ï·—’…ïπù•πîÏ(ÄÄÄÅ—ï·—’…ïπù•πîπ¡…ï¡Ö…î°Ö’—ΩµÖ—•çMÖµ¡±ïIÖ—î∞Äÿ–∞Ä»§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕï—ïπï…Ö—•Ωπ5Ωëî°1ΩΩ¡πù•πîËÈïπï…Ö—•Ωπ5ΩëîËÈ—ï·—’…ï1ΩΩ¿§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕï—Qï·—’…ï’…Ö—•ΩπMïçΩπëÃ†ÿ∏¡ò§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕï—Qï·—’…ïYÖ…•Ö—•Ω∏†¿∏·ò§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕï—Qï·—’…ï±Ö——ï∏†¿∏·ò§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕï—Qï·—’…ïMΩ’…çï5Ö—ç††¿∏Âò§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕ’âµ•—MΩ’…çî°›•πë=πïM°Ω–∞Äâ›•πêµΩπîµÕ°Ω–π›Öÿà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°—ï·—’…ïπù•πîπùï—M—Ö—î†§ÄÙÙÅ1ΩΩ¡πù•πîËÈM—Ö—îËÈÕΩ’…çïIïÖë‰∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâô•±îÅ•µ¡Ω…–ÅÕ°Ω’±êÅ›Ö•–ÅôΩ»Å—°îÅ’Õï»Å—ºÅç°ΩΩÕîÅ…ÖπùîÅÖπêÅµΩëîà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°—ï·—’…ïπù•πîπ…ïÖπÖ±ÂÈïMΩ’…çïIÖπùî†¿∏¡ò∞Äƒ∏¡ò§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâïπï…Ö—îÅÕ°Ω’±êÅÕ—Ö…–ÅQï·—’…îÅ1ΩΩ¿Åô…Ω¥Å—°îÅÕï±ïç—ïêÅ…Öπùîà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°›Ö•—Ω…IïÖë‰°—ï·—’…ïπù•πî§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâïŸΩ±Ÿ•πúÅ—ï·—’…îÅµΩëîÅÕ°Ω’±êÅô•π•Õ†Å•∏Å—°îÅâÖç≠ù…Ω’πêà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°—ï·—’…ïπù•πîπùï—1ÖÕ—UÕïëïπï…Ö—•Ωπ5Ωëî†§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÙÙÅ1ΩΩ¡πù•πîËÈïπï…Ö—•Ωπ5ΩëîËÈ—ï·—’…ï1ΩΩ¿∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâï·¡±•ç•–Å—ï·—’…îÅÕï±ïç—•Ω∏ÅÕ°Ω’±êÅâîÅ…ï—Ö•πïêà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°—ï·—’…ïπù•πîπùï—Öπë•ëÖ—ïΩ’π–†§ÄÙÙÄ»∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ—ï·—’…îÅµΩëîÅÕ°Ω’±êÅ…ï—Ö•∏Å—›ºÅÖ±—ï…πÖ—•ŸïÃÅ›•—°Ω’–Å—…•¡±•πúÅµïµΩ…‰Å’Õîà§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅïπù•πïQï·—’…îÄÙÅ—ï·—’…ïπù•πîπç…ïÖ—ïIïπëï…ïë1ΩΩ¿†§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ïπù•πïQï·—’…îπùï—9’µMÖµ¡±ïÃ†§ÄÙÙÄƒ»¿¿¿∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâïπù•πîÅÕ°Ω’±êÅ¡’â±•Õ†Å—°îÅ…ï≈’ïÕ—ïêÅùïπï…Ö—ïêÅ—ï·—’…îÅ±ïπù—†à§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕï±ïç—Öπë•ëÖ—î†ƒ§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕïçΩπëQï·—’…îÄÙÅ—ï·—’…ïπù•πîπç…ïÖ—ïIïπëï…ïë1ΩΩ¿†§Ï(ÄÄÄÅÖ’—ºÅçÖπë•ëÖ—ï•ôôï…ïπçîÄÙÄ¿∏¿Ï(ÄÄÄÅôΩ»Ä°•π–ÅÕÖµ¡±îÄÙÄ¿ÏÅÕÖµ¡±îÄÅÕïçΩπëQï·—’…îπùï—9’µMÖµ¡±ïÃ†§ÏÄ¨≠ÕÖµ¡±î§(ÄÄÄÄÄÄÄÅçÖπë•ëÖ—ï•ôôï…ïπçîÄ¨ÙÅÕ—êËÈÖâÃ°ïπù•πïQï·—’…îπùï—MÖµ¡±î†¿∞ÅÕÖµ¡±î§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¥ÅÕïçΩπëQï·—’…îπùï—MÖµ¡±î†¿∞ÅÕÖµ¡±î§§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°çÖπë•ëÖ—ï•ôôï…ïπçîÄ¯Äƒ∏¿∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÕï±ïç—•πúÅÖπΩ—°ï»Å—ï·—’…îÅçÖπë•ëÖ—îÅÕ°Ω’±êÅÕ›Ö¿Å•∏Åë•ôôï…ïπ–ÅÖ’ë•ºà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°—ï·—’…ïπù•πîπùï—Öπë•ëÖ—ïïÕç…•¡—•Ω∏†¿§πçΩπ—Ö•πÃ†àÿ∏¿ÅÃà§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄòòÅ—ï·—’…ïπù•πîπùï—Öπë•ëÖ—ïïÕç…•¡—•Ω∏†ƒ§πçΩπ—Ö•πÃ†àÿ∏¿ÅÃà§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÖç—•ŸîÅÖπêÅ•πÖç—•ŸîÅµïµΩ…‰µÕ›Ö¡¡ïêÅŸÖ…•Öπ—ÃÅÕ°Ω’±êÅ…ï—Ö•∏ÅŸÖ±•êÅëïÕç…•¡—•ΩπÃà§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕï±ïç—Öπë•ëÖ—î†¿§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ïÕ—Ω…ïë•…Õ—Qï·—’…îÄÙÅ—ï·—’…ïπù•πîπç…ïÖ—ïIïπëï…ïë1ΩΩ¿†§Ï(ÄÄÄÅÖ’—ºÅ…ïÕ—Ω…ïëÖπë•ëÖ—ï……Ω»ÄÙÄ¿∏¿Ï(ÄÄÄÅôΩ»Ä°•π–ÅÕÖµ¡±îÄÙÄ¿ÏÅÕÖµ¡±îÄÅ…ïÕ—Ω…ïë•…Õ—Qï·—’…îπùï—9’µMÖµ¡±ïÃ†§ÏÄ¨≠ÕÖµ¡±î§(ÄÄÄÄÄÄÄÅ…ïÕ—Ω…ïëÖπë•ëÖ—ï……Ω»Ä¨ÙÅÕ—êËÈÖâÃ°ïπù•πïQï·—’…îπùï—MÖµ¡±î†¿∞ÅÕÖµ¡±î§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¥Å…ïÕ—Ω…ïë•…Õ—Qï·—’…îπùï—MÖµ¡±î†¿∞ÅÕÖµ¡±î§§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïÕ—Ω…ïëÖπë•ëÖ—ï……Ω»ÄÄƒ∏¡î¥ÿ∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâçÖπë•ëÖ—îÅÕ›•—ç°•πúÅÕ°Ω’±êÅ¡…ïÕï…ŸîÅïÖ…±•ï»ÅÖ’ë•ºÅ›•—°Ω’–Åë’¡±•çÖ—îÅâ’ôôï…Ãà§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕï—A…ïŸ•ï›5Ωëî°1ΩΩ¡πù•πîËÈA…ïŸ•ï›5ΩëîËÈ±ΩΩ¿§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπÕï—A…ïŸ•ï›A±ÖÂ•πú°—…’î§Ï(ÄÄÄÅ©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯Å—ï·—’…ïA…ïŸ•ï‹†»∞Äÿ–§Ï(ÄÄÄÅ—ï·—’…ïA…ïŸ•ï‹πç±ïÖ»†§Ï(ÄÄÄÅ—ï·—’…ïπù•πîπ¡…ΩçïÕÃ°—ï·—’…ïA…ïŸ•ï‹∞Äƒ∏¡ò§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°—ï·—’…ïA…ïŸ•ï‹πùï—5Öùπ•—’ëî†¿∞Ä¿∞Äÿ–§Ä¯Ä¿∏¡ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâïπï…Ö—ïêÅÖ’ë•—•Ω∏ÅÕ°Ω’±êÅÕ—Ö…–Å¡±ÖÂâÖç¨Å•µµïë•Ö—ï±‰à§Ï((ÄÄÄÅ1ΩΩ¡πù•πîÅ…Öπùïπù•πîÏ(ÄÄÄÅ…Öπùïπù•πîπ¡…ï¡Ö…î°Ö’—ΩµÖ—•çMÖµ¡±ïIÖ—î∞Äÿ–∞Ä»§Ï(ÄÄÄÅ…Öπùïπù•πîπÕï—ïπï…Ö—•Ωπ5Ωëî°1ΩΩ¡πù•πîËÈïπï…Ö—•Ωπ5ΩëîËÈ…Ω—Ö—ïIï¡Ö•»§Ï(ÄÄÄÅ…Öπùïπù•πîπÕ’âµ•—MΩ’…çî°…ï¡ïÖ—ïë5Ö—ï…•Ö∞∞Äâ…ï¡ïÖ—ïêµµÖ—ï…•Ö∞π›Öÿà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…Öπùïπù•πîπùï—M—Ö—î†§ÄÙÙÅ1ΩΩ¡πù•πîËÈM—Ö—îËÈÕΩ’…çïIïÖë‰∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ±ΩÖëïêÅÖµâ•ïπçîÅÕ°Ω’±êÅ›Ö•–ÅôΩ»ÅÖ∏Åï·¡±•ç•–Åïπï…Ö—îÅÖç—•Ω∏à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…Öπùïπù•πîπ…ïÖπÖ±ÂÈïMΩ’…çïIÖπùî†¿∏¡ò∞Äƒ∏¡ò§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâïπï…Ö—îÅÕ°Ω’±êÅÕ—Ö…–ÅIΩ—Ö—îÄòÅIï¡Ö•»Åô…Ω¥Å—°îÅÕï±ïç—ïêÅ…Öπùîà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°›Ö•—Ω…IïÖë‰°…Öπùïπù•πî§∞Äâ•µ¡Ω…—ïêÅÕΩ’…çîÅÕ°Ω’±êÅâîÅÖπÖ±ÂÕïêÅ•∏ÅâÖç≠ù…Ω’πêà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…Öπùïπù•πîπùï—Öπë•ëÖ—ïΩ’π–†§Ä¯Ä¿∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ•µ¡Ω…—ïêÅÕΩ’…çîÅÕ°Ω’±êÅï·¡ΩÕîÅÖ±—ï…πÖ—îÅçÖπë•ëÖ—ïÃà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…Öπùïπù•πîπùï—]ÖŸïôΩ…µA…ïŸ•ï‹†§πÕ•Èî†§ÄÙÙÄÃ»¿∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ•µ¡Ω…—ïêÅÕΩ’…çîÅÕ°Ω’±êÅ¡’â±•Õ†ÅÑÅâΩ’πëïêÅ›ÖŸïôΩ…¥Å¡…ïŸ•ï‹à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…Öπùïπù•πîπ…ïÖπÖ±ÂÈïMΩ’…çïIÖπùî†¿∏Õò∞Ä¿∏Âò§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÕΩ’…çîÅ%∏Ω=’–ÅÕï±ïç—•Ω∏ÅÕ°Ω’±êÅ≈’ï’îÅ…ïÖπÖ±ÂÕ•Ãà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°›Ö•—Ω…IïÖë‰°…Öπùïπù•πî§∞ÄâÕï±ïç—ïêÅÕΩ’…çîÅ…ÖπùîÅÕ°Ω’±êÅô•π•Õ†ÅÖπÖ±ÂÕ•Ãà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…Öπùïπù•πîπùï—IΩ—Ö—•ΩπA…Ω¡Ω…—•Ω∏†§Ä¯ÙÄ¿∏Õò(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄòòÅ…Öπùïπù•πîπùï—IΩ—Ö—•ΩπA…Ω¡Ω…—•Ω∏†§ÄÙÄ¿∏Âò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÖ’—ΩµÖ—•åÅ±ΩΩ¿ÅÕ—Ö…–Åµ’Õ–Å…ïµÖ•∏Å•πÕ•ëîÅ’Õï»ÅMΩ’…çîÅ%∏Ω=’–ÅÕï±ïç—•Ω∏à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…Öπùïπù•πîπÕï—5Öπ’Ö±IΩ—Ö—•ΩπAΩ•π–†¿∏—ò§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâë…ÖùùÖâ±îÅ1ΩΩ¿ÅM—Ö…–ÅÕ°Ω’±êÅ¡’â±•Õ†ÅÑÅµÖπ’Ö±±‰Å…Ω—Ö—ïêÅ±ΩΩ¿à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°Õ—êËÈÖâÃ°…Öπùïπù•πîπùï—IΩ—Ö—•ΩπA…Ω¡Ω…—•Ω∏†§Ä¥Ä¿∏—ò§ÄÄ¿∏¿¿…ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâµÖπ’Ö∞Å1ΩΩ¿ÅM—Ö…–ÅÕ°Ω’±êÅ…ï—Ö•∏Å—°îÅ…ï≈’ïÕ—ïêÅ…Ω—Ö—•Ω∏Å¡Ω•π–à§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅµÖπ’Ö±Iïπëï…ïêÄÙÅ…Öπùïπù•πîπç…ïÖ—ïIïπëï…ïë1ΩΩ¿†§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°µÖπ’Ö±Iïπëï…ïêπùï—9’µMÖµ¡±ïÃ†§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¯Å©’çîËÈ…Ω’πëQΩ%π–†¿∏‘‘Ä®Å…ï¡ïÖ—ïë5Ö—ï…•Ö∞πùï—9’µMÖµ¡±ïÃ†§§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâIΩ—Ö—îÄòÅIï¡Ö•»Åµ’Õ–Å¡…ïÕï…ŸîÅ—°îÅÕï±ïç—ïêÅ±ΩπúµôΩ…¥ÅµÖ—ï…•Ö∞à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…Öπùïπù•πîπùï—M•ùπÖ±MπÖ¡Õ°Ω–†§πŸÖ±•ê∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ…ïÖë‰ÅΩ’—¡’–ÅÕ°Ω’±êÅ¡’â±•Õ†Å…ïÖ∞ÅÕ¡ïç—…’¥∞Å¡°ÖÕîÅÖπêÅçΩ……ï±Ö—•Ω∏ÅÖπÖ±ÂÕ•Ãà§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ÖπùïM—Ö—îÄÙÅ…Öπùïπù•πîπç…ïÖ—ï1ΩΩ¡M—Ö—î†§Ï(ÄÄÄÅ1ΩΩ¡πù•πîÅ…ïÕ—Ω…ïëIÖπùîÏ(ÄÄÄÅ…ïÕ—Ω…ïëIÖπùîπ¡…ï¡Ö…î°Ö’—ΩµÖ—•çMÖµ¡±ïIÖ—î∞Äÿ–∞Ä»§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïÕ—Ω…ïëIÖπùîπ…ïÕ—Ω…ï1ΩΩ¡M—Ö—î†(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ…ÖπùïM—Ö—îπùï—Ö—Ñ†§∞Å…ÖπùïM—Ö—îπùï—M•Èî†§§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÕï±ïç—ïêÅÕΩ’…çîÅ…ÖπùîÅÖπêÅ…ï¡Ö•…ïêÅ…ïÕ’±–ÅÕ°Ω’±êÅ…ïÕ—Ω…îà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°Õ—êËÈÖâÃ°…ïÕ—Ω…ïëIÖπùîπùï—πÖ±ÂÕ•ÕIÖπùïM—Ö…—A…Ω¡Ω…—•Ω∏†§Ä¥Ä¿∏Õò§ÄÄ¿∏¿¿…ò(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄòòÅÕ—êËÈÖâÃ°…ïÕ—Ω…ïëIÖπùîπùï—πÖ±ÂÕ•ÕIÖπùïπëA…Ω¡Ω…—•Ω∏†§Ä¥Ä¿∏Âò§ÄÄ¿∏¿¿…ò(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄòòÅÕ—êËÈÖâÃ°…ïÕ—Ω…ïëIÖπùîπùï—IΩ—Ö—•ΩπA…Ω¡Ω…—•Ω∏†§Ä¥Ä¿∏—ò§ÄÄ¿∏¿¿…ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ¡…Ω©ïç–Å…ïçÖ±∞ÅÕ°Ω’±êÅ…ïÕ—Ω…îÅMΩ’…çîÅ%∏Ω=’–ÅÖπêÅ1ΩΩ¿ÅM—Ö…–Å¡ΩÕ•—•ΩπÃà§Ï(ÄÄÄÅ…Öπùïπù•πîπÕï—A…ïŸ•ï›5Ωëî°1ΩΩ¡πù•πîËÈA…ïŸ•ï›5ΩëîËÈΩ…•ù•πÖ∞§Ï(ÄÄÄÅ…Öπùïπù•πîπÕï—A…ïŸ•ï›A±ÖÂ•πú°—…’î§Ï(ÄÄÄÅ©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯ÅΩ…•ù•πÖ±A…ïŸ•ï‹†»∞Äÿ–§Ï(ÄÄÄÅΩ…•ù•πÖ±A…ïŸ•ï‹πç±ïÖ»†§Ï(ÄÄÄÅ…Öπùïπù•πîπ¡…ΩçïÕÃ°Ω…•ù•πÖ±A…ïŸ•ï‹∞Äƒ∏¡ò§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°Ω…•ù•πÖ±A…ïŸ•ï‹πùï—5Öùπ•—’ëî†¿∞Ä¿∞Äÿ–§Ä¯Ä¿∏¡ò(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄòòÅΩ…•ù•πÖ±A…ïŸ•ï‹πùï—5Öùπ•—’ëî†ƒ∞Ä¿∞Äÿ–§Ä¯Ä¿∏¡ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ=…•ù•πÖ∞ÅΩÅµΩëîÅÕ°Ω’±êÅÖ’ë•—•Ω∏Å•µ¡Ω…—ïêÅÕ—ï…ïºÅÕΩ’…çîà§Ï((ÄÄÄÅ©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯Å…ïÖ±•Õ—•çπÖ±ÂÕ•Ã†»∞Äÿ»–¿¿§Ï(ÄÄÄÅôΩ»Ä°•π–ÅÕÖµ¡±îÄÙÄ¿ÏÅÕÖµ¡±îÄÅ…ïÖ±•Õ—•çπÖ±ÂÕ•Ãπùï—9’µMÖµ¡±ïÃ†§ÏÄ¨≠ÕÖµ¡±î§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ¡°ÖÕîÄÙÅ©’çîËÈ5Ö—°ΩπÕ—Öπ—ÃÒô±ΩÖ–¯ËÈ—›ΩA§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ®ÅÕ—Ö—•ç}çÖÕ–Òô±ΩÖ–¯°ÕÖµ¡±îÄîÄƒ»¿¿¿§ÄºÄƒ»¿¿¿∏¡òÏ(ÄÄÄÄÄÄÄÅ…ïÖ±•Õ—•çπÖ±ÂÕ•ÃπÕï—MÖµ¡±î†¿∞ÅÕÖµ¡±î∞Ä¿∏›òÄ®ÅÕ—êËÈÕ•∏°¡°ÖÕî§§Ï(ÄÄÄÄÄÄÄÅ…ïÖ±•Õ—•çπÖ±ÂÕ•ÃπÕï—MÖµ¡±î†ƒ∞ÅÕÖµ¡±î∞Ä¿∏ŸòÄ®ÅÕ—êËÈÕ•∏°¡°ÖÕîÄ¨Ä¿∏ƒ…ò§§Ï(ÄÄÄÅÙ(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÖπÖ±ÂÕ•ÕM—Ö…–ÄÙÅÕ—êËÈç°…ΩπºËÈÕ—ïÖëÂ}ç±Ωç¨ËÈπΩ‹†§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ïÖ±•Õ—•çIïÕ’±–ÄÙÅ1ΩΩ¡πÖ±ÂÈï»ËÈô•πë	ïÕ—1ΩΩ¿°…ïÖ±•Õ—•çπÖ±ÂÕ•Ã∞Ä–‡¿¿¿∏¿∞Ä–‡¿¿¿∞Ä‹»¿¿§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÖπÖ±ÂÕ•Õ’…Ö—•Ω∏ÄÙÅÕ—êËÈç°…ΩπºËÈë’…Ö—•Ωπ}çÖÕ–ÒÕ—êËÈç°…ΩπºËÈµ•±±•ÕïçΩπëÃ¯†(ÄÄÄÄÄÄÄÅÕ—êËÈç°…ΩπºËÈÕ—ïÖëÂ}ç±Ωç¨ËÈπΩ‹†§Ä¥ÅÖπÖ±ÂÕ•ÕM—Ö…–§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïÖ±•Õ—•çIïÕ’±–πïπëMÖµ¡±îÄ¯Å…ïÖ±•Õ—•çIïÕ’±–πÕ—Ö…—MÖµ¡±î∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄà–‡Å≠!ËÅÖπÖ±ÂÕ•ÃÅÕ°Ω’±êÅÕï±ïç–ÅŸÖ±•êÅâΩ’πëÖ…•ïÃà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïÖ±•Õ—•çIïÕ’±–πÕ¡ïç—…’¥Ä¯ÙÄ¿∏¡òÄòòÅ…ïÖ±•Õ—•çIïÕ’±–πÕ¡ïç—…’¥ÄÙÄƒ¿¿∏¡ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄà–‡Å≠!ËÅÕ¡ïç—…Ö∞ÅÖπÖ±ÂÕ•ÃÅÕ°Ω’±êÅâîÅπΩ…µÖ±•Èïêà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ÖπÖ±ÂÕ•Õ’…Ö—•Ω∏ÄÅÕ—êËÈç°…ΩπºËÈÕïçΩπëÃ†‘§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâΩπîµÕïçΩπêÅâÖç≠ù…Ω’πêÅÖπÖ±ÂÕ•ÃÅÕ°Ω’±êÅ…ïµÖ•∏ÅâΩ’πëïêà§Ï((ÄÄÄÅçΩπÕ—ï·¡»ÅÖ’—ºÅ—ïÕ—MÖµ¡±ïIÖ—îÄÙÄƒ¿¿¿∏¿Ï(ÄÄÄÅ1ΩΩ¡πù•πîÅïπù•πîÏ(ÄÄÄÅïπù•πîπ¡…ï¡Ö…î°—ïÕ—MÖµ¡±ïIÖ—î∞Äÿ–∞Ä»§Ï(ÄÄÄÅïπù•πîπÕï—1ΩΩ¡1ïπù—°MïçΩπëÃ†¿∏—ò§Ï(ÄÄÄÅïπù•πîπÕï—…ΩÕÕôÖëï5•±±•ÕïçΩπëÃ†‘∏¡ò§Ï(ÄÄÄÅïπù•πîπâïù•πÖ¡—’…î†§Ï((ÄÄÄÅ©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯ÅçÖ¡—’…î†»∞Ä–¿¿§Ï(ÄÄÄÅôΩ»Ä°•π–ÅÕÖµ¡±îÄÙÄ¿ÏÅÕÖµ¡±îÄÅçÖ¡—’…îπùï—9’µMÖµ¡±ïÃ†§ÏÄ¨≠ÕÖµ¡±î§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ¡°ÖÕîÄÙÅ©’çîËÈ5Ö—°ΩπÕ—Öπ—ÃÒô±ΩÖ–¯ËÈ—›ΩA§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ®ÅÕ—Ö—•ç}çÖÕ–Òô±ΩÖ–¯°ÕÖµ¡±îÄîÄƒ¿¿§ÄºÄƒ¿¿∏¡òÏ(ÄÄÄÄÄÄÄÅçÖ¡—’…îπÕï—MÖµ¡±î†¿∞ÅÕÖµ¡±î∞ÅÕ—êËÈÕ•∏°¡°ÖÕî§§Ï(ÄÄÄÄÄÄÄÅçÖ¡—’…îπÕï—MÖµ¡±î†ƒ∞ÅÕÖµ¡±î∞Ä¿∏·òÄ®ÅÕ—êËÈÕ•∏°¡°ÖÕîÄ¨Ä¿∏¿·ò§§Ï(ÄÄÄÅÙ((ÄÄÄÅïπù•πîπ¡…ΩçïÕÃ°çÖ¡—’…î∞Äƒ∏¡ò§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ïπù•πîπùï—M—Ö—î†§ÄÙÙÅ1ΩΩ¡πù•πîËÈM—Ö—îËÈÖπÖ±ÂÕ•πú(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÒÅïπù•πîπùï—M—Ö—î†§ÄÙÙÅ1ΩΩ¡πù•πîËÈM—Ö—îËÈ…ïÖë‰∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâçÖ¡—’…îÅÕ°Ω’±êÅ—…ÖπÕ•—•Ω∏Å—ºÅâÖç≠ù…Ω’πêÅÖπÖ±ÂÕ•Ãà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°›Ö•—Ω…IïÖë‰°ïπù•πî§∞ÄâÖπÖ±ÂÕ•ÃÅÕ°Ω’±êÅ¡’â±•Õ†ÅÑÅ±ΩΩ¿à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ïπù•πîπùï—Ö¡—’…ïëMÖµ¡±ïΩ’π–†§Ä¯Ä¿∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÖπÖ±ÂÕ•ÃÅÕ°Ω’±êÅÕï±ïç–ÅÑÅπΩ∏µïµ¡—‰Å±ΩΩ¿à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ïπù•πîπùï—Ö¡—’…ïA…Ωù…ïÕÃ†§ÄÙÙÄƒ∏¡ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâçÖ¡—’…îÅ¡…Ωù…ïÕÃÅÕ°Ω’±êÅçΩµ¡±ï—îà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ïπù•πîπùï—MïÖµE’Ö±•—‰†§Ä¯ÙÄ¿∏¡òÄòòÅïπù•πîπùï—MïÖµE’Ö±•—‰†§ÄÙÄƒ¿¿∏¡ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâΩŸï…Ö±∞ÅÕïÖ¥Å≈’Ö±•—‰ÅÕ°Ω’±êÅâîÅπΩ…µÖ±•Èïêà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ïπù•πîπùï—M¡ïç—…’µMçΩ…î†§Ä¯ÙÄ¿∏¡òÄòòÅïπù•πîπùï—M¡ïç—…’µMçΩ…î†§ÄÙÄƒ¿¿∏¡ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÕ¡ïç—…’¥ÅÕçΩ…îÅÕ°Ω’±êÅâîÅπΩ…µÖ±•Èïêà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ïπù•πîπùï—A°ÖÕïMçΩ…î†§Ä¯ÙÄ¿∏¡òÄòòÅïπù•πîπùï—A°ÖÕïMçΩ…î†§ÄÙÄƒ¿¿∏¡ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ¡°ÖÕîÅÕçΩ…îÅÕ°Ω’±êÅâîÅπΩ…µÖ±•Èïêà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ïπù•πîπùï—M—ï…ïΩMçΩ…î†§Ä¯ÙÄ¿∏¡òÄòòÅïπù•πîπùï—M—ï…ïΩMçΩ…î†§ÄÙÄƒ¿¿∏¡ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÕ—ï…ïºÅÕçΩ…îÅÕ°Ω’±êÅâîÅπΩ…µÖ±•Èïêà§Ï((ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ïπëï…ïêÄÙÅïπù•πîπç…ïÖ—ïIïπëï…ïë1ΩΩ¿†§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïπëï…ïêπùï—9’µMÖµ¡±ïÃ†§Ä¯Ä¿∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâÕïÖ¥Å…ï¡Ö•»ÅÕ°Ω’±êÅ¡…Ωë’çîÅï·¡Ω…—Öâ±îÅ±ΩΩ¿ÅÖ’ë•ºà§Ï(ÄÄÄÅ•òÄ°…ïπëï…ïêπùï—9’µMÖµ¡±ïÃ†§Ä¯Äƒ§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅâΩ’πëÖ…Â)’µ¿ÄÙÅÕ—êËÈÖâÃ°…ïπëï…ïêπùï—MÖµ¡±î†¿∞Å…ïπëï…ïêπùï—9’µMÖµ¡±ïÃ†§Ä¥Äƒ§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¥Å…ïπëï…ïêπùï—MÖµ¡±î†¿∞Ä¿§§Ï(ÄÄÄÄÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°âΩ’πëÖ…Â)’µ¿ÄÄ¿∏»’ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ…ïπëï…ïêÅ±ΩΩ¿ÅâΩ’πëÖ…‰ÅÕ°Ω’±êÅπΩ–ÅçΩπ—Ö•∏ÅÖ∏ÅΩâŸ•Ω’ÃÅ©’µ¿à§Ï(ÄÄÄÅÙ((ÄÄÄÅ©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯ÅÕ—Ω¡¡ïëA±ÖÂâÖç¨†»∞Äÿ–§Ï(ÄÄÄÅÕ—Ω¡¡ïëA±ÖÂâÖç¨πç±ïÖ»†§Ï(ÄÄÄÅïπù•πîπ¡…ΩçïÕÃ°Õ—Ω¡¡ïëA±ÖÂâÖç¨∞Äƒ∏¡ò§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°Õ—Ω¡¡ïëA±ÖÂâÖç¨πùï—5Öùπ•—’ëî†¿∞Ä¿∞Äÿ–§ÄÙÙÄ¿∏¡ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ¡…ïŸ•ï‹ÅÕ°Ω’±êÅ…ïµÖ•∏ÅÕ—Ω¡¡ïêÅ’π—•∞Å—°îÅ’Õï»Åï·¡±•ç•—±‰ÅÕ—Ö…—ÃÅ•–à§Ï((ÄÄÄÅïπù•πîπÕï—A…ïŸ•ï›A±ÖÂ•πú°—…’î§Ï(ÄÄÄÅ©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯Å¡±ÖÂâÖç¨†»∞Äÿ–§Ï(ÄÄÄÅ¡±ÖÂâÖç¨πç±ïÖ»†§Ï(ÄÄÄÅïπù•πîπ¡…ΩçïÕÃ°¡±ÖÂâÖç¨∞Äƒ∏¡ò§Ï(ÄÄÄÅâΩΩ∞ÅçΩπ—Ö•πÕM•ùπÖ∞ÄÙÅôÖ±ÕîÏ(ÄÄÄÅôΩ»Ä°•π–ÅÕÖµ¡±îÄÙÄ¿ÏÅÕÖµ¡±îÄÅ¡±ÖÂâÖç¨πùï—9’µMÖµ¡±ïÃ†§ÏÄ¨≠ÕÖµ¡±î§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅŸÖ±’îÄÙÅ¡±ÖÂâÖç¨πùï—MÖµ¡±î†¿∞ÅÕÖµ¡±î§Ï(ÄÄÄÄÄÄÄÅçΩπ—Ö•πÕM•ùπÖ∞ÄÙÅçΩπ—Ö•πÕM•ùπÖ∞ÅÒÅÕ—êËÈÖâÃ°ŸÖ±’î§Ä¯Äƒ∏¡î¥’òÏ(ÄÄÄÄÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°Õ—êËÈ•Õô•π•—î°ŸÖ±’î§∞Äâ¡±ÖÂâÖç¨Åµ’Õ–ÅçΩπ—Ö•∏Åô•π•—îÅÕÖµ¡±ïÃà§Ï(ÄÄÄÅÙ(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°çΩπ—Ö•πÕM•ùπÖ∞∞Äâ¡±ÖÂâÖç¨ÅÕ°Ω’±êÅïµ•–Å—°îÅÕï±ïç—ïêÅ±ΩΩ¿à§Ï(ÄÄÄÅ•òÄ°…ïπëï…ïêπùï—9’µMÖµ¡±ïÃ†§Ä¯ÙÅ¡±ÖÂâÖç¨πùï—9’µMÖµ¡±ïÃ†§§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅëΩ’â±îÅ¡…ïŸ•ï›·¡Ω…—……Ω»ÄÙÄ¿∏¿Ï(ÄÄÄÄÄÄÄÅôΩ»Ä°•π–Åç°Öππï∞ÄÙÄ¿ÏÅç°Öππï∞ÄÅ¡±ÖÂâÖç¨πùï—9’µ°Öππï±Ã†§ÏÄ¨≠ç°Öππï∞§(ÄÄÄÄÄÄÄÅÏ(ÄÄÄÄÄÄÄÄÄÄÄÅôΩ»Ä°•π–ÅÕÖµ¡±îÄÙÄ¿ÏÅÕÖµ¡±îÄÅ¡±ÖÂâÖç¨πùï—9’µMÖµ¡±ïÃ†§ÏÄ¨≠ÕÖµ¡±î§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ¡…ïŸ•ï›·¡Ω…—……Ω»Ä¨ÙÅÕ—êËÈÖâÃ°¡±ÖÂâÖç¨πùï—MÖµ¡±î°ç°Öππï∞∞ÅÕÖµ¡±î§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¥Å…ïπëï…ïêπùï—MÖµ¡±î°ç°Öππï∞∞ÅÕÖµ¡±î§§Ï(ÄÄÄÄÄÄÄÅÙ(ÄÄÄÄÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°¡…ïŸ•ï›·¡Ω…—……Ω»ÄÄƒ∏¡î¥‘∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ¡…ïŸ•ï‹ÅÕ°Ω’±êÅÕ—Ö…–ÅΩ∏Å—°îÅï·Öç–ÅÕÖµîÅÕÖµ¡±ïÃÅÖÃÅï·¡Ω…—ïêÅÖ’ë•ºà§Ï(ÄÄÄÅÙ(ÄÄÄÅ•òÄ†ÖçΩπ—Ö•πÕM•ùπÖ∞§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅë•ÖùπΩÕ—•ç1ΩΩ¿ÄÙÅïπù•πîπç…ïÖ—ïIïπëï…ïë1ΩΩ¿†§Ï(ÄÄÄÄÄÄÄÅÕ—êËÈçï…»ÄÄâ¡±ÖÂâÖç¨Åë•ÖùπΩÕ—•åËÅÕÖµ¡±ïÃÙàÄÅïπù•πîπùï—Ö¡—’…ïëMÖµ¡±ïΩ’π–†§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄàÅÕïÖ¥ÙàÄÅïπù•πîπùï—MïÖµE’Ö±•—‰†§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄàÅ…ïπëï…ïêÙàÄÄ°ë•ÖùπΩÕ—•ç1ΩΩ¿πùï—9’µMÖµ¡±ïÃ†§Ä¯Ä¿(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¸Åë•ÖùπΩÕ—•ç1ΩΩ¿πùï—5Öùπ•—’ëî†¿∞Ä¿∞Åë•ÖùπΩÕ—•ç1ΩΩ¿πùï—9’µMÖµ¡±ïÃ†§§ÄËÄ¥ƒ∏¡ò§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄùq∏úÏ(ÄÄÄÅÙ((ÄÄÄÅïπù•πîπÕï—A…ïŸ•ï›A±ÖÂ•πú°ôÖ±Õî§Ï(ÄÄÄÅ©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯Åë…Âô—ï…M—Ω¿†»∞Äÿ–§Ï(ÄÄÄÅë…Âô—ï…M—Ω¿πç±ïÖ»†§Ï(ÄÄÄÅë…Âô—ï…M—Ω¿πÖëëMÖµ¡±î†¿∞Ä‹∞Ä¿∏»’ò§Ï(ÄÄÄÅë…Âô—ï…M—Ω¿πÖëëMÖµ¡±î†ƒ∞Äƒƒ∞Ä¥¿∏…ò§Ï(ÄÄÄÅïπù•πîπ¡…ΩçïÕÃ°ë…Âô—ï…M—Ω¿∞Äƒ∏¡ò§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°Õ—êËÈÖâÃ°ë…Âô—ï…M—Ω¿πùï—MÖµ¡±î†¿∞Ä‹§Ä¥Ä¿∏»’ò§ÄÄƒ∏¡î¥›ò(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄòòÅÕ—êËÈÖâÃ°ë…Âô—ï…M—Ω¿πùï—MÖµ¡±î†ƒ∞Äƒƒ§Ä¨Ä¿∏…ò§ÄÄƒ∏¡î¥›ò∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâM—Ω¿ÅÕ°Ω’±êÅ•µµïë•Ö—ï±‰Å…ïÕ—Ω…îÅ’π—Ω’ç°ïêÅ\Å•π¡’–à§Ï((ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕÖŸïëM—Ö—îÄÙÅïπù•πîπç…ïÖ—ï1ΩΩ¡M—Ö—î†§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–†ÖÕÖŸïëM—Ö—îπ•Õµ¡—‰†§∞ÄâçÖ¡—’…ïêÅ±ΩΩ¿ÅÕ°Ω’±êÅÕï…•Ö±•Èîà§Ï((ÄÄÄÅ1ΩΩ¡πù•πîÅ…ïÕ—Ω…ïêÏ(ÄÄÄÅ…ïÕ—Ω…ïêπ¡…ï¡Ö…î°—ïÕ—MÖµ¡±ïIÖ—î∞Äÿ–∞Ä»§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïÕ—Ω…ïêπ…ïÕ—Ω…ï1ΩΩ¡M—Ö—î°ÕÖŸïëM—Ö—îπùï—Ö—Ñ†§∞ÅÕÖŸïëM—Ö—îπùï—M•Èî†§§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâçÖ¡—’…ïêÅ±ΩΩ¿ÅÕ°Ω’±êÅ…ïÕ—Ω…îà§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïÕ—Ω…ïêπùï—M—Ö—î†§ÄÙÙÅ1ΩΩ¡πù•πîËÈM—Ö—îËÈ…ïÖë‰∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ…ïÕ—Ω…ïêÅ±ΩΩ¿ÅÕ°Ω’±êÅâîÅ•µµïë•Ö—ï±‰Å…ïÖë‰à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïÕ—Ω…ïêπùï—Ö¡—’…ïëMÖµ¡±ïΩ’π–†§ÄÙÙÅïπù•πîπùï—Ö¡—’…ïëMÖµ¡±ïΩ’π–†§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ…ïÕ—Ω…ïêÅ±ΩΩ¿Å±ïπù—†ÅÕ°Ω’±êÅµÖ—ç†à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïÕ—Ω…ïêπùï—MΩ’…çï9Öµî†§ÄÙÙÄâ\ÅÖ¡—’…îà(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄòòÅ…ïÕ—Ω…ïêπùï—]ÖŸïôΩ…µA…ïŸ•ï‹†§πÕ•Èî†§ÄÙÙÄÃ»¿∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ\Å¡…Ω©ïç–Å…ïçÖ±∞ÅÕ°Ω’±êÅ…ïÕ—Ω…îÅ—°îÅÕΩ’…çîÅÖπêÅïë•—Öâ±îÅ…ÖπùîÅçΩπ—ï·–à§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°…ïÕ—Ω…ïêπùï—M•ùπÖ±MπÖ¡Õ°Ω–†§πŸÖ±•ê∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ\Å¡…Ω©ïç–Å…ïçÖ±∞ÅÕ°Ω’±êÅ…ïÕ—Ω…îÅÕ¡ïç—…’¥∞Å¡°ÖÕîÅÖπêÅçΩ……ï±Ö—•Ω∏ÅÖπÖ±ÂÕ•Ãà§Ï((ÄÄÄÅïπù•πîπç±ïÖ»†§Ï(ÄÄÄÅ¡±ÖÂâÖç¨πç±ïÖ»†§Ï(ÄÄÄÅïπù•πîπ¡…ΩçïÕÃ°¡±ÖÂâÖç¨∞Äƒ∏¡ò§Ï(ÄÄÄÅ¡ÖÕÕïêÄòÙÅï·¡ïç–°ïπù•πîπùï—M—Ö—î†§ÄÙÙÅ1ΩΩ¡πù•πîËÈM—Ö—îËÈÕΩ’…çïIïÖë‰∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄâ±ïÖ»ÅIïÕ’±–ÅÕ°Ω’±êÅ…ï—Ö•∏Å—°îÅÕΩ’…çîÅôΩ»ÅÖπΩ—°ï»Åùïπï…Ö—•Ω∏à§Ï((ÄÄÄÅ•òÄ†Ö¡ÖÕÕïê§(ÄÄÄÄÄÄÄÅ…ï—’…∏ÄƒÏ((ÄÄÄÅÕ—êËÈçΩ’–ÄÄâ1ΩΩ¡M’…ùïΩ∏Åïπù•πîÅ—ïÕ—ÃÅ¡ÖÕÕïêÏÄ–‡Å≠!ËÅÖπÖ±ÂÕ•ÃÅ—ΩΩ¨Äà(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÖπÖ±ÂÕ•Õ’…Ö—•Ω∏πçΩ’π–†§ÄÄàÅµÕq∏àÏ(ÄÄÄÅ…ï—’…∏Ä¿Ï)Ù
+    for (int sample = 0; sample < windOneShot.getNumSamples(); ++sample)
+    {
+        noiseState ^= noiseState << 13u;
+        noiseState ^= noiseState >> 17u;
+        noiseState ^= noiseState << 5u;
+        const auto white = static_cast<float>(noiseState & 0xffffu) / 32768.0f - 1.0f;
+        const auto gust = 0.35f + 0.28f * std::sin(
+            juce::MathConstants<float>::twoPi * static_cast<float>(sample) / 5300.0f);
+        previousNoise = 0.92f * previousNoise + 0.08f * white;
+        windOneShot.setSample(0, sample, gust * previousNoise);
+        windOneShot.setSample(1, sample, gust * (0.82f * previousNoise + 0.06f * white));
+    }
+    TextureSynthesisSettings textureSettings;
+    textureSettings.durationSeconds = 12.0f;
+    textureSettings.variation = 0.82f;
+    textureSettings.flatten = 0.76f;
+    textureSettings.sourceMatch = 0.90f;
+    textureSettings.seed = 0xabc123u;
+    const auto textureA = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, textureSettings);
+    const auto textureARepeat = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, textureSettings);
+    textureSettings.seed += 17u;
+    const auto textureB = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, textureSettings);
+    passed &= expect(textureA.audio.getNumSamples() == 24000,
+                     "texture synthesis should create the requested long output");
+    passed &= expect(textureA.audio.getNumSamples() > windOneShot.getNumSamples(),
+                     "one-shot texture output should be longer than its source");
+    passed &= expect(textureA.analysisFrameStarts.size() > 4,
+                     "texture model should learn from multiple active source frames");
+    auto deterministicError = 0.0;
+    auto seedDifference = 0.0;
+    for (int sample = 0; sample < textureA.audio.getNumSamples(); ++sample)
+    {
+        deterministicError += std::abs(textureA.audio.getSample(0, sample)
+                                       - textureARepeat.audio.getSample(0, sample));
+        seedDifference += std::abs(textureA.audio.getSample(0, sample)
+                                   - textureB.audio.getSample(0, sample));
+    }
+    passed &= expect(deterministicError < 1.0e-6,
+                     "same seed must reproduce the exact texture for DAW recall");
+    passed &= expect(seedDifference > 1.0,
+                     "new variation seed should create audibly different sample data");
+    auto repeatedWindowError = 0.0;
+    for (int sample = 0; sample < 2000; ++sample)
+        repeatedWindowError += std::abs(textureA.audio.getSample(0, sample)
+                                        - textureA.audio.getSample(0, sample + 2000));
+    passed &= expect(repeatedWindowError > 0.5,
+                     "successive output windows must not be identical copies");
+    passed &= expect(textureA.diversity > 30.0f,
+                     "texture path should retain measurable source-position diversity");
+    passed &= expect(textureA.closureQuality >= 0.0f && textureA.closureQuality <= 100.0f,
+                     "texture circular closure score should be normalized");
+    passed &= expect(textureA.containsOnlyFiniteSamples,
+                     "texture delivery must contain only finite samples");
+    passed &= expect(textureA.truePeakDbtp <= -0.85f,
+                     "texture delivery must retain at least 0.85 dBTP headroom");
+    passed &= expect(textureA.repeatSafety >= 0.0f && textureA.repeatSafety <= 100.0f,
+                     "texture repetition risk must be normalized");
+    passed &= expect(textureA.qualityScore >= 0.0f && textureA.qualityScore <= 100.0f,
+                     "commercial quality gate score must be normalized");
+    passed &= expect(textureA.passedQualityGate == textureARepeat.passedQualityGate,
+                     "quality gate must be deterministic for project recall");
+    passed &= expect(textureA.loudnessPreservation >= 0.0f
+                         && textureA.loudnessPreservation <= 100.0f,
+                     "texture loudness matching score should be normalized");
+    passed &= expect(textureA.phasePreservation >= 0.0f
+                         && textureA.phasePreservation <= 100.0f,
+                     "texture phase/correlation matching score should be normalized");
+    passed &= expect(textureA.positionPreservation >= 0.0f
+                         && textureA.positionPreservation <= 100.0f,
+                     "texture stereo position score should be normalized");
+    auto unmatchedSettings = textureSettings;
+    unmatchedSettings.seed = 0x31c0ffeeu;
+    unmatchedSettings.sourceMatch = 0.0f;
+    const auto unmatchedTexture = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, unmatchedSettings);
+    auto matchedSettings = unmatchedSettings;
+    matchedSettings.sourceMatch = 1.0f;
+    const auto matchedTexture = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, matchedSettings);
+    auto rebuildDifference = 0.0;
+    for (int sample = 0; sample < matchedTexture.audio.getNumSamples(); ++sample)
+        rebuildDifference += std::abs(
+            matchedTexture.audio.getSample(0, sample)
+            - unmatchedTexture.audio.getSample(0, sample));
+    passed &= expect(rebuildDifference > 1.0,
+                     "Rebuild must replace exemplar tiling with a distinct material model");
+    passed &= expect(matchedTexture.macroStability >= unmatchedTexture.macroStability - 5.0f,
+                     "full Rebuild must not reintroduce the source one-shot envelope");
+    passed &= expect(matchedTexture.spectrumPreservation >= 20.0f,
+                     "full Rebuild must retain defined source material colour");
+    auto reversedWindowError = 0.0;
+    for (int sample = 0; sample < 2000; ++sample)
+        reversedWindowError += std::abs(
+            textureA.audio.getSample(0, sample)
+            - textureA.audio.getSample(0, 3999 - sample));
+    passed &= expect(reversedWindowError > 0.5,
+                     "texture output must not be assembled from reversed source-like windows");
+
+    // Regression: a one-shot's single swell/decay must not become a train of new attacks.
+    juce::AudioBuffer<float> envelopedWind(2, 14000);
+    noiseState = 0x51f15e1u;
+    auto colouredLeft = 0.0f;
+    auto colouredRight = 0.0f;
+    for (int sample = 0; sample < envelopedWind.getNumSamples(); ++sample)
+    {
+        noiseState ^= noiseState << 13u;
+        noiseState ^= noiseState >> 17u;
+        noiseState ^= noiseState << 5u;
+        const auto white = static_cast<float>(noiseState & 0xffffu) / 32768.0f - 1.0f;
+        const auto progress = static_cast<float>(sample)
+                              / static_cast<float>(envelopedWind.getNumSamples() - 1);
+        float macroEnvelope = 0.0f;
+        if (progress < 0.20f)
+        {
+            const auto attack = progress / 0.20f;
+            macroEnvelope = attack * attack * (3.0f - 2.0f * attack);
+        }
+        else
+        {
+            const auto decay = (progress - 0.20f) / 0.80f;
+            macroEnvelope = std::pow(juce::jmax(0.0f, 1.0f - decay), 1.65f);
+        }
+        colouredLeft = 0.94f * colouredLeft + 0.06f * white;
+        colouredRight = 0.91f * colouredRight + 0.09f * (0.77f * white
+            + 0.23f * std::sin(0.031f * static_cast<float>(sample)));
+        envelopedWind.setSample(0, sample, macroEnvelope * colouredLeft);
+        envelopedWind.setSample(1, sample, macroEnvelope * colouredRight);
+    }
+    TextureSynthesisSettings stationarySettings;
+    stationarySettings.durationSeconds = 16.0f;
+    stationarySettings.variation = 0.76f;
+    stationarySettings.flatten = 0.90f;
+    stationarySettings.seed = 0x5a17b33fu;
+    const auto stationaryTexture = TextureSynthesizer::synthesize(
+        envelopedWind, automaticSampleRate, stationarySettings);
+    const auto sourceBlocks = blockRms(envelopedWind, 500);
+    const auto sourceHigh = percentile(sourceBlocks, 0.90f);
+    std::vector<float> activeSourceBlocks;
+    for (const auto level : sourceBlocks)
+        if (level >= sourceHigh * 0.12f)
+            activeSourceBlocks.push_back(level);
+    const auto outputBlocks = blockRms(stationaryTexture.audio, 500);
+    const auto outputLow = percentile(outputBlocks, 0.10f);
+    const auto outputHigh = percentile(outputBlocks, 0.90f);
+    const auto outputRange = outputHigh / juce::jmax(1.0e-7f, outputLow);
+    passed &= expect(outputRange < 1.75f,
+                     "stationary texture must not contain repeated one-shot-sized level humps");
+    passed &= expect(coefficientOfVariation(outputBlocks)
+                         < coefficientOfVariation(activeSourceBlocks) * 0.65f,
+                     "texture synthesis should remove the source macro envelope");
+    passed &= expect(stationaryTexture.macroStability >= 58.0f,
+                     "texture report should reject output with obvious repeated attacks");
+    passed &= expect(meanNearestSourceCorrelation(
+                         envelopedWind, stationaryTexture.audio, 96) >= 0.48f,
+                     "texture output must retain recognisable source microstructure");
+    passed &= expect(stationaryTexture.spectrumPreservation >= 20.0f,
+                     "timbre metric must retain the source spectral fingerprint");
+    auto movingSettings = stationarySettings;
+    movingSettings.flatten = 0.05f;
+    const auto movingTexture = TextureSynthesizer::synthesize(
+        envelopedWind, automaticSampleRate, movingSettings);
+    passed &= expect(coefficientOfVariation(outputBlocks)
+                         < coefficientOfVariation(blockRms(movingTexture.audio, 500)),
+                     "Stability should give the user direct control over macro movement");
+
+    juce::AudioBuffer<float> passByOneShot(2, 16000);
+    noiseState = 0x7af31d9u;
+    auto passByPhase = 0.0;
+    auto passByNoise = 0.0f;
+    for (int sample = 0; sample < passByOneShot.getNumSamples(); ++sample)
+    {
+        noiseState ^= noiseState << 13u;
+        noiseState ^= noiseState >> 17u;
+        noiseState ^= noiseState << 5u;
+        const auto white = static_cast<float>(noiseState & 0xffffu) / 32768.0f - 1.0f;
+        passByNoise = 0.88f * passByNoise + 0.12f * white;
+        const auto progress = static_cast<float>(sample)
+                              / static_cast<float>(passByOneShot.getNumSamples() - 1);
+        const auto distance = std::abs(2.0f * progress - 1.0f);
+        const auto frequency = 95.0f + 520.0f * (1.0f - distance * distance);
+        passByPhase += juce::MathConstants<double>::twoPi * frequency
+                       / automaticSampleRate;
+        const auto eventEnvelope = std::pow(
+            juce::jmax(0.0f, std::sin(juce::MathConstants<float>::pi * progress)),
+            0.72f);
+        const auto carrier = static_cast<float>(
+            0.22 * std::sin(passByPhase)
+            + 0.08 * std::sin(1.71 * passByPhase + 0.2))
+            + 0.08f * passByNoise;
+        passByOneShot.setSample(0, sample, eventEnvelope * carrier);
+        passByOneShot.setSample(1, sample, eventEnvelope * (
+            0.88f * carrier + 0.05f * white));
+    }
+    TextureSynthesisSettings passBySettings;
+    passBySettings.durationSeconds = 16.0f;
+    passBySettings.variation = 0.72f;
+    passBySettings.seed = 0x1ee7c0deu;
+    const auto passByTexture = TextureSynthesizer::synthesize(
+        passByOneShot, automaticSampleRate, passBySettings);
+    const auto sourceCentroids = spectralCentroids(
+        passByOneShot, automaticSampleRate, 256);
+    const auto outputCentroids = spectralCentroids(
+        passByTexture.audio, automaticSampleRate, 256);
+    passed &= expect(coefficientOfVariation(outputCentroids)
+                         < coefficientOfVariation(sourceCentroids) * 0.58f,
+                     "stationary synthesis must remove the one-shot pass-by trajectory");
+    std::vector<float> outputCentroidMovement;
+    outputCentroidMovement.reserve(outputCentroids.size() - 1u);
+    for (size_t frame = 1; frame < outputCentroids.size(); ++frame)
+        outputCentroidMovement.push_back(
+            outputCentroids[frame] - outputCentroids[frame - 1u]);
+    const auto passByRepeat = strongestAutocorrelation(
+        outputCentroidMovement, 4, 24);
+    if (passByRepeat >= 0.36f)
+        std::cerr << "pass-by centroid repetition=" << passByRepeat << '\n';
+    passed &= expect(passByRepeat < 0.36f,
+                     "output spectrum must not repeat a hidden pass-by cycle");
+
+    LoopEngine textureEngine;
+    textureEngine.prepare(automaticSampleRate, 64, 2);
+    textureEngine.setGenerationMode(LoopEngine::GenerationMode::textureLoop);
+    textureEngine.setTextureDurationSeconds(6.0f);
+    textureEngine.setTextureVariation(0.8f);
+    textureEngine.setTextureFlatten(0.8f);
+    textureEngine.setTextureSourceMatch(0.9f);
+    textureEngine.submitSource(windOneShot, "wind-one-shot.wav");
+    passed &= expect(textureEngine.getState() == LoopEngine::State::sourceReady,
+                     "file import should wait for the user to choose range and mode");
+    passed &= expect(textureEngine.reanalyzeSourceRange(0.0f, 1.0f),
+                     "Generate should start Texture Loop from the selected range");
+    passed &= expect(waitForReady(textureEngine),
+                      "evolving texture mode should finish in the background");
+    passed &= expect(textureEngine.getLastUsedGenerationMode()
+                         == LoopEngine::GenerationMode::textureLoop,
+                     "explicit texture selection should be retained");
+    passed &= expect(textureEngine.getCandidateCount() == 2,
+                     "texture mode should retain two alternatives without tripling memory use");
+    const auto engineTexture = textureEngine.createRenderedLoop();
+    passed &= expect(engineTexture.getNumSamples() == 12000,
+                     "engine should publish the requested generated texture length");
+    textureEngine.selectCandidate(1);
+    const auto secondTexture = textureEngine.createRenderedLoop();
+    auto candidateDifference = 0.0;
+    for (int sample = 0; sample < secondTexture.getNumSamples(); ++sample)
+        candidateDifference += std::abs(engineTexture.getSample(0, sample)
+                                        - secondTexture.getSample(0, sample));
+    passed &= expect(candidateDifference > 1.0,
+                     "selecting another texture candidate should swap in different audio");
+    passed &= expect(textureEngine.getCandidateDescription(0).contains("6.0 s")
+                         && textureEngine.getCandidateDescription(1).contains("6.0 s"),
+                     "active and inactive memory-swapped variants should retain valid descriptions");
+    textureEngine.selectCandidate(0);
+    const auto restoredFirstTexture = textureEngine.createRenderedLoop();
+    auto restoredCandidateError = 0.0;
+    for (int sample = 0; sample < restoredFirstTexture.getNumSamples(); ++sample)
+        restoredCandidateError += std::abs(engineTexture.getSample(0, sample)
+                                           - restoredFirstTexture.getSample(0, sample));
+    passed &= expect(restoredCandidateError < 1.0e-6,
+                     "candidate switching should preserve earlier audio without duplicate buffers");
+    textureEngine.setPreviewMode(LoopEngine::PreviewMode::loop);
+    textureEngine.setPreviewPlaying(true);
+    juce::AudioBuffer<float> texturePreview(2, 64);
+    texturePreview.clear();
+    textureEngine.process(texturePreview, 1.0f);
+    passed &= expect(texturePreview.getMagnitude(0, 0, 64) > 0.0f,
+                     "Generated audition should start playback immediately");
+
+    LoopEngine rangeEngine;
+    rangeEngine.prepare(automaticSampleRate, 64, 2);
+    rangeEngine.setGenerationMode(LoopEngine::GenerationMode::rotateRepair);
+    rangeEngine.submitSource(repeatedMaterial, "repeated-material.wav");
+    passed &= expect(rangeEngine.getState() == LoopEngine::State::sourceReady,
+                     "loaded ambience should wait for an explicit Generate action");
+    passed &= expect(rangeEngine.reanalyzeSourceRange(0.0f, 1.0f),
+                     "Generate should start Rotate & Repair from the selected range");
+    passed &= expect(waitForReady(rangeEngine), "imported source should be analysed in background");
+    passed &= expect(rangeEngine.getCandidateCount() > 0,
+                     "imported source should expose alternate candidates");
+    passed &= expect(rangeEngine.getWaveformPreview().size() == 320,
+                     "imported source should publish a bounded waveform preview");
+    passed &= expect(rangeEngine.reanalyzeSourceRange(0.3f, 0.9f),
+                     "source In/Out selection should queue reanalysis");
+    passed &= expect(waitForReady(rangeEngine), "selected source range should finish analysis");
+    passed &= expect(rangeEngine.getRotationProportion() >= 0.3f
+                         && rangeEngine.getRotationProportion() <= 0.9f,
+                     "automatic loop start must remain inside user Source In/Out selection");
+    passed &= expect(rangeEngine.setManualRotationPoint(0.4f),
+                     "draggable Loop Start should publish a manually rotated loop");
+    passed &= expect(std::abs(rangeEngine.getRotationProportion() - 0.4f) < 0.002f,
+                     "manual Loop Start should retain the requested rotation point");
+    const auto manualRendered = rangeEngine.createRenderedLoop();
+    passed &= expect(manualRendered.getNumSamples()
+                         > juce::roundToInt(0.55 * repeatedMaterial.getNumSamples()),
+                     "Rotate & Repair must preserve the selected long-form material");
+    passed &= expect(rangeEngine.getSignalSnapshot().valid,
+                      "ready output should publish real spectrum, phase and correlation analysis");
+    const auto rangeState = rangeEngine.createLoopState();
+    LoopEngine restoredRange;
+    restoredRange.prepare(automaticSampleRate, 64, 2);
+    passed &= expect(restoredRange.restoreLoopState(
+                         rangeState.getData(), rangeState.getSize()),
+                     "selected source range and repaired result should restore");
+    passed &= expect(std::abs(restoredRange.getAnalysisRangeStartProportion() - 0.3f) < 0.002f
+                         && std::abs(restoredRange.getAnalysisRangeEndProportion() - 0.9f) < 0.002f
+                         && std::abs(restoredRange.getRotationProportion() - 0.4f) < 0.002f,
+                     "project recall should restore Source In/Out and Loop Start positions");
+    rangeEngine.setPreviewMode(LoopEngine::PreviewMode::original);
+    rangeEngine.setPreviewPlaying(true);
+    juce::AudioBuffer<float> originalPreview(2, 64);
+    originalPreview.clear();
+    rangeEngine.process(originalPreview, 1.0f);
+    passed &= expect(originalPreview.getMagnitude(0, 0, 64) > 0.0f
+                         && originalPreview.getMagnitude(1, 0, 64) > 0.0f,
+                     "Original A/B mode should audition imported stereo source");
+
+    juce::AudioBuffer<float> realisticAnalysis(2, 62400);
+    for (int sample = 0; sample < realisticAnalysis.getNumSamples(); ++sample)
+    {
+        const auto phase = juce::MathConstants<float>::twoPi
+                           * static_cast<float>(sample % 12000) / 12000.0f;
+        realisticAnalysis.setSample(0, sample, 0.7f * std::sin(phase));
+        realisticAnalysis.setSample(1, sample, 0.6f * std::sin(phase + 0.12f));
+    }
+    const auto analysisStart = std::chrono::steady_clock::now();
+    const auto realisticResult = LoopAnalyzer::findBestLoop(realisticAnalysis, 48000.0, 48000, 7200);
+    const auto analysisDuration = std::chrono::duration_cast<std::chrono::milliseconds>(
+        std::chrono::steady_clock::now() - analysisStart);
+    passed &= expect(realisticResult.endSample > realisticResult.startSample,
+                     "48 kHz analysis should select valid boundaries");
+    passed &= expect(realisticResult.spectrum >= 0.0f && realisticResult.spectrum <= 100.0f,
+                     "48 kHz spectral analysis should be normalized");
+    passed &= expect(analysisDuration < std::chrono::seconds(5),
+                     "one-second background analysis should remain bounded");
+
+    constexpr auto testSampleRate = 1000.0;
+    LoopEngine engine;
+    engine.prepare(testSampleRate, 64, 2);
+    engine.setLoopLengthSeconds(0.4f);
+    engine.setCrossfadeMilliseconds(5.0f);
+    engine.beginCapture();
+
+    juce::AudioBuffer<float> capture(2, 400);
+    for (int sample = 0; sample < capture.getNumSamples(); ++sample)
+    {
+        const auto phase = juce::MathConstants<float>::twoPi
+                           * static_cast<float>(sample % 100) / 100.0f;
+        capture.setSample(0, sample, std::sin(phase));
+        capture.setSample(1, sample, 0.8f * std::sin(phase + 0.08f));
+    }
+
+    engine.process(capture, 1.0f);
+    passed &= expect(engine.getState() == LoopEngine::State::analysing
+                         || engine.getState() == LoopEngine::State::ready,
+                     "capture should transition to background analysis");
+    passed &= expect(waitForReady(engine), "analysis should publish a loop");
+    passed &= expect(engine.getCapturedSampleCount() > 0,
+                     "analysis should select a non-empty loop");
+    passed &= expect(engine.getCaptureProgress() == 1.0f,
+                     "capture progress should complete");
+    passed &= expect(engine.getSeamQuality() >= 0.0f && engine.getSeamQuality() <= 100.0f,
+                     "overall seam quality should be normalized");
+    passed &= expect(engine.getSpectrumScore() >= 0.0f && engine.getSpectrumScore() <= 100.0f,
+                     "spectrum score should be normalized");
+    passed &= expect(engine.getPhaseScore() >= 0.0f && engine.getPhaseScore() <= 100.0f,
+                     "phase score should be normalized");
+    passed &= expect(engine.getStereoScore() >= 0.0f && engine.getStereoScore() <= 100.0f,
+                     "stereo score should be normalized");
+
+    const auto rendered = engine.createRenderedLoop();
+    passed &= expect(rendered.getNumSamples() > 0,
+                     "seam repair should produce exportable loop audio");
+    if (rendered.getNumSamples() > 1)
+    {
+        const auto boundaryJump = std::abs(rendered.getSample(0, rendered.getNumSamples() - 1)
+                                           - rendered.getSample(0, 0));
+        passed &= expect(boundaryJump < 0.25f,
+                         "rendered loop boundary should not contain an obvious jump");
+    }
+
+    juce::AudioBuffer<float> stoppedPlayback(2, 64);
+    stoppedPlayback.clear();
+    engine.process(stoppedPlayback, 1.0f);
+    passed &= expect(stoppedPlayback.getMagnitude(0, 0, 64) == 0.0f,
+                     "preview should remain stopped until the user explicitly starts it");
+
+    engine.setPreviewPlaying(true);
+    juce::AudioBuffer<float> playback(2, 64);
+    playback.clear();
+    engine.process(playback, 1.0f);
+    bool containsSignal = false;
+    for (int sample = 0; sample < playback.getNumSamples(); ++sample)
+    {
+        const auto value = playback.getSample(0, sample);
+        containsSignal = containsSignal || std::abs(value) > 1.0e-5f;
+        passed &= expect(std::isfinite(value), "playback must contain finite samples");
+    }
+    passed &= expect(containsSignal, "playback should emit the selected loop");
+    if (rendered.getNumSamples() >= playback.getNumSamples())
+    {
+        double previewExportError = 0.0;
+        for (int channel = 0; channel < playback.getNumChannels(); ++channel)
+        {
+            for (int sample = 0; sample < playback.getNumSamples(); ++sample)
+                previewExportError += std::abs(playback.getSample(channel, sample)
+                                               - rendered.getSample(channel, sample));
+        }
+        passed &= expect(previewExportError < 1.0e-5,
+                         "preview should start on the exact same samples as exported audio");
+    }
+    if (!containsSignal)
+    {
+        const auto diagnosticLoop = engine.createRenderedLoop();
+        std::cerr << "playback diagnostic: samples=" << engine.getCapturedSampleCount()
+                  << " seam=" << engine.getSeamQuality()
+                  << " rendered=" << (diagnosticLoop.getNumSamples() > 0
+                      ? diagnosticLoop.getMagnitude(0, 0, diagnosticLoop.getNumSamples()) : -1.0f)
+                  << '\n';
+    }
+
+    engine.setPreviewPlaying(false);
+    juce::AudioBuffer<float> dryAfterStop(2, 64);
+    dryAfterStop.clear();
+    dryAfterStop.addSample(0, 7, 0.25f);
+    dryAfterStop.addSample(1, 11, -0.2f);
+    engine.process(dryAfterStop, 1.0f);
+    passed &= expect(std::abs(dryAfterStop.getSample(0, 7) - 0.25f) < 1.0e-7f
+                         && std::abs(dryAfterStop.getSample(1, 11) + 0.2f) < 1.0e-7f,
+                     "Stop should immediately restore untouched DAW input");
+
+    const auto savedState = engine.createLoopState();
+    passed &= expect(!savedState.isEmpty(), "captured loop should serialize");
+
+    LoopEngine restored;
+    restored.prepare(testSampleRate, 64, 2);
+    passed &= expect(restored.restoreLoopState(savedState.getData(), savedState.getSize()),
+                     "captured loop should restore");
+    passed &= expect(restored.getState() == LoopEngine::State::ready,
+                     "restored loop should be immediately ready");
+    passed &= expect(restored.getCapturedSampleCount() == engine.getCapturedSampleCount(),
+                     "restored loop length should match");
+    passed &= expect(restored.getSourceName() == "DAW Capture"
+                         && restored.getWaveformPreview().size() == 320,
+                     "DAW project recall should restore the source and editable range context");
+    passed &= expect(restored.getSignalSnapshot().valid,
+                     "DAW project recall should restore spectrum, phase and correlation analysis");
+
+    engine.clear();
+    playback.clear();
+    engine.process(playback, 1.0f);
+    passed &= expect(engine.getState() == LoopEngine::State::sourceReady,
+                      "Clear Result should retain the source for another generation");
+
+    if (!passed)
+        return 1;
+
+    std::cout << "LoopSurgeon engine tests passed; 48 kHz analysis took "
+              << analysisDuration.count() << " ms\n";
+    return 0;
+}

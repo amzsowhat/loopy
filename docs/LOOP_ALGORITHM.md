@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠# Loop Surgeon algorithms
+# Loop Surgeon algorithms
 
 The user explicitly chooses between two equally important jobs. Source In/Out is a hard boundary.
 

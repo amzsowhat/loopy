@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠# Loop Surgeon 0.7.0 pre-release review
+# Loop Surgeon 0.7.0 pre-release review
 
 ## Product correction
 

@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠param(
+param(
     [string] $Version = "0.7.0-pre"
 )
 

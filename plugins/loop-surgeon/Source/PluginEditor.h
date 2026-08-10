@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠#pragma once
+#pragma once
 
 #include <juce_gui_extra/juce_gui_extra.h>
 

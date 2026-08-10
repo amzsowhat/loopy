@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{~,y 'v√Æ∂õ≠# Sound VST Project
+# Sound VST Project
 
 A cloud-first monorepo for multiple independent VST3 audio tools. Each plug-in has its own product
 directory, documentation, source, tests, and build target, while repository-level configuration

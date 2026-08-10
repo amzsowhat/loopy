@@ -1,4 +1,4 @@
-­r‡^Ñf¥–Ø¦{~,yÊ'vÃ®¶›­# macOS / REAPER test checklist
+# macOS / REAPER test checklist
 
 Use native Apple Silicon REAPER. Install `Loop Surgeon.vst3` under
 `~/Library/Audio/Plug-Ins/VST3/`, then run **Preferences > Plug-ins > VST > Re-scan**. The current

@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠juce_add_plugin(LoopSurgeon
+juce_add_plugin(LoopSurgeon
     VERSION 0.7.0
     COMPANY_NAME "Sound VST Project"
     BUNDLE_ID com.amzsowhat.loopsurgeon

@@ -1,4 +1,4 @@
-�r�^�f��ئ{}�y�'vî���# Loop Surgeon 0.7.0-pre：Windows / REAPER 简要测试说明
+# Loop Surgeon 0.7.0-pre：Windows / REAPER 简要测试说明
 
 这是本机生成的 Windows x64 测试包。本地 Release 编译和确定性 DSP 测试已通过；尚未
 完成完整素材库盲听、VST3 Validator 和多采样率 REAPER 验证，因此仍是预发布测试版。

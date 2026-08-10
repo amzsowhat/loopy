@@ -1,4 +1,4 @@
-≠rá^—f•ñÿ¶{~,y 'v√Æ∂õ≠# P2 Loop Surgeon
+# P2 Loop Surgeon
 
 Current target: **0.7.0 pre-release**. Loop Surgeon is one VST3 effect/Standalone product with two
 equally important modes. File import/drop is the primary workflow; DAW-input capture is secondary.
