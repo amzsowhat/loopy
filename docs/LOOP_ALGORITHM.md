@@ -1,46 +1,49 @@
 # Loop Surgeon algorithms
 
-## Stationary Texture
+Loop Surgeon exposes two equal, user-selected modes. Auto routing was removed because the two jobs
+have different creative intent that the source waveform alone cannot determine reliably.
 
-This is the default path for wind, rain, room tone, drones, and other noise-like material.
+## Rotate & Repair
 
-1. Resample mono/stereo input to the host rate and use only Source In/Out.
-2. Sample at most 256 distributed 4096-point frames; discard silence and extreme level outliers.
-3. Convert stereo to Mid/Side and calculate log-magnitude spectra.
-4. Take the temporal median at every bin. Ordered rise/fall/pass-by trajectories are therefore not
-   part of the model.
-5. Lightly smooth across log frequency while retaining 75% of the measured bin detail.
-6. Draw seeded Gaussian complex spectra around the Mid and Side models. Random phase makes
-   neighbouring frames non-coherent and prevents the comb filtering created by overlapping copied
-   grains.
-7. Apply no more than subtle slow drift across ten broad frequency bands. Variation controls that
-   drift, not source-event order.
-8. Inverse-transform sine-windowed frames with 50% overlap directly into a circular output buffer.
-   Wrapped frames straddle the end/start boundary and per-sample squared-window normalization keeps
-   variance stable.
-9. Reconstruct Left/Right, match active source RMS, cap peaks, and score the actual output.
+Use this when Source In/Out already contains the intended long ambience or environment edit.
 
-## Direct Seam Loop
+1. Evaluate the original end/start mismatch with short and longer waveform, level, derivative,
+   spectrum, transient, phase and stereo windows.
+2. Test several overlap lengths up to Seam Repair and keep the least destructive internal repair.
+3. Scan internal source cuts for stable level/spectrum/stereo context and low transient energy.
+4. Rotate the complete forward-running range at the chosen cut.
+5. Crossfade the old end into the old start inside the result. The final loop boundary now joins
+   the two source samples that were adjacent at the internal cut.
+6. Remove non-finite samples/DC and enforce a circular -1 dBTP peak ceiling.
 
-This is intentionally a conventional short-loop path for strongly periodic material.
+This automates the standard manual cut-rotate-overlap workflow and does not extract a short period.
+The overlap shortens the result slightly; the UI reports actual output length.
 
-1. Build 100 Hz loudness, change-rate, and four-band spectral feature frames.
-2. Normalize the streams and use multivariate autocorrelation to propose periods.
-3. Search strictly inside Source In/Out for start/end pairs near each period.
-4. Score waveform jump, level, slope, phase, stereo, transient, repair, and period evidence.
-5. Re-evaluate finalists using short/long windows and a 16-band spectral signature.
-6. Test repair lengths up to the configured maximum against the rendered boundary.
-7. Apply weak-link and activity penalties, refine at single-sample resolution, and expose the
-   adopted bounds as green Loop In/Out markers.
+## Texture Loop
 
-Direct Seam Loop does not remove a pass-by, pitch sweep, or other event inside the chosen short
-segment. Stationary Texture is the required mode when those event trajectories must disappear.
+Use this when the goal is a sustained layer made from a source's material without its original
+ADSR, pass-by or directional timeline.
 
-## Auto
+1. Use only Source In/Out and sample up to 256 distributed active 4096-point frames.
+2. Reject silence and extreme hit outliers. Take per-bin temporal medians of Mid/Side log spectra.
+3. Adaptively smooth isolated narrow peaks while retaining broad spectral colour.
+4. Draw deterministic non-coherent Gaussian complex spectra around those models. No source segment
+   is copied, reversed or time-stretched.
+5. Apply multi-rate integer-cycle spectral drift, then circular sine-window overlap-add with
+   per-sample energy normalization.
+6. Measure the source's active macro-level range. Flatten controls a newly generated circular
+   movement envelope; the ordered source envelope is never reused.
+7. Source Match controls active-frame gated K-weighted loudness correction, Mid/Side width,
+   broadband channel correlation and left/right energy position. The ordered one-shot envelope and
+   silent tail are excluded from the loudness target.
+8. Remove non-finite samples/DC, enforce a circular -1 dBTP ceiling and score closure, timbre,
+   loudness, phase, position, stability and repeat risk.
 
-Auto runs periodic analysis first. It keeps Direct Seam Loop only when the leading candidate has
-strong periodicity, transient continuity, overall quality, and high confidence; otherwise it uses
-Stationary Texture.
+The exported WAV eventually repeats at its full requested length. The target is absence of an
+obvious shorter envelope or spectral cycle inside that buffer.
 
-Both paths are deterministic explainable DSP, not trained perceptual models. Commercial claims
-remain blocked on a larger licensed corpus and blind listening tests.
+## Known modelling boundary
+
+Texture Loop preserves band-specific Mid/Side energy and broadband position/correlation. It does
+not yet reconstruct a full frequency-dependent complex stereo covariance matrix. The source code
+also still needs fresh compiler, meter, corpus and host validation before commercial release.
