@@ -9,7 +9,7 @@ int main(const int argumentCount, char** arguments)
     if (argumentCount < 3)
     {
         std::cerr << "Usage: LoopSurgeonTextureRender <input> <output> "
-                     "[selection-seconds] [duration-seconds]\n";
+                     "[selection-seconds] [duration-seconds] [flatten] [source-match]\n";
         return 2;
     }
 
@@ -52,6 +52,10 @@ int main(const int argumentCount, char** arguments)
     settings.durationSeconds = argumentCount > 4
         ? juce::String::fromUTF8(arguments[4]).getFloatValue() : 24.0f;
     settings.variation = 0.72f;
+    settings.flatten = argumentCount > 5
+        ? juce::String::fromUTF8(arguments[5]).getFloatValue() : 0.72f;
+    settings.sourceMatch = argumentCount > 6
+        ? juce::String::fromUTF8(arguments[6]).getFloatValue() : 0.85f;
     settings.seed = 0x5a17b33fu;
     const auto result = TextureSynthesizer::synthesize(
         resampled, outputSampleRate, settings);
@@ -79,7 +83,13 @@ int main(const int argumentCount, char** arguments)
               << " closure=" << result.closureQuality
               << " stationary=" << result.transitionQuality
               << " spectrum=" << result.spectrumPreservation
-              << " stereo=" << result.stereoPreservation
-              << " stability=" << result.macroStability << '\n';
+              << " loudness=" << result.loudnessPreservation
+              << " phase=" << result.phasePreservation
+              << " position=" << result.positionPreservation
+              << " stability=" << result.macroStability
+              << " repeatSafety=" << result.repeatSafety
+              << " truePeakDbtp=" << result.truePeakDbtp
+              << " quality=" << result.qualityScore
+              << " gate=" << (result.passedQualityGate ? "PASS" : "FAIL") << '\n';
     return 0;
 }
