@@ -1,16 +1,20 @@
 #include "TextureSynthesizer.h"
 
+#include "RenderQuality.h"
+
 #include <juce_dsp/juce_dsp.h>
 
 #include <algorithm>
 #include <array>
 #include <cmath>
 #include <numeric>
+#include <utility>
 
 namespace
 {
 constexpr int spectrumBands = 8;
 constexpr int driftBands = 10;
+constexpr int driftLayers = 4;
 constexpr int maximumAnalysisFrames = 256;
 
 struct BoundaryFeature
@@ -256,6 +260,147 @@ float frameRms(const juce::AudioBuffer<float>& source,
             sampleCount * juce::jmax(1, source.getNumChannels()))));
 }
 
+struct SpatialMeasurement
+{
+    float correlation = 1.0f;
+    float imbalanceDb = 0.0f;
+};
+
+SpatialMeasurement analyseSelectedSpatial(
+    const juce::AudioBuffer<float>& source,
+    const std::vector<int>& frameStarts,
+    const std::vector<int>& selectedFrames,
+    const int frameSamples)
+{
+    SpatialMeasurement result;
+    if (source.getNumChannels() < 2)
+        return result;
+
+    auto leftEnergy = 0.0;
+    auto rightEnergy = 0.0;
+    auto dot = 0.0;
+    for (const auto frame : selectedFrames)
+    {
+        const auto start = frameStarts[static_cast<size_t>(frame)];
+        for (int sample = 0; sample < frameSamples; ++sample)
+        {
+            const auto left = static_cast<double>(source.getSample(0, start + sample));
+            const auto right = static_cast<double>(source.getSample(1, start + sample));
+            leftEnergy += left * left;
+            rightEnergy += right * right;
+            dot += left * right;
+        }
+    }
+    const auto denominator = std::sqrt(leftEnergy * rightEnergy);
+    if (denominator > 1.0e-12)
+        result.correlation = static_cast<float>(
+            juce::jlimit(-1.0, 1.0, dot / denominator));
+    result.imbalanceDb = 10.0f * std::log10(static_cast<float>(
+        juce::jmax(1.0e-12, leftEnergy) / juce::jmax(1.0e-12, rightEnergy)));
+    return result;
+}
+
+void applyCircularMacroMovement(juce::AudioBuffer<float>& audio,
+                                const float sourceRangeDb,
+                                const float flatten,
+                                DeterministicRandom& random)
+{
+    const auto depthDb = juce::jlimit(0.0f, 9.0f, sourceRangeDb)
+                         * (1.0f - flatten) * 0.48f;
+    if (depthDb < 0.01f || audio.getNumSamples() == 0)
+        return;
+
+    constexpr std::array<float, 3> weights { 0.58f, 0.29f, 0.13f };
+    std::array<float, weights.size()> phases {};
+    std::array<int, weights.size()> cycles {};
+    for (size_t layer = 0; layer < weights.size(); ++layer)
+    {
+        phases[layer] = juce::MathConstants<float>::twoPi * random.unit();
+        cycles[layer] = 1 + static_cast<int>(random.next() % static_cast<uint32_t>(2 + layer * 2));
+    }
+
+    const auto gainAt = [&] (const int sample)
+    {
+        const auto position = static_cast<float>(sample)
+                              / static_cast<float>(audio.getNumSamples());
+        auto movement = 0.0f;
+        for (size_t layer = 0; layer < weights.size(); ++layer)
+            movement += weights[layer] * std::sin(
+                juce::MathConstants<float>::twoPi
+                    * static_cast<float>(cycles[layer]) * position
+                + phases[layer]);
+        return juce::Decibels::decibelsToGain(depthDb * movement);
+    };
+    auto squareGain = 0.0;
+    for (int sample = 0; sample < audio.getNumSamples(); ++sample)
+    {
+        const auto gain = gainAt(sample);
+        squareGain += static_cast<double>(gain) * gain;
+    }
+    const auto normalisation = 1.0f / std::sqrt(static_cast<float>(
+        squareGain / static_cast<double>(audio.getNumSamples())));
+    for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+        for (int sample = 0; sample < audio.getNumSamples(); ++sample)
+            audio.setSample(channel, sample, audio.getSample(channel, sample)
+                * gainAt(sample) * normalisation);
+}
+
+void matchStereoImage(juce::AudioBuffer<float>& audio,
+                      const SpatialMeasurement source,
+                      const float amount)
+{
+    if (audio.getNumChannels() < 2 || audio.getNumSamples() == 0 || amount <= 0.0f)
+        return;
+
+    const auto originalRms = RenderQuality::calculateRms(audio);
+    const auto currentCorrelation = RenderQuality::calculateStereoCorrelation(audio);
+    const auto desiredCorrelation = juce::jlimit(
+        -0.92f, 0.98f, currentCorrelation
+            + amount * (source.correlation - currentCorrelation));
+
+    auto midEnergy = 0.0;
+    auto sideEnergy = 0.0;
+    constexpr auto inverseRootTwo = 0.7071067811865475f;
+    for (int sample = 0; sample < audio.getNumSamples(); ++sample)
+    {
+        const auto left = audio.getSample(0, sample);
+        const auto right = audio.getSample(1, sample);
+        const auto mid = (left + right) * inverseRootTwo;
+        const auto side = (left - right) * inverseRootTwo;
+        midEnergy += static_cast<double>(mid) * mid;
+        sideEnergy += static_cast<double>(side) * side;
+    }
+    const auto currentRatio = std::sqrt(static_cast<float>(
+        juce::jmax(1.0e-12, sideEnergy) / juce::jmax(1.0e-12, midEnergy)));
+    const auto desiredRatio = std::sqrt(
+        (1.0f - desiredCorrelation) / (1.0f + desiredCorrelation));
+    const auto sideScale = juce::jlimit(0.25f, 4.0f,
+        desiredRatio / juce::jmax(1.0e-6f, currentRatio));
+    for (int sample = 0; sample < audio.getNumSamples(); ++sample)
+    {
+        const auto left = audio.getSample(0, sample);
+        const auto right = audio.getSample(1, sample);
+        const auto mid = (left + right) * inverseRootTwo;
+        const auto side = (left - right) * inverseRootTwo * sideScale;
+        audio.setSample(0, sample, (mid + side) * inverseRootTwo);
+        audio.setSample(1, sample, (mid - side) * inverseRootTwo);
+    }
+
+    const auto currentImbalance = RenderQuality::calculateStereoLevelImbalanceDb(audio);
+    const auto desiredImbalance = currentImbalance
+                                  + amount * (source.imbalanceDb - currentImbalance);
+    const auto correctionDb = juce::jlimit(-12.0f, 12.0f,
+                                            desiredImbalance - currentImbalance);
+    audio.applyGain(0, 0, audio.getNumSamples(),
+                    juce::Decibels::decibelsToGain(0.5f * correctionDb));
+    audio.applyGain(1, 0, audio.getNumSamples(),
+                    juce::Decibels::decibelsToGain(-0.5f * correctionDb));
+
+    const auto adjustedRms = RenderQuality::calculateRms(audio);
+    if (adjustedRms > 1.0e-9f)
+        audio.applyGain(originalRms / adjustedRms);
+}
+
 std::vector<float> analyseFrameSpectrum(const juce::AudioBuffer<float>& source,
                                         const int component,
                                         const int start,
@@ -319,167 +464,66 @@ std::vector<float> buildStationaryModel(
         const auto smoothed = static_cast<float>(
             (prefix[last] - prefix[first])
             / static_cast<double>(last - first));
-        model[bin] = std::exp(0.75f * raw[bin] + 0.25f * smoothed);
+        const auto isolatedPeak = juce::jlimit(
+            0.0f, 1.0f, (raw[bin] - smoothed - 0.18f) / 0.90f);
+        const auto…2084 tokens truncated…     const auto analysed = analyseBoundary(audio, start, window);
+        auto spectralCentre = 0.0f;
+        for (int band = 0; band < spectrumBands; ++band)
+            spectralCentre += static_cast<float>(band)
+                              * analysed.spectrum[static_cast<size_t>(band)];
+        features[static_cast<size_t>(frame)] = {
+            std::log(juce::jmax(1.0e-8f, analysed.rms)),
+            std::log(juce::jmax(1.0e-8f, analysed.derivative)),
+            spectralCentre,
+            analysed.stereoCorrelation
+        };
     }
-    model.front() = 0.0f;
-    return model;
-}
 
-float driftForBin(const std::array<float, driftBands>& states,
-                  const int bin,
-                  const int fftSize,
-                  const double sampleRate)
-{
-    constexpr std::array<float, driftBands> centres {
-        40.0f, 80.0f, 160.0f, 315.0f, 630.0f,
-        1250.0f, 2500.0f, 5000.0f, 10000.0f, 20000.0f
-    };
-    const auto frequency = static_cast<float>(
-        static_cast<double>(bin) * sampleRate / static_cast<double>(fftSize));
-    if (frequency <= centres.front())
-        return states.front();
-    for (int index = 1; index < driftBands; ++index)
+    for (int dimension = 0; dimension < dimensions; ++dimension)
     {
-        if (frequency <= centres[static_cast<size_t>(index)])
+        auto mean = 0.0;
+        for (const auto& feature : features)
+            mean += feature[static_cast<size_t>(dimension)];
+        mean /= static_cast<double>(features.size());
+        auto variance = 0.0;
+        for (const auto& feature : features)
         {
-            const auto low = std::log2(centres[static_cast<size_t>(index - 1)]);
-            const auto high = std::log2(centres[static_cast<size_t>(index)]);
-            const auto position = juce::jlimit(
-                0.0f, 1.0f, (std::log2(frequency) - low) / (high - low));
-            return states[static_cast<size_t>(index - 1)]
-                   + position * (states[static_cast<size_t>(index)]
-                                 - states[static_cast<size_t>(index - 1)]);
+            const auto centred = feature[static_cast<size_t>(dimension)] - mean;
+            variance += static_cast<double>(centred) * centred;
         }
-    }
-    return states.back();
-}
-
-std::vector<float> calculateSlowEnvelope(const juce::AudioBuffer<float>& audio,
-                                         const double sampleRate,
-                                         const float windowSeconds)
-{
-    const auto sampleCount = audio.getNumSamples();
-    std::vector<float> power(static_cast<size_t>(sampleCount), 0.0f);
-    for (int sample = 0; sample < sampleCount; ++sample)
-    {
-        auto value = 0.0f;
-        for (int channel = 0; channel < audio.getNumChannels(); ++channel)
-        {
-            const auto current = audio.getSample(channel, sample);
-            value += current * current;
-        }
-        power[static_cast<size_t>(sample)]
-            = value / static_cast<float>(juce::jmax(1, audio.getNumChannels()));
+        const auto scale = std::sqrt(
+            variance / static_cast<double>(features.size())) + 1.0e-7;
+        for (auto& feature : features)
+            feature[static_cast<size_t>(dimension)] = static_cast<float>(
+                (feature[static_cast<size_t>(dimension)] - mean) / scale);
     }
 
-    const auto window = juce::jlimit(
-        1, sampleCount, juce::roundToInt(sampleRate * windowSeconds));
-    const auto before = window / 2;
-    const auto after = window - before - 1;
-    const auto wrap = [sampleCount] (int sample)
+    const auto minimumLag = juce::jmax(
+        3, juce::roundToInt(0.40 * sampleRate / static_cast<double>(hop)));
+    const auto maximumLag = juce::jmin(frames / 2, frames - 12);
+    auto strongest = 0.0f;
+    for (int lag = minimumLag; lag <= maximumLag; ++lag)
     {
-        sample %= sampleCount;
-        return sample < 0 ? sample + sampleCount : sample;
-    };
-    auto sum = 0.0;
-    for (int offset = -before; offset <= after; ++offset)
-        sum += power[static_cast<size_t>(wrap(offset))];
-    std::vector<float> envelope(static_cast<size_t>(sampleCount), 0.0f);
-    for (int sample = 0; sample < sampleCount; ++sample)
-    {
-        envelope[static_cast<size_t>(sample)] = std::sqrt(
-            static_cast<float>(juce::jmax(0.0, sum)
-                               / static_cast<double>(window)));
-        sum -= power[static_cast<size_t>(wrap(sample - before))];
-        sum += power[static_cast<size_t>(wrap(sample + after + 1))];
-    }
-    return envelope;
-}
-
-float calculateMacroStability(const juce::AudioBuffer<float>& audio,
-                              const double sampleRate)
-{
-    const auto envelope = calculateSlowEnvelope(audio, sampleRate, 0.36f);
-    const auto low = juce::jmax(1.0e-7f, sampledPercentile(envelope, 0.10f));
-    const auto high = juce::jmax(low, sampledPercentile(envelope, 0.90f));
-    const auto rangeDecibels = 20.0f * std::log10(high / low);
-    auto mean = 0.0;
-    auto squareTotal = 0.0;
-    for (const auto value : envelope)
-    {
-        mean += value;
-        squareTotal += static_cast<double>(value) * value;
-    }
-    mean /= static_cast<double>(juce::jmax<size_t>(1u, envelope.size()));
-    const auto variance = juce::jmax(
-        0.0, squareTotal / static_cast<double>(
-            juce::jmax<size_t>(1u, envelope.size())) - mean * mean);
-    const auto coefficient = static_cast<float>(
-        std::sqrt(variance) / juce::jmax(1.0e-7, mean));
-    return 100.0f * std::exp(
-        -0.06f * rangeDecibels - 1.1f * coefficient);
-}
-
-float calculateStationarity(const juce::AudioBuffer<float>& audio,
-                            const double sampleRate)
-{
-    constexpr int observations = 16;
-    const auto window = juce::jlimit(
-        64, audio.getNumSamples(), juce::roundToInt(sampleRate * 0.20));
-    auto previous = analyseBoundary(audio, 0, window);
-    auto total = 0.0f;
-    for (int observation = 1; observation < observations; ++observation)
-    {
-        const auto start = observation * juce::jmax(0, audio.getNumSamples() - window)
-                           / (observations - 1);
-        const auto current = analyseBoundary(audio, start, window);
-        total += spectrumDistance(previous, current);
-        previous = current;
-    }
-    return similarityScore(total / static_cast<float>(observations - 1), 0.85f);
-}
-
-float compareSpectralModels(const std::vector<float>& sourceModel,
-                            const std::vector<float>& outputModel,
-                            const int fftSize,
-                            const double sampleRate)
-{
-    constexpr std::array<float, 13> edges {
-        20.0f, 50.0f, 80.0f, 125.0f, 200.0f, 315.0f, 500.0f,
-        800.0f, 1250.0f, 2500.0f, 5000.0f, 10000.0f, 24000.0f
-    };
-    std::array<double, edges.size() - 1u> sourceBands {};
-    std::array<double, edges.size() - 1u> outputBands {};
-    for (int bin = 1; bin <= fftSize / 2; ++bin)
-    {
-        const auto frequency = static_cast<float>(
-            static_cast<double>(bin) * sampleRate / static_cast<double>(fftSize));
-        for (size_t band = 0; band + 1u < edges.size(); ++band)
-        {
-            if (frequency >= edges[band]
-                && frequency < juce::jmin(
-                    edges[band + 1u], static_cast<float>(sampleRate * 0.5)))
+        auto dot = 0.0;
+        auto firstEnergy = 0.0;
+        auto secondEnergy = 0.0;
+        for (int frame = 0; frame + lag < frames; ++frame)
+            for (int dimension = 0; dimension < dimensions; ++dimension)
             {
-                sourceBands[band] += static_cast<double>(
-                    sourceModel[static_cast<size_t>(bin)])
-                    * sourceModel[static_cast<size_t>(bin)];
-                outputBands[band] += static_cast<double>(
-                    outputModel[static_cast<size_t>(bin)])
-                    * outputModel[static_cast<size_t>(bin)];
-                break;
+                const auto first = features[static_cast<size_t>(frame)]
+                                           [static_cast<size_t>(dimension)];
+                const auto second = features[static_cast<size_t>(frame + lag)]
+                                            [static_cast<size_t>(dimension)];
+                dot += static_cast<double>(first) * second;
+                firstEnergy += static_cast<double>(first) * first;
+                secondEnergy += static_cast<double>(second) * second;
             }
-        }
+        const auto denominator = std::sqrt(firstEnergy * secondEnergy);
+        if (denominator > 1.0e-12)
+            strongest = juce::jmax(
+                strongest, static_cast<float>(dot / denominator));
     }
-    const auto sourceTotal = std::accumulate(
-        sourceBands.begin(), sourceBands.end(), 1.0e-20);
-    const auto outputTotal = std::accumulate(
-        outputBands.begin(), outputBands.end(), 1.0e-20);
-    auto distance = 0.0f;
-    for (size_t band = 0; band < sourceBands.size(); ++band)
-        distance += std::abs(
-            static_cast<float>(sourceBands[band] / sourceTotal)
-            - static_cast<float>(outputBands[band] / outputTotal));
-    return similarityScore(distance, 2.0f);
+    return juce::jlimit(0.0f, 1.0f, strongest);
 }
 }
 
@@ -495,6 +539,8 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
 
     settings.durationSeconds = juce::jlimit(4.0f, 60.0f, settings.durationSeconds);
     settings.variation = juce::jlimit(0.0f, 1.0f, settings.variation);
+    settings.flatten = juce::jlimit(0.0f, 1.0f, settings.flatten);
+    settings.sourceMatch = juce::jlimit(0.0f, 1.0f, settings.sourceMatch);
     DeterministicRandom random(settings.seed);
 
     auto fftOrder = 12;
@@ -538,6 +584,32 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
             std::distance(levels.begin(),
                           std::max_element(levels.begin(), levels.end()))));
 
+    std::vector<float> activeLevels;
+    activeLevels.reserve(selectedFrames.size());
+    for (const auto frame : selectedFrames)
+        activeLevels.push_back(levels[static_cast<size_t>(frame)]);
+    const auto activeLow = juce::jmax(1.0e-8f, sampledPercentile(activeLevels, 0.10f));
+    const auto activeHigh = juce::jmax(activeLow, sampledPercentile(activeLevels, 0.90f));
+    const auto activeRangeDb = 20.0f * std::log10(activeHigh / activeLow);
+    const auto sourceSpatial = analyseSelectedSpatial(
+        source, frameStarts, selectedFrames, fftSize);
+    const auto referenceFrameCount = juce::jmin(
+        24, static_cast<int>(selectedFrames.size()));
+    juce::AudioBuffer<float> activeReference(
+        source.getNumChannels(), referenceFrameCount * fftSize);
+    for (int reference = 0; reference < referenceFrameCount; ++reference)
+    {
+        const auto selectedIndex = referenceFrameCount > 1
+            ? reference * (static_cast<int>(selectedFrames.size()) - 1)
+                / (referenceFrameCount - 1)
+            : 0;
+        const auto sourceStart = frameStarts[static_cast<size_t>(
+            selectedFrames[static_cast<size_t>(selectedIndex)])];
+        for (int channel = 0; channel < activeReference.getNumChannels(); ++channel)
+            activeReference.copyFrom(channel, reference * fftSize,
+                                     source, channel, sourceStart, fftSize);
+    }
+
     juce::dsp::FFT fft(fftOrder);
     const auto componentCount = source.getNumChannels() > 1 ? 2 : 1;
     std::array<std::vector<std::vector<float>>, 2> analysisSpectra;
@@ -552,9 +624,9 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
                 fftSize, fft));
         models[static_cast<size_t>(component)] = buildStationaryModel(spectra);
     }
-    result.sourceGrainStarts.reserve(selectedFrames.size());
+    result.analysisFrameStarts.reserve(selectedFrames.size());
     for (const auto frame : selectedFrames)
-        result.sourceGrainStarts.push_back(
+        result.analysisFrameStarts.push_back(
             frameStarts[static_cast<size_t>(frame)]);
 
     const auto targetSamples = juce::jmax(
@@ -563,17 +635,40 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     components.clear();
     std::vector<float> normalisation(static_cast<size_t>(targetSamples), 0.0f);
     std::vector<float> transform(static_cast<size_t>(2 * fftSize), 0.0f);
-    std::array<float, driftBands> driftState {};
-    const auto driftCoefficient = std::exp(
-        -static_cast<float>(hop) / static_cast<float>(sampleRate * 0.85));
-    const auto driftDrive = (0.12f + 0.62f * settings.variation)
-                            * std::sqrt(juce::jmax(
-                                0.0f, 1.0f - driftCoefficient * driftCoefficient));
+    const auto outputFrameCount = juce::jmax(1, (targetSamples + hop - 1) / hop);
+    std::array<std::array<float, driftLayers>, driftBands> driftPhases {};
+    std::array<std::array<int, driftLayers>, driftBands> driftCycles {};
+    constexpr std::array<float, driftLayers> driftWeights { 0.52f, 0.30f, 0.13f, 0.05f };
+    for (int band = 0; band < driftBands; ++band)
+        for (int layer = 0; layer < driftLayers; ++layer)
+        {
+            driftPhases[static_cast<size_t>(band)][static_cast<size_t>(layer)]
+                = juce::MathConstants<float>::twoPi * random.unit();
+            const auto maximumCycle = juce::jmax(1, 2 + layer * layer * 2);
+            driftCycles[static_cast<size_t>(band)][static_cast<size_t>(layer)]
+                = 1 + static_cast<int>(random.next()
+                    % static_cast<uint32_t>(maximumCycle));
+        }
 
-    for (int outputStart = 0; outputStart < targetSamples; outputStart += hop)
+    auto outputFrame = 0;
+    for (int outputStart = 0; outputStart < targetSamples;
+         outputStart += hop, ++outputFrame)
     {
-        for (auto& state : driftState)
-            state = driftCoefficient * state + driftDrive * random.gaussian();
+        std::array<float, driftBands> driftState {};
+        const auto circularPosition = static_cast<float>(outputFrame)
+                                      / static_cast<float>(outputFrameCount);
+        for (int band = 0; band < driftBands; ++band)
+            for (int layer = 0; layer < driftLayers; ++layer)
+                driftState[static_cast<size_t>(band)] +=
+                    (0.18f + (0.32f + 1.08f * settings.variation)
+                                  * (0.35f + 0.65f * (1.0f - settings.flatten)))
+                    * driftWeights[static_cast<size_t>(layer)]
+                    * std::sin(juce::MathConstants<float>::twoPi
+                                   * static_cast<float>(driftCycles[static_cast<size_t>(band)]
+                                                                  [static_cast<size_t>(layer)])
+                                   * circularPosition
+                               + driftPhases[static_cast<size_t>(band)]
+                                            [static_cast<size_t>(layer)]);
 
         for (int component = 0; component < componentCount; ++component)
         {
@@ -623,42 +718,39 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
                                  components.getSample(component, sample) * scale);
     }
 
-    result.audio.setSize(source.getNumChannels(), targetSamples, false, true, false);
     constexpr auto inverseRootTwo = 0.7071067811865475f;
     for (int sample = 0; sample < targetSamples; ++sample)
     {
         if (source.getNumChannels() < 2)
-        {
-            result.audio.setSample(0, sample, components.getSample(0, sample));
             continue;
-        }
         const auto mid = components.getSample(0, sample);
         const auto side = components.getSample(1, sample);
-        result.audio.setSample(0, sample, (mid + side) * inverseRootTwo);
-        result.audio.setSample(1, sample, (mid - side) * inverseRootTwo);
+        components.setSample(0, sample, (mid + side) * inverseRootTwo);
+        components.setSample(1, sample, (mid - side) * inverseRootTwo);
     }
+    result.audio = std::move(components);
 
-    std::vector<float> activeLevels;
-    for (const auto frame : selectedFrames)
-        activeLevels.push_back(levels[static_cast<size_t>(frame)]);
-    const auto targetRms = sampledPercentile(activeLevels, 0.60f);
-    auto outputEnergy = 0.0;
-    for (int channel = 0; channel < result.audio.getNumChannels(); ++channel)
-        for (int sample = 0; sample < targetSamples; ++sample)
-        {
-            const auto value = result.audio.getSample(channel, sample);
-            outputEnergy += static_cast<double>(value) * value;
-        }
-    const auto outputRms = std::sqrt(static_cast<float>(
-        outputEnergy / static_cast<double>(
-            targetSamples * result.audio.getNumChannels())));
-    result.audio.applyGain(targetRms / juce::jmax(1.0e-8f, outputRms));
-    auto peak = 0.0f;
-    for (int channel = 0; channel < result.audio.getNumChannels(); ++channel)
-        peak = juce::jmax(
-            peak, result.audio.getMagnitude(channel, 0, targetSamples));
-    if (peak > 0.98f)
-        result.audio.applyGain(0.98f / peak);
+    applyCircularMacroMovement(result.audio, activeRangeDb, settings.flatten, random);
+    result.containsOnlyFiniteSamples = RenderQuality::repairNonFiniteAndRemoveDc(
+        result.audio);
+
+    const auto sourceLoudness = RenderQuality::estimateIntegratedLoudnessDb(
+        activeReference, sampleRate);
+    const auto rawLoudness = RenderQuality::estimateIntegratedLoudnessDb(
+        result.audio, sampleRate);
+    const auto rawCorrelation = RenderQuality::calculateStereoCorrelation(result.audio);
+    const auto rawImbalance = RenderQuality::calculateStereoLevelImbalanceDb(result.audio);
+    const auto expectedCorrelation = rawCorrelation + settings.sourceMatch
+        * (sourceSpatial.correlation - rawCorrelation);
+    const auto expectedImbalance = rawImbalance + settings.sourceMatch
+        * (sourceSpatial.imbalanceDb - rawImbalance);
+    matchStereoImage(result.audio, sourceSpatial, settings.sourceMatch);
+
+    const auto matchedGainDb = settings.sourceMatch * juce::jlimit(
+        -18.0f, 18.0f, sourceLoudness - rawLoudness);
+    result.audio.applyGain(juce::Decibels::decibelsToGain(matchedGainDb));
+    const auto expectedLoudness = rawLoudness + matchedGainDb;
+    result.truePeakDbtp = RenderQuality::applyCircularTruePeakCeiling(result.audio, -1.0f);
 
     const auto featureSamples = juce::jlimit(
         64, targetSamples / 2, juce::roundToInt(sampleRate * 0.22));
@@ -698,18 +790,43 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     }
     result.spectrumPreservation = compareSpectralModels(
         models[0], buildStationaryModel(outputSpectra), fftSize, sampleRate);
-    result.stereoPreservation = 100.0f * std::exp(
-        -2.2f * std::abs(sourceFeature.stereoCorrelation
-                         - outputFeature.stereoCorrelation));
+    const auto outputLoudness = RenderQuality::estimateIntegratedLoudnessDb(
+        result.audio, sampleRate);
+    const auto outputCorrelation = RenderQuality::calculateStereoCorrelation(result.audio);
+    const auto outputImbalance = RenderQuality::calculateStereoLevelImbalanceDb(result.audio);
+    const auto loudnessErrorDb = std::abs(outputLoudness - expectedLoudness);
+    result.loudnessPreservation = 100.0f * std::exp(-0.30f * loudnessErrorDb);
+    result.phasePreservation = 100.0f * std::exp(
+        -3.2f * std::abs(outputCorrelation - expectedCorrelation));
+    result.positionPreservation = result.audio.getNumChannels() < 2 ? 100.0f
+        : 100.0f * std::exp(-0.24f * std::abs(outputImbalance - expectedImbalance));
+    result.stereoPreservation = 0.58f * result.phasePreservation
+                                + 0.42f * result.positionPreservation;
     result.transientPreservation = 100.0f * std::exp(
         -1.6f * std::abs(sourceFeature.derivative - outputFeature.derivative)
         / juce::jmax(0.01f,
                      sourceFeature.derivative + outputFeature.derivative));
     result.macroStability = calculateMacroStability(result.audio, sampleRate);
-    const auto frameCoverage = juce::jlimit(
-        0.0f, 1.0f, static_cast<float>(selectedFrames.size()) / 24.0f);
-    result.diversity = 100.0f * juce::jlimit(
-        0.0f, 1.0f, 0.65f + 0.20f * frameCoverage
-                          + 0.15f * settings.variation);
+    const auto repeatRisk = calculateRepeatRisk(result.audio, sampleRate);
+    result.repeatSafety = 100.0f * (1.0f - repeatRisk);
+    result.diversity = result.repeatSafety;
+    result.qualityScore = 0.20f * result.closureQuality
+                          + 0.08f * result.transitionQuality
+                          + 0.18f * result.spectrumPreservation
+                          + 0.12f * result.loudnessPreservation
+                          + 0.10f * result.phasePreservation
+                          + 0.08f * result.positionPreservation
+                          + 0.12f * result.macroStability
+                          + 0.12f * result.repeatSafety;
+    const auto requiredStability = 45.0f + 22.0f * settings.flatten;
+    result.passedQualityGate = result.containsOnlyFiniteSamples
+                               && result.truePeakDbtp <= -0.85f
+                               && result.closureQuality >= 62.0f
+                               && result.spectrumPreservation >= 42.0f
+                               && result.loudnessPreservation >= 70.0f
+                               && result.phasePreservation >= 62.0f
+                               && result.positionPreservation >= 62.0f
+                               && result.macroStability >= requiredStability
+                               && result.repeatSafety >= 58.0f;
     return result;
 }
