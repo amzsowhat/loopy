@@ -2,30 +2,38 @@
 
 ## P2 Loop Surgeon
 
-### Prototype 0.2 鈥?implemented
+### 0.6.0 pre-release source
 
-- VST3 and Standalone targets
-- mono/stereo host layouts
-- one-click capture with automatic start/end search around the requested duration
-- level, slope, spectral, phase, and stereo seam sub-scores
-- background analysis with no large clear or analysis pass on the audio thread
-- seam crossfade, smoothed wet/dry mix, and automatic playback
-- host parameter and gzip-compressed captured-audio state round trip
-- deterministic engine tests and Windows CI
-- Apple Silicon macOS CMake presets for Reaper testing
+- one VST3/Standalone product with two equal modes: Rotate & Repair and Texture Loop;
+- fixed Source In/Out selection in both modes;
+- full-selection circular rotation plus internal head/tail repair for designed ambience loops;
+- exact-length stationary texture synthesis for removing one-shot ADSR/pass-by motion;
+- user Flatten and combined Source Match depth for loudness, phase/correlation, stereo position and
+  channel balance;
+- source/generated audition with explicit Preview/Stop;
+- circular true-peak ceiling, closure, spectrum, loudness, phase, position, stability and repeat-risk
+  quality gates;
+- real spectrum, phase, correlation and position views;
+- 24-bit WAV export, DAW file drag and embedded project recall;
+- automatic GitHub Actions triggers disabled while the account quota is exhausted.
 
-### Prototype 0.3
+This revision is source-only. It has not been compiled, packaged, listened to, meter-validated or
+host-validated.
 
-- waveform overview with draggable loop markers
-- host-loop capture mode using sample-position context
-- bar/beat quantization and transport-aligned capture
-- multi-resolution FFT and perceptual weighting for difficult sources
-- higher-quality state restore resampling
+### Required before a sale candidate
 
-### Product 0.4
+- compile and run deterministic tests on Windows x64 and Apple Silicon;
+- fix all compiler, test, validator and REAPER failures;
+- compare K-weighted loudness and circular true-peak estimates with trusted meters;
+- test a licensed multi-category source corpus at 44.1, 48 and 96 kHz;
+- run blind A/B against competent manual loops and long-duration repeat listening;
+- measure memory, project size, save/restore latency and offline generation latency;
+- validate DAW recall, automation, export/reimport and drag delivery;
+- complete signing, notarisation, installer, licensing and support documentation.
 
-- local gain and spectral seam repair
-- salient-event lane and protected regions
-- long-duration repeat-risk analysis
-- cue/smpl marker and sidecar export on a background worker
-- compatibility matrix across supported DAWs
+### Later product work
+
+- frequency-dependent cross-channel coherence/covariance matching;
+- cancellable long synthesis and background import/export/state serialization;
+- waveform zoom, typed sample/time positions, snapping, keyboard nudge and undo/redo;
+- WAV `cue`/`smpl` metadata and batch/library workflows.
