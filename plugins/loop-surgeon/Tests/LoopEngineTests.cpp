@@ -1,5 +1,6 @@
 #include "LoopAnalyzer.h"
 #include "LoopEngine.h"
+#include "RenderQuality.h"
 #include "TextureSynthesizer.h"
 
 #include <algorithm>
@@ -214,6 +215,30 @@ int main()
     passed &= expect(repairedExact.repair > repairedBroken.repair,
                      "post-render repair scoring should reject a misleading bad seam");
 
+    const auto rotateReport = LoopAnalyzer::analyzeRotateRepair(
+        repeatedMaterial, automaticSampleRate, 3, 120);
+    passed &= expect(!rotateReport.candidates.empty(),
+                     "Rotate & Repair should propose full-selection loop starts");
+    if (!rotateReport.candidates.empty())
+    {
+        const auto& rotate = rotateReport.candidates.front();
+        const auto rotated = LoopAnalyzer::renderRotateRepair(repeatedMaterial, rotate);
+        passed &= expect(rotate.startSample == 0
+                             && rotate.endSample == repeatedMaterial.getNumSamples(),
+                         "Rotate & Repair must keep the full selected source range");
+        passed &= expect(rotate.rotationSample > rotate.startSample
+                             && rotate.rotationSample < rotate.endSample,
+                         "Rotate & Repair should choose an internal natural loop start");
+        passed &= expect(rotated.getNumSamples()
+                             == repeatedMaterial.getNumSamples() - rotate.repairOverlapSamples,
+                         "only the internal seam overlap may shorten a repaired long loop");
+        passed &= expect(rotated.getNumSamples() > repeatedMaterial.getNumSamples() * 9 / 10,
+                         "Rotate & Repair must never collapse a long source into a short period");
+        passed &= expect(RenderQuality::estimateCircularTruePeak(rotated)
+                             <= juce::Decibels::decibelsToGain(-0.85f),
+                         "repaired loop must retain true-peak headroom");
+    }
+
     juce::AudioBuffer<float> silenceTrap(1, truePeriod * 6);
     silenceTrap.clear();
     for (int sample = truePeriod; sample < silenceTrap.getNumSamples(); ++sample)
@@ -253,6 +278,8 @@ int main()
     TextureSynthesisSettings textureSettings;
     textureSettings.durationSeconds = 12.0f;
     textureSettings.variation = 0.82f;
+    textureSettings.flatten = 0.76f;
+    textureSettings.sourceMatch = 0.90f;
     textureSettings.seed = 0xabc123u;
     const auto textureA = TextureSynthesizer::synthesize(
         windOneShot, automaticSampleRate, textureSettings);
@@ -265,7 +292,7 @@ int main()
                      "texture synthesis should create the requested long output");
     passed &= expect(textureA.audio.getNumSamples() > windOneShot.getNumSamples(),
                      "one-shot texture output should be longer than its source");
-    passed &= expect(textureA.sourceGrainStarts.size() > 4,
+    passed &= expect(textureA.analysisFrameStarts.size() > 4,
                      "texture model should learn from multiple active source frames");
     auto deterministicError = 0.0;
     auto seedDifference = 0.0;
@@ -290,32 +317,52 @@ int main()
                      "texture path should retain measurable source-position diversity");
     passed &= expect(textureA.closureQuality >= 0.0f && textureA.closureQuality <= 100.0f,
                      "texture circular closure score should be normalized");
-
-    // Regression: a one-shot's single swell/decay must not become a train of new attacks.
-    juce::AudioBuffer<float> envelopedWind(2, 14000);
-    noiseState = 0x51f15e1u;
-    auto colouredLeft = 0.0f;
-    auto colouredRight = 0.0f;
-    for (int sample = 0; sample < envelopedWind.getNumSamples(); ++sample)
-    {
-        noiseState ^= noiseState << 13u;
-        noiseState ^= noiseState >> 17u;
-        noiseState ^= noiseState << 5u;
-        const auto white = static_cast<float>(noiseState & 0xffffu) / 32768.0f - 1.0f;
-        const auto progress = static_cast<float>(sample)
-                              / static_cast<float>(envelopedWind.getNumSamples() - 1);
-        float macroEnvelope = 0.0f;
-        if (progress < 0.20f)
-        {
-            const auto attack = progress / 0.20f;
-            macroEnvelope = attack * attack * (3.0f - 2.0f * attack);
-        }
-        else
-        {
-            const auto decay = (progress - 0.20f) / 0.80f;
-            macroEnvelope = std::pow(juce::jmax(0.0f, 1.0f - decay), 1.65f);
-        }
-        colouredLeft = 0.94f * colouredLeft + 0.06f * white;
+    passed &= expect(textureA.containsOnlyFiniteSamples,
+                     "texture delivery must contain only finite samples");
+    passed &= expect(textureA.truePeakDbtp <= -0.85f,
+                     "texture delivery must retain at least 0.85 dBTP headroom");
+    passed &= expect(textureA.repeatSafety >= 0.0f && textureA.repeatSafety <= 100.0f,
+                     "texture repetition risk must be normalized");
+    passed &= expect(textureA.qualityScore >= 0.0f && textureA.qualityScore <= 100.0f,
+                     "commercial quality gate score must be normalized");
+    passed &= expect(textureA.passedQualityGate == textureARepeat.passedQualityGate,
+                     "quality gate must be deterministic for project recall");
+    passed &= expect(textureA.loudnessPreservation >= 0.0f
+                         && textureA.loudnessPreservation <= 100.0f,
+                     "texture loudness matching score should be normalized");
+    passed &= expect(textureA.phasePreservation >= 0.0f
+                         && textureA.phasePreservation <= 100.0f,
+                     "texture phase/correlation matching score should be normalized");
+    passed &= expect(textureA.positionPreservation >= 0.0f
+                         && textureA.positionPreservation <= 100.0f,
+                     "texture stereo position score should be normalized");
+    auto unmatchedSettings = textureSettings;
+    unmatchedSettings.seed = 0x31c0ffeeu;
+    unmatchedSettings.sourceMatch = 0.0f;
+    const auto unmatchedTexture = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, unmatchedSettings);
+    auto matchedSettings = unmatchedSettings;
+    matchedSettings.sourceMatch = 1.0f;
+    const auto matchedTexture = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, matchedSettings);
+    const auto sourceLoudness = RenderQuality::estimateIntegratedLoudnessDb(
+        windOneShot, automaticSampleRate);
+    const auto unmatchedLoudness = RenderQuality::estimateIntegratedLoudnessDb(
+        unmatchedTexture.audio, automaticSampleRate);
+    const auto matchedLoudness = RenderQuality::estimateIntegratedLoudnessDb(
+        matchedTexture.audio, automaticSampleRate);
+    passed &= expect(std::abs(matchedLoudness - sourceLoudness)
+                         <= std::abs(unmatchedLoudness - sourceLoudness) + 0.5f,
+                     "Source Match should move output loudness toward the selected source");
+    const auto sourceCorrelation = RenderQuality::calculateStereoCorrelation(windOneShot);
+    const auto unmatchedCorrelation = RenderQuality::calculateStereoCorrelation(
+        unmatchedTexture.audio);
+    const auto matchedCorrelation = RenderQuality::calculateStereoCorrelation(
+        matchedTexture.audio);
+    passed &= expect(std::abs(matchedCorrelation - sourceCorrelation)
+                         <= std::abs(unmatchedCorrelation - sourceCorrelation) + 0.03f,
+                     "Source Match should move channel correlation toward the selected source");
+ …548 tokens truncated….06f * white;
         colouredRight = 0.91f * colouredRight + 0.09f * (0.77f * white
             + 0.23f * std::sin(0.031f * static_cast<float>(sample)));
         envelopedWind.setSample(0, sample, macroEnvelope * colouredLeft);
@@ -324,6 +371,7 @@ int main()
     TextureSynthesisSettings stationarySettings;
     stationarySettings.durationSeconds = 16.0f;
     stationarySettings.variation = 0.76f;
+    stationarySettings.flatten = 0.90f;
     stationarySettings.seed = 0x5a17b33fu;
     const auto stationaryTexture = TextureSynthesizer::synthesize(
         envelopedWind, automaticSampleRate, stationarySettings);
@@ -346,6 +394,13 @@ int main()
                      "texture report should reject output with obvious repeated attacks");
     passed &= expect(stationaryTexture.spectrumPreservation >= 35.0f,
                      "macro-envelope removal must retain the source timbral fingerprint");
+    auto movingSettings = stationarySettings;
+    movingSettings.flatten = 0.05f;
+    const auto movingTexture = TextureSynthesizer::synthesize(
+        envelopedWind, automaticSampleRate, movingSettings);
+    passed &= expect(coefficientOfVariation(outputBlocks)
+                         < coefficientOfVariation(blockRms(movingTexture.audio, 500)),
+                     "Flatten should give the user direct control over macro movement");
 
     juce::AudioBuffer<float> passByOneShot(2, 16000);
     noiseState = 0x7af31d9u;
@@ -393,17 +448,23 @@ int main()
 
     LoopEngine textureEngine;
     textureEngine.prepare(automaticSampleRate, 64, 2);
-    textureEngine.setGenerationMode(LoopEngine::GenerationMode::evolvingTexture);
+    textureEngine.setGenerationMode(LoopEngine::GenerationMode::textureLoop);
     textureEngine.setTextureDurationSeconds(6.0f);
     textureEngine.setTextureVariation(0.8f);
+    textureEngine.setTextureFlatten(0.8f);
+    textureEngine.setTextureSourceMatch(0.9f);
     textureEngine.submitSource(windOneShot, "wind-one-shot.wav");
+    passed &= expect(textureEngine.getState() == LoopEngine::State::sourceReady,
+                     "file import should wait for the user to choose range and mode");
+    passed &= expect(textureEngine.reanalyzeSourceRange(0.0f, 1.0f),
+                     "Generate should start Texture Loop from the selected range");
     passed &= expect(waitForReady(textureEngine),
-                     "evolving texture mode should finish in the background");
+                      "evolving texture mode should finish in the background");
     passed &= expect(textureEngine.getLastUsedGenerationMode()
-                         == LoopEngine::GenerationMode::evolvingTexture,
+                         == LoopEngine::GenerationMode::textureLoop,
                      "explicit texture selection should be retained");
-    passed &= expect(textureEngine.getCandidateCount() == 3,
-                     "texture mode should offer three seeded variations");
+    passed &= expect(textureEngine.getCandidateCount() == 2,
+                     "texture mode should retain two alternatives without tripling memory use");
     const auto engineTexture = textureEngine.createRenderedLoop();
     passed &= expect(engineTexture.getNumSamples() == 12000,
                      "engine should publish the requested generated texture length");
@@ -434,30 +495,14 @@ int main()
     passed &= expect(texturePreview.getMagnitude(0, 0, 64) > 0.0f,
                      "Generated audition should start playback immediately");
 
-    LoopEngine automaticModeEngine;
-    automaticModeEngine.prepare(automaticSampleRate, 64, 2);
-    automaticModeEngine.setGenerationMode(LoopEngine::GenerationMode::automatic);
-    automaticModeEngine.submitSource(repeatedMaterial, "periodic-material.wav");
-    passed &= expect(waitForReady(automaticModeEngine),
-                     "Auto mode should finish analysing periodic material");
-    passed &= expect(automaticModeEngine.getLastUsedGenerationMode()
-                         == LoopEngine::GenerationMode::seamLoop,
-                     "Auto mode should keep a strongly periodic source as a seam loop");
-    LoopEngine automaticWindEngine;
-    automaticWindEngine.prepare(automaticSampleRate, 64, 2);
-    automaticWindEngine.setGenerationMode(LoopEngine::GenerationMode::automatic);
-    automaticWindEngine.setTextureDurationSeconds(6.0f);
-    automaticWindEngine.submitSource(windOneShot, "wind-auto.wav");
-    passed &= expect(waitForReady(automaticWindEngine),
-                     "Auto mode should finish analysing stochastic material");
-    passed &= expect(automaticWindEngine.getLastUsedGenerationMode()
-                         == LoopEngine::GenerationMode::evolvingTexture,
-                     "Auto mode should route stochastic wind material to texture synthesis");
-
     LoopEngine rangeEngine;
     rangeEngine.prepare(automaticSampleRate, 64, 2);
-    rangeEngine.setGenerationMode(LoopEngine::GenerationMode::seamLoop);
+    rangeEngine.setGenerationMode(LoopEngine::GenerationMode::rotateRepair);
     rangeEngine.submitSource(repeatedMaterial, "repeated-material.wav");
+    passed &= expect(rangeEngine.getState() == LoopEngine::State::sourceReady,
+                     "loaded ambience should wait for an explicit Generate action");
+    passed &= expect(rangeEngine.reanalyzeSourceRange(0.0f, 1.0f),
+                     "Generate should start Rotate & Repair from the selected range");
     passed &= expect(waitForReady(rangeEngine), "imported source should be analysed in background");
     passed &= expect(rangeEngine.getCandidateCount() > 0,
                      "imported source should expose alternate candidates");
@@ -466,18 +511,29 @@ int main()
     passed &= expect(rangeEngine.reanalyzeSourceRange(0.3f, 0.9f),
                      "source In/Out selection should queue reanalysis");
     passed &= expect(waitForReady(rangeEngine), "selected source range should finish analysis");
-    passed &= expect(rangeEngine.getLoopStartProportion() >= 0.29f
-                         && rangeEngine.getLoopEndProportion() <= 0.91f,
-                     "automatic loop must remain inside user Source In/Out selection");
-    passed &= expect(rangeEngine.setManualLoopRange(0.4f, 0.55f),
-                     "draggable Loop In/Out should publish a manually refined loop");
-    passed &= expect(std::abs(rangeEngine.getLoopStartProportion() - 0.4f) < 0.002f
-                         && std::abs(rangeEngine.getLoopEndProportion() - 0.55f) < 0.002f,
-                     "manual Loop In/Out should retain the requested visible range");
+    passed &= expect(rangeEngine.getRotationProportion() >= 0.3f
+                         && rangeEngine.getRotationProportion() <= 0.9f,
+                     "automatic loop start must remain inside user Source In/Out selection");
+    passed &= expect(rangeEngine.setManualRotationPoint(0.4f),
+                     "draggable Loop Start should publish a manually rotated loop");
+    passed &= expect(std::abs(rangeEngine.getRotationProportion() - 0.4f) < 0.002f,
+                     "manual Loop Start should retain the requested rotation point");
     const auto manualRendered = rangeEngine.createRenderedLoop();
-    passed &= expect(std::abs(manualRendered.getNumSamples()
-                              - juce::roundToInt(0.15 * repeatedMaterial.getNumSamples())) < 3,
-                     "manual loop crossfade must preserve the visible Loop In/Out duration");
+    passed &= expect(manualRendered.getNumSamples()
+                         > juce::roundToInt(0.55 * repeatedMaterial.getNumSamples()),
+                     "Rotate & Repair must preserve the selected long-form material");
+    passed &= expect(rangeEngine.getSignalSnapshot().valid,
+                      "ready output should publish real spectrum, phase and correlation analysis");
+    const auto rangeState = rangeEngine.createLoopState();
+    LoopEngine restoredRange;
+    restoredRange.prepare(automaticSampleRate, 64, 2);
+    passed &= expect(restoredRange.restoreLoopState(
+                         rangeState.getData(), rangeState.getSize()),
+                     "selected source range and repaired result should restore");
+    passed &= expect(std::abs(restoredRange.getAnalysisRangeStartProportion() - 0.3f) < 0.002f
+                         && std::abs(restoredRange.getAnalysisRangeEndProportion() - 0.9f) < 0.002f
+                         && std::abs(restoredRange.getRotationProportion() - 0.4f) < 0.002f,
+                     "project recall should restore Source In/Out and Loop Start positions");
     rangeEngine.setPreviewMode(LoopEngine::PreviewMode::original);
     rangeEngine.setPreviewPlaying(true);
     juce::AudioBuffer<float> originalPreview(2, 64);
@@ -509,7 +565,7 @@ int main()
     constexpr auto testSampleRate = 1000.0;
     LoopEngine engine;
     engine.prepare(testSampleRate, 64, 2);
-    engine.setLoopLengthSeconds(0.1f);
+    engine.setLoopLengthSeconds(0.4f);
     engine.setCrossfadeMilliseconds(5.0f);
     engine.beginCapture();
 
@@ -612,12 +668,17 @@ int main()
                      "restored loop should be immediately ready");
     passed &= expect(restored.getCapturedSampleCount() == engine.getCapturedSampleCount(),
                      "restored loop length should match");
+    passed &= expect(restored.getSourceName() == "DAW Capture"
+                         && restored.getWaveformPreview().size() == 320,
+                     "DAW project recall should restore the source and editable range context");
+    passed &= expect(restored.getSignalSnapshot().valid,
+                     "DAW project recall should restore spectrum, phase and correlation analysis");
 
     engine.clear();
     playback.clear();
     engine.process(playback, 1.0f);
-    passed &= expect(engine.getState() == LoopEngine::State::empty,
-                     "clear should return the engine to empty without clearing large buffers");
+    passed &= expect(engine.getState() == LoopEngine::State::sourceReady,
+                      "Clear Result should retain the source for another generation");
 
     if (!passed)
         return 1;
