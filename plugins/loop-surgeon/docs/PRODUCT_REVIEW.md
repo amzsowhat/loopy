@@ -1,4 +1,4 @@
-# Loop Surgeon 0.6.0 pre-release review
+# Loop Surgeon 0.6.1 pre-release review
 
 ## Product correction
 
@@ -19,8 +19,8 @@ There is no Auto mode. The user selects the treatment appropriate to the source.
 - load-only file import followed by an explicit Generate action, so mode and range are chosen before
   expensive processing starts;
 - full-selection forward-only Rotate & Repair with adaptive internal seam overlap;
-- Texture Loop temporal-median spectral modelling, isolated-peak smoothing, random complex spectra,
-  circular multiscale drift and circular overlap-add;
+- Texture Loop source-exemplar selection, phase-preserving forward segments, boundary-matched
+  transition paths, reuse penalties, non-uniform circular placement and complementary crossfades;
 - explicit Flatten and Source Match controls;
 - active-frame gated K-weighted loudness matching, stereo correlation/width and left/right position
   matching with one user Source Match depth;
@@ -35,20 +35,20 @@ There is no Auto mode. The user selects the treatment appropriate to the source.
 - automatic GitHub Actions triggers removed from all three workflows so source synchronization does
   not consume the exhausted account quota.
 
-## What has not been verified
+## Verification status
 
-This revision was intentionally not built. No compiler result, deterministic-test result, plug-in
-validator result, packaged VST3 or REAPER session exists for 0.6.0 yet. All items above mean
-implemented in source and statically inspected, not proven working.
+Windows x64 Release compilation and the deterministic engine suite pass locally. The supplied
+underwater ice impact was also rendered through the offline Texture path. Its new source-frame
+timbre score is materially higher than the removed random-phase renderer, while its 200 ms macro
+level range remains controlled. This is automated evidence, not a substitute for listening.
 
-The earlier 0.5.2 wind experiment showed that spectral reconstruction could reduce copied pass-by
-correlation substantially, but those figures cannot validate the new code. The new loudness,
-spatial, state and Rotate & Repair paths require fresh measurements.
+VST3 Validator, Windows REAPER listening for 0.6.1, native Apple Silicon REAPER, trusted meter
+comparison and a licensed multi-category listening corpus remain unverified.
 
 ## Remaining commercial blockers
 
-1. Compile and run deterministic tests on Windows and Apple Silicon after build capacity is
-   available, then fix all compiler/test failures.
+1. Run VST3 Validator, Windows REAPER and native Apple Silicon REAPER, then fix host-specific
+   failures.
 2. Validate the K-weighting and true-peak results against trusted reference meters.
 3. Test the supplied whoosh plus a licensed multi-category corpus; include blind manual-loop A/B,
    repeated-boundary listening and at least 44.1/48/96 kHz.
