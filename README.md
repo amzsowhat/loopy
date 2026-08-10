@@ -8,16 +8,16 @@ keeps Codex sessions and CI consistent across machines.
 
 | Product | Directory | Status |
 | --- | --- | --- |
-| P2 Loop Surgeon | [`plugins/loop-surgeon`](plugins/loop-surgeon) | One-shot texture and seamless-loop alpha |
+| P2 Loop Surgeon | [`plugins/loop-surgeon`](plugins/loop-surgeon) | Rotate/repair and texture-loop pre-release source |
 
-## Demo capabilities
+## Loop Surgeon capabilities
 
 Loop Surgeon builds as both a VST3 effect and a Standalone application. Drop in source audio, limit
-the material with Source In/Out, then choose Auto, Stationary Texture, or Direct Seam Loop. Texture
-mode learns a median Mid/Side spectral model and synthesizes a new 4–60 second stochastic result
-without copying the source's attack, decay, or pass-by trajectory. Direct Seam Loop remains the
-explainable traditional short-period path. The selected result is stored in the DAW project and
-exports as a 24-bit WAV.
+the material with Source In/Out, then choose one of two equal modes. **Rotate & Repair** preserves a
+complete long ambience, rotates at an internal natural cut, and repairs the moved old head/tail seam.
+**Texture Loop** learns robust source colour and synthesizes a new exact-length circular result
+without copying, reversing, stretching, or retaining the source's ordered ADSR/pass-by trajectory.
+The active result and source/edit context are stored in the DAW project and export as a 24-bit WAV.
 
 ## Build on Windows
 
@@ -35,11 +35,11 @@ ctest --preset test-debug -C Debug --output-on-failure
 
 Release builds use `vs2022-release` and `build-release`.
 
-## Download for Windows / Reaper
+## Windows / REAPER status
 
-The 0.5.2 Alpha spectral-texture source is on `main`, but the Windows package is not listed as
-downloadable until the `v0.5.2-alpha-windows-ready` CI marker exists. Earlier binaries still use the
-discarded correlated long-grain texture engine.
+The current 0.6.0 revision is source-only. GitHub Actions builds are manual-only because the account
+quota is exhausted, and this revision has not been compiled or packaged. Earlier 0.5.2 binaries do
+not contain Rotate & Repair, Flatten, Source Match, the new quality gate, or full source recall.
 
 Unzip the package and copy the complete `Loop Surgeon.vst3` folder to:
 
@@ -53,11 +53,10 @@ for the smoke-test checklist.
 
 ## Build on macOS for Reaper
 
-### Download the M-series Mac build
+### M-series Mac status
 
-The Apple Silicon package is not listed as downloadable until the
-`v0.5.2-alpha-macos-ready` CI marker exists. Earlier binaries are not a valid test of the current
-workflow or algorithm.
+There is no 0.6.0 Apple Silicon package yet. Earlier binaries are not a valid test of the current
+workflow or algorithms.
 
 Unzip it and copy `Loop Surgeon.vst3` to `~/Library/Audio/Plug-Ins/VST3/`. If macOS blocks
 the private ad-hoc-signed test build, run:
