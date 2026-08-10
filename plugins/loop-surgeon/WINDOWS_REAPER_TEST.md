@@ -1,9 +1,10 @@
-# Loop Surgeon 0.6.0：Windows / REAPER 测试说明
+# Loop Surgeon 0.6.0-pre：Windows / REAPER 测试说明
 
-当前 0.6.0 只有源码，尚未构建测试包。GitHub Actions 自动触发已关闭，避免继续消耗已
-用完的额度；旧 0.5.2 VST3 不能用于判断这里的新算法。
+这是本机生成的 Windows x64 测试包。本地 Release 编译与确定性测试已经通过；尚未完成
+Plugin Validator、完整素材库试听和多采样率 REAPER 验证，因此仍是测试版本。GitHub
+Actions 自动触发保持关闭，未消耗远端构建额度。
 
-## 有新测试包后的安装
+## 安装
 
 1. 关闭 REAPER。
 2. 将完整的 `Loop Surgeon.vst3` 文件夹复制到：
