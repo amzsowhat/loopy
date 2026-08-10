@@ -1,4 +1,4 @@
-#include "LoopAnalyzer.h"
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠#include "LoopAnalyzer.h"
 
 #include "RenderQuality.h"
 
@@ -343,467 +343,4 @@ LoopAnalysisResult evaluateCandidate(const juce::AudioBuffer<float>& audio, cons
         : calculateLevelScore(audio, start, end, effectiveWindow);
     result.slope = calculateSlopeScore(audio, start, end);
     result.phase = detailed
-        ? 0.60f * calculatePhaseScore(audio, start, end, effectiveWindow)
-              + 0.40f * calculatePhaseScore(audio, start, end, longWindow)
-        : calculatePhaseScore(audio, start, end, effectiveWindow);
-    result.stereo = detailed
-        ? 0.60f * calculateStereoScore(audio, start, end, effectiveWindow)
-              + 0.40f * calculateStereoScore(audio, start, end, longWindow)
-        : calculateStereoScore(audio, start, end, effectiveWindow);
-    result.transient = detailed
-        ? 0.65f * calculateTransientScore(audio, start, end, effectiveWindow)
-              + 0.35f * calculateTransientScore(audio, start, end, longWindow)
-        : calculateTransientScore(audio, start, end, effectiveWindow);
-    result.periodicity = periodicity;
-    result.spectrum = detailed ? calculateSpectrumScore(audio, start, end, longWindow) : 0.0f;
-    result.repair = calculateRepairScore(audio, start, end, result.repairOverlapSamples,
-                                         result.phase);
-    const auto visibleSamples = end - start - result.repairOverlapSamples;
-    const auto durationError = std::abs(visibleSamples - requestedVisibleSamples)
-                               / static_cast<double>(juce::jmax(1, requestedVisibleSamples));
-    const auto duration = clampScore(100.0 * std::exp(-8.0 * durationError));
-    const auto localRms = 0.5 * (sampleRms(audio, start, effectiveWindow)
-                                 + sampleRms(audio, end - effectiveWindow, effectiveWindow));
-    const auto activity = clampScore(100.0 * localRms / juce::jmax(1.0e-8, sourceRms * 0.35));
-
-    const auto weighted = detailed
-        ? 0.13f * result.waveform + 0.09f * result.level + 0.06f * result.slope
-              + 0.12f * result.phase + 0.06f * result.stereo
-              + 0.11f * result.transient + 0.13f * result.spectrum
-              + 0.20f * result.repair + 0.06f * result.periodicity + 0.04f * duration
-        : 0.18f * result.waveform + 0.11f * result.level + 0.08f * result.slope
-              + 0.16f * result.phase + 0.07f * result.stereo
-              + 0.13f * result.transient + 0.20f * result.repair
-              + 0.07f * result.periodicity;
-    const auto weakestCritical = juce::jmin(result.waveform, result.phase,
-                                            result.transient, result.repair);
-    result.overall = (0.82f * weighted + 0.18f * weakestCritical)
-                     * (0.65f + 0.35f * activity / 100.0f);
-    return result;
-}
-
-void keepBest(std::vector<Candidate>& finalists, Candidate candidate, const size_t maximum)
-{
-    if (finalists.size() < maximum)
-    {
-        finalists.push_back(std::move(candidate));
-        return;
-    }
-    const auto weakest = std::min_element(finalists.begin(), finalists.end(),
-                                          [] (const auto& left, const auto& right)
-                                          {
-                                              return left.cheapScore < right.cheapScore;
-                                          });
-    if (candidate.cheapScore > weakest->cheapScore)
-        *weakest = std::move(candidate);
-}
-
-std::vector<PeriodCandidate> findPeriods(const juce::AudioBuffer<float>& audio,
-                                         const double sampleRate,
-                                         const int minimumSamples,
-                                         const int maximumSamples)
-{
-    const auto hop = juce::jmax(1, juce::roundToInt(sampleRate / 100.0));
-    const auto frames = audio.getNumSamples() / hop;
-    constexpr std::array<int, 4> spectralCycles { 1, 3, 8, 20 };
-    constexpr auto featureCount = spectralCycles.size() + 2;
-    using FeatureFrame = std::array<double, featureCount>;
-    std::array<std::vector<dou‚Ä¶361 tokens truncated‚Ä¶o.getNumChannels());
-            energy += mono * mono;
-            if (index > 0)
-                derivative += std::abs(mono - previous);
-            previous = mono;
-            for (size_t band = 0; band < spectralCycles.size(); ++band)
-            {
-                real[band] += mono * cosines[band][static_cast<size_t>(index)];
-                imaginary[band] -= mono * sines[band][static_cast<size_t>(index)];
-            }
-        }
-        feature[0] = std::log(std::sqrt(energy / hop) + 1.0e-9);
-        feature[1] = std::log(derivative / juce::jmax(1, hop - 1) + 1.0e-9);
-        for (size_t band = 0; band < spectralCycles.size(); ++band)
-            feature[band + 2] = std::log(std::sqrt(real[band] * real[band]
-                                                   + imaginary[band] * imaginary[band]) + 1.0e-9);
-    }
-
-    for (size_t featureIndex = 0; featureIndex < featureCount; ++featureIndex)
-    {
-        double mean = 0.0;
-        for (const auto& frame : features)
-            mean += frame[featureIndex];
-        mean /= juce::jmax<size_t>(1, features.size());
-        double variance = 0.0;
-        for (const auto& frame : features)
-            variance += (frame[featureIndex] - mean) * (frame[featureIndex] - mean);
-        const auto scale = std::sqrt(variance / juce::jmax<size_t>(1, features.size())) + 1.0e-9;
-        for (auto& frame : features)
-            frame[featureIndex] = (frame[featureIndex] - mean) / scale;
-    }
-
-    const auto minimumLag = juce::jmax(1, minimumSamples / hop);
-    const auto maximumLag = juce::jmin(frames - 2, maximumSamples / hop);
-    std::vector<PeriodCandidate> periods;
-    for (int lag = minimumLag; lag <= maximumLag; ++lag)
-    {
-        double dot = 0.0;
-        double firstEnergy = 0.0;
-        double secondEnergy = 0.0;
-        for (int index = 0; index + lag < frames; ++index)
-        {
-            for (size_t featureIndex = 0; featureIndex < featureCount; ++featureIndex)
-            {
-                const auto first = features[static_cast<size_t>(index)][featureIndex];
-                const auto second = features[static_cast<size_t>(index + lag)][featureIndex];
-                dot += first * second;
-                firstEnergy += first * first;
-                secondEnergy += second * second;
-            }
-        }
-        const auto denominator = std::sqrt(firstEnergy * secondEnergy);
-        const auto correlation = denominator > 1.0e-12 ? juce::jlimit(-1.0, 1.0, dot / denominator) : 0.0;
-        periods.push_back({ lag * hop, clampScore(50.0 * (correlation + 1.0)) });
-    }
-    std::sort(periods.begin(), periods.end(), [] (const auto& left, const auto& right)
-    {
-        return left.score > right.score;
-    });
-    std::vector<PeriodCandidate> distinct;
-    for (const auto& period : periods)
-    {
-        const auto duplicate = std::any_of(distinct.begin(), distinct.end(), [&] (const auto& kept)
-        {
-            return std::abs(kept.samples - period.samples) < juce::jmax(hop * 3, kept.samples / 20);
-        });
-        if (!duplicate)
-            distinct.push_back(period);
-        if (distinct.size() == 6)
-            break;
-    }
-    return distinct;
-}
-
-LoopAnalysisResult searchAtPeriod(const juce::AudioBuffer<float>& audio, const double sampleRate,
-                                  const PeriodCandidate period, const int refinementRadius,
-                                  const int maximumRepairOverlapSamples,
-                                  const double sourceRms)
-{
-    const auto window = juce::jlimit(16, juce::jmin(512, audio.getNumSamples() / 4),
-                                     juce::roundToInt(sampleRate * 0.012));
-    const auto startStep = juce::jmax(1, juce::roundToInt(sampleRate * 0.02));
-    const auto lengthStep = juce::jmax(1, juce::roundToInt(sampleRate * 0.0025));
-    const auto preferredRepair = juce::jmax(0, maximumRepairOverlapSamples);
-    const auto requestedSourceSpan = period.samples + preferredRepair;
-    std::vector<Candidate> finalists;
-    for (int start = 0; start + requestedSourceSpan - refinementRadius < audio.getNumSamples(); start += startStep)
-    {
-        for (int offset = -refinementRadius; offset <= refinementRadius; offset += lengthStep)
-        {
-            const auto end = start + requestedSourceSpan + offset;
-            if (end > audio.getNumSamples() || end - start < window * 2)
-                continue;
-            Candidate candidate;
-            candidate.result = evaluateCandidate(audio, start, end, period.samples,
-                                                  window, false, period.score, preferredRepair,
-                                                  sourceRms, sampleRate);
-            candidate.cheapScore = candidate.result.overall;
-            keepBest(finalists, std::move(candidate), 16);
-        }
-    }
-    LoopAnalysisResult best;
-    best.overall = -1.0f;
-    std::vector<int> repairOptions { preferredRepair };
-    if (preferredRepair >= 4)
-    {
-        repairOptions.push_back(juce::jmax(2, preferredRepair / 3));
-        repairOptions.push_back(juce::jmax(2, 2 * preferredRepair / 3));
-    }
-    std::sort(repairOptions.begin(), repairOptions.end());
-    repairOptions.erase(std::unique(repairOptions.begin(), repairOptions.end()),
-                        repairOptions.end());
-
-    for (const auto& candidate : finalists)
-    {
-        const auto visibleSamples = candidate.result.endSample
-                                    - candidate.result.startSample - preferredRepair;
-        for (const auto repair : repairOptions)
-        {
-            const auto adjustedEnd = candidate.result.startSample + visibleSamples + repair;
-            if (adjustedEnd > audio.getNumSamples())
-                continue;
-            const auto detailed = evaluateCandidate(audio, candidate.result.startSample,
-                                                    adjustedEnd, period.samples,
-                                                    window, true, period.score, repair,
-                                                    sourceRms, sampleRate);
-            if (detailed.overall > best.overall)
-                best = detailed;
-        }
-    }
-    if (best.overall < 0.0f)
-        return best;
-
-    // The broad search is millisecond-scale for speed. Refine the best pair at
-    // single-sample resolution so the published boundary is not grid-limited.
-    const auto sampleRadius = juce::jlimit(1, 128, juce::roundToInt(sampleRate * 0.0025));
-    std::vector<Candidate> sampleFinalists;
-    for (int startOffset = -sampleRadius; startOffset <= sampleRadius; ++startOffset)
-    {
-        const auto start = best.startSample + startOffset;
-        if (start < 0)
-            continue;
-        for (int endOffset = -sampleRadius; endOffset <= sampleRadius; ++endOffset)
-        {
-            const auto end = best.endSample + endOffset;
-            if (end > audio.getNumSamples() || end - start < window * 2)
-                continue;
-            Candidate candidate;
-            candidate.result = evaluateCandidate(audio, start, end, period.samples,
-                                                  window, false, period.score,
-                                                  best.repairOverlapSamples,
-                                                  sourceRms, sampleRate);
-            candidate.cheapScore = candidate.result.overall;
-            keepBest(sampleFinalists, std::move(candidate), 16);
-        }
-    }
-    for (const auto& candidate : sampleFinalists)
-    {
-        const auto detailed = evaluateCandidate(audio, candidate.result.startSample,
-                                                candidate.result.endSample, period.samples,
-                                                window, true, period.score,
-                                                best.repairOverlapSamples,
-                                                sourceRms, sampleRate);
-        if (detailed.overall > best.overall)
-            best = detailed;
-    }
-    return best;
-}
-}
-
-LoopAnalysisReport LoopAnalyzer::analyzeSource(const juce::AudioBuffer<float>& audio,
-                                               const double sampleRate,
-                                               int minimumLoopSamples,
-                                               int maximumLoopSamples,
-                                               const int maximumCandidates,
-                                               const int repairOverlapSamples)
-{
-    LoopAnalysisReport report;
-    if (audio.getNumChannels() == 0 || audio.getNumSamples() < 32 || sampleRate <= 0.0)
-        return report;
-    minimumLoopSamples = juce::jlimit(16, audio.getNumSamples() / 2, minimumLoopSamples);
-    maximumLoopSamples = juce::jlimit(minimumLoopSamples,
-                                      audio.getNumSamples() - 1 - juce::jmax(0, repairOverlapSamples),
-                                      maximumLoopSamples);
-    const auto sourceRms = sampleRms(audio, 0, audio.getNumSamples());
-    const auto periods = findPeriods(audio, sampleRate, minimumLoopSamples, maximumLoopSamples);
-    for (const auto& period : periods)
-    {
-        const auto radius = juce::jmin(juce::roundToInt(sampleRate * 0.08), period.samples / 12);
-        auto result = searchAtPeriod(audio, sampleRate, period, radius,
-                                     repairOverlapSamples, sourceRms);
-        if (result.overall >= 0.0f)
-            report.candidates.push_back(result);
-    }
-    std::sort(report.candidates.begin(), report.candidates.end(), [] (const auto& left, const auto& right)
-    {
-        return left.overall > right.overall;
-    });
-    std::vector<LoopAnalysisResult> diverse;
-    const auto duplicateStartTolerance = juce::roundToInt(sampleRate * 0.05);
-    for (const auto& candidate : report.candidates)
-    {
-        const auto candidateLength = candidate.endSample - candidate.startSample
-                                     - candidate.repairOverlapSamples;
-        const auto duplicate = std::any_of(diverse.begin(), diverse.end(), [&] (const auto& kept)
-        {
-            const auto keptLength = kept.endSample - kept.startSample - kept.repairOverlapSamples;
-            return std::abs(candidate.startSample - kept.startSample) < duplicateStartTolerance
-                   && std::abs(candidateLength - keptLength)
-                          < juce::jmax(8, candidateLength / 40);
-        });
-        if (!duplicate)
-            diverse.push_back(candidate);
-        if (diverse.size() >= static_cast<size_t>(juce::jmax(1, maximumCandidates)))
-            break;
-    }
-    report.candidates = std::move(diverse);
-    report.lowConfidence = report.candidates.empty()
-                           || report.candidates.front().overall < 62.0f
-                           || report.candidates.front().periodicity < 58.0f
-                           || report.candidates.front().repair < 55.0f;
-    return report;
-}
-
-LoopAnalysisReport LoopAnalyzer::analyzeRotateRepair(
-    const juce::AudioBuffer<float>& audio,
-    const double sampleRate,
-    const int maximumCandidates,
-    const int maximumRepairOverlapSamples)
-{
-    LoopAnalysisReport report;
-    const auto samples = audio.getNumSamples();
-    if (audio.getNumChannels() == 0 || samples < 256 || sampleRate <= 0.0)
-        return report;
-
-    const auto maximumFade = juce::jlimit(
-        0, samples / 8, maximumRepairOverlapSamples);
-    std::vector<int> repairOptions { 0 };
-    for (const auto milliseconds : { 20, 40, 80, 140, 220 })
-    {
-        const auto repair = juce::jmin(
-            maximumFade, juce::roundToInt(sampleRate * milliseconds * 0.001));
-        if (repair >= 2)
-            repairOptions.push_back(repair);
-    }
-    std::sort(repairOptions.begin(), repairOptions.end());
-    repairOptions.erase(std::unique(repairOptions.begin(), repairOptions.end()),
-                        repairOptions.end());
-
-    LoopAnalysisResult bestRepair;
-    bestRepair.overall = -1.0f;
-    for (const auto repair : repairOptions)
-    {
-        auto candidate = evaluateFixedRange(audio, sampleRate, 0, samples, repair);
-        const auto removedFraction = static_cast<float>(repair)
-                                     / static_cast<float>(samples);
-        candidate.overall -= 12.0f * removedFraction;
-        if (candidate.overall > bestRepair.overall)
-            bestRepair = candidate;
-    }
-    if (bestRepair.overall < 0.0f)
-        return report;
-
-    const auto guard = juce::jlimit(
-        32, juce::jmax(32, samples / 3),
-        juce::jmax(bestRepair.repairOverlapSamples + 32,
-                   juce::roundToInt(sampleRate * 0.35)));
-    const auto firstCut = juce::jmin(samples - 1, guard);
-    const auto lastCut = juce::jmax(firstCut, samples - guard);
-    const auto step = juce::jmax(1, juce::roundToInt(sampleRate * 0.01));
-    struct RotationCandidate
-    {
-        int cut = 0;
-        float safety = 0.0f;
-    };
-    std::vector<RotationCandidate> rotations;
-    for (int cut = firstCut; cut <= lastCut; cut += step)
-        rotations.push_back({ cut, calculateRotationSafety(audio, sampleRate, cut) });
-    std::sort(rotations.begin(), rotations.end(), [] (const auto& left, const auto& right)
-    {
-        return left.safety > right.safety;
-    });
-
-    const auto distinctDistance = juce::roundToInt(sampleRate * 0.40);
-    for (const auto& rotation : rotations)
-    {
-        const auto duplicate = std::any_of(
-            report.candidates.begin(), report.candidates.end(), [&] (const auto& kept)
-            {
-                return std::abs(kept.rotationSample - rotation.cut) < distinctDistance;
-            });
-        if (duplicate)
-            continue;
-        auto result = bestRepair;
-        result.startSample = 0;
-        result.endSample = samples;
-        result.rotationSample = rotation.cut;
-        result.overall = 0.68f * bestRepair.overall + 0.32f * rotation.safety;
-        result.periodicity = rotation.safety;
-        report.candidates.push_back(result);
-        if (report.candidates.size()
-            >= static_cast<size_t>(juce::jmax(1, maximumCandidates)))
-            break;
-    }
-
-    report.lowConfidence = report.candidates.empty()
-                           || report.candidates.front().overall < 68.0f
-                           || report.candidates.front().repair < 58.0f;
-    return report;
-}
-
-juce::AudioBuffer<float> LoopAnalyzer::renderRotateRepair(
-    const juce::AudioBuffer<float>& source,
-    const LoopAnalysisResult& result)
-{
-    if (source.getNumChannels() == 0 || result.rotationSample < 0
-        || result.startSample < 0 || result.endSample > source.getNumSamples()
-        || result.endSample - result.startSample < 32)
-        return {};
-
-    const auto rangeStart = result.startSample;
-    const auto rangeSamples = result.endSample - rangeStart;
-    const auto rotation = juce::jlimit(
-        rangeStart + 1, result.endSample - 1, result.rotationSample);
-    const auto relativeRotation = rotation - rangeStart;
-    const auto fade = juce::jlimit(
-        0, juce::jmin(relativeRotation, rangeSamples - relativeRotation),
-        result.repairOverlapSamples);
-    const auto renderedSamples = rangeSamples - fade;
-    juce::AudioBuffer<float> rendered(source.getNumChannels(), renderedSamples);
-    const auto tailLength = rangeSamples - relativeRotation;
-    const auto prefixLength = tailLength - fade;
-    const auto suffixLength = relativeRotation - fade;
-    const auto useLinearFade = result.phase >= 75.0f;
-
-    for (int channel = 0; channel < rendered.getNumChannels(); ++channel)
-    {
-        if (prefixLength > 0)
-            rendered.copyFrom(channel, 0, source, channel,
-                              rotation, prefixLength);
-        for (int sample = 0; sample < fade; ++sample)
-        {
-            const auto position = static_cast<float>(sample + 1)
-                                  / static_cast<float>(fade + 1);
-            const auto tailGain = useLinearFade ? 1.0f - position
-                : std::cos(position * juce::MathConstants<float>::halfPi);
-            const auto headGain = useLinearFade ? position
-                : std::sin(position * juce::MathConstants<float>::halfPi);
-            const auto tail = source.getSample(
-                channel, result.endSample - fade + sample);
-            const auto head = source.getSample(
-                channel, rangeStart + sample);
-            rendered.setSample(channel, prefixLength + sample,
-                               tailGain * tail + headGain * head);
-        }
-        if (suffixLength > 0)
-            rendered.copyFrom(channel, prefixLength + fade, source, channel,
-                              rangeStart + fade, suffixLength);
-    }
-
-    juce::ignoreUnused(RenderQuality::repairNonFiniteAndRemoveDc(rendered));
-    juce::ignoreUnused(RenderQuality::applyCircularTruePeakCeiling(rendered, -1.0f));
-    return rendered;
-}
-
-LoopAnalysisResult LoopAnalyzer::findBestLoop(const juce::AudioBuffer<float>& audio,
-                                               const double sampleRate,
-                                               const int requestedLoopSamples,
-                                               const int searchRadiusSamples)
-{
-    LoopAnalysisResult fallback;
-    fallback.endSample = juce::jmin(audio.getNumSamples(), requestedLoopSamples);
-    if (audio.getNumChannels() == 0 || audio.getNumSamples() < 8)
-        return fallback;
-    const auto period = PeriodCandidate { requestedLoopSamples, 100.0f };
-    const auto result = searchAtPeriod(audio, sampleRate, period, searchRadiusSamples,
-                                       0, sampleRms(audio, 0, audio.getNumSamples()));
-    return result.overall < 0.0f ? fallback : result;
-}
-
-LoopAnalysisResult LoopAnalyzer::evaluateFixedRange(const juce::AudioBuffer<float>& audio,
-                                                     const double sampleRate,
-                                                     const int startSample,
-                                                     const int endSample,
-                                                     const int repairOverlapSamples)
-{
-    LoopAnalysisResult empty;
-    if (audio.getNumChannels() == 0 || startSample < 0 || endSample > audio.getNumSamples()
-        || endSample - startSample < 32)
-        return empty;
-    const auto window = juce::jlimit(16, juce::jmin(512, (endSample - startSample) / 4),
-                                     juce::roundToInt(sampleRate * 0.012));
-    const auto repair = juce::jlimit(0, (endSample - startSample) / 3,
-                                     repairOverlapSamples);
-    return evaluateCandidate(audio, startSample, endSample,
-                             endSample - startSample - repair,
-                             window, true, 100.0f, repair,
-                             sampleRms(audio, 0, audio.getNumSamples()), sampleRate);
-}
+        ? 0.60f * calculatePhaseSc„ù}∂âûÀk∫wµÁ@ÄÄÅ…ï—’…∏Å…ï¡Ω…–Ï(ÄÄÄÅµ•π•µ’µ1ΩΩ¡MÖµ¡±ïÃÄÙÅ©’çîËÈ©±•µ•–†ƒÿ∞ÅÖ’ë•ºπùï—9’µMÖµ¡±ïÃ†§ÄºÄ»∞Åµ•π•µ’µ1ΩΩ¡MÖµ¡±ïÃ§Ï(ÄÄÄÅµÖ·•µ’µ1ΩΩ¡MÖµ¡±ïÃÄÙÅ©’çîËÈ©±•µ•–°µ•π•µ’µ1ΩΩ¡MÖµ¡±ïÃ∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÖ’ë•ºπùï—9’µMÖµ¡±ïÃ†§Ä¥ÄƒÄ¥Å©’çîËÈ©µÖ‡†¿∞Å…ï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃ§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅµÖ·•µ’µ1ΩΩ¡MÖµ¡±ïÃ§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕΩ’…çïIµÃÄÙÅÕÖµ¡±ïIµÃ°Ö’ë•º∞Ä¿∞ÅÖ’ë•ºπùï—9’µMÖµ¡±ïÃ†§§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ¡ï…•ΩëÃÄÙÅô•πëAï…•ΩëÃ°Ö’ë•º∞ÅÕÖµ¡±ïIÖ—î∞Åµ•π•µ’µ1ΩΩ¡MÖµ¡±ïÃ∞ÅµÖ·•µ’µ1ΩΩ¡MÖµ¡±ïÃ§Ï(ÄÄÄÅôΩ»Ä°çΩπÕ–ÅÖ’—ºòÅ¡ï…•ΩêÄËÅ¡ï…•ΩëÃ§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…Öë•’ÃÄÙÅ©’çîËÈ©µ•∏°©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏¿‡§∞Å¡ï…•ΩêπÕÖµ¡±ïÃÄºÄƒ»§Ï(ÄÄÄÄÄÄÄÅÖ’—ºÅ…ïÕ’±–ÄÙÅÕïÖ…ç°—Aï…•Ωê°Ö’ë•º∞ÅÕÖµ¡±ïIÖ—î∞Å¡ï…•Ωê∞Å…Öë•’Ã∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃ∞ÅÕΩ’…çïIµÃ§Ï(ÄÄÄÄÄÄÄÅ•òÄ°…ïÕ’±–πΩŸï…Ö±∞Ä¯ÙÄ¿∏¡ò§(ÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπ¡’Õ°}âÖç¨°…ïÕ’±–§Ï(ÄÄÄÅÙ(ÄÄÄÅÕ—êËÈÕΩ…–°…ï¡Ω…–πçÖπë•ëÖ—ïÃπâïù•∏†§∞Å…ï¡Ω…–πçÖπë•ëÖ—ïÃπïπê†§∞ÅmtÄ°çΩπÕ–ÅÖ’—ºòÅ±ïô–∞ÅçΩπÕ–ÅÖ’—ºòÅ…•ù°–§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅ…ï—’…∏Å±ïô–πΩŸï…Ö±∞Ä¯Å…•ù°–πΩŸï…Ö±∞Ï(ÄÄÄÅÙ§Ï(ÄÄÄÅÕ—êËÈŸïç—Ω»Ò1ΩΩ¡πÖ±ÂÕ•ÕIïÕ’±–¯Åë•Ÿï…ÕîÏ(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅë’¡±•çÖ—ïM—Ö…—QΩ±ï…ÖπçîÄÙÅ©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏¿‘§Ï(ÄÄÄÅôΩ»Ä°çΩπÕ–ÅÖ’—ºòÅçÖπë•ëÖ—îÄËÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃ§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅçÖπë•ëÖ—ï1ïπù—†ÄÙÅçÖπë•ëÖ—îπïπëMÖµ¡±îÄ¥ÅçÖπë•ëÖ—îπÕ—Ö…—MÖµ¡±î(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¥ÅçÖπë•ëÖ—îπ…ï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅë’¡±•çÖ—îÄÙÅÕ—êËÈÖπÂ}Ωò°ë•Ÿï…Õîπâïù•∏†§∞Åë•Ÿï…Õîπïπê†§∞ÅlôtÄ°çΩπÕ–ÅÖ’—ºòÅ≠ï¡–§(ÄÄÄÄÄÄÄÅÏ(ÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ≠ï¡—1ïπù—†ÄÙÅ≠ï¡–πïπëMÖµ¡±îÄ¥Å≠ï¡–πÕ—Ö…—MÖµ¡±îÄ¥Å≠ï¡–π…ï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃÏ(ÄÄÄÄÄÄÄÄÄÄÄÅ…ï—’…∏ÅÕ—êËÈÖâÃ°çÖπë•ëÖ—îπÕ—Ö…—MÖµ¡±îÄ¥Å≠ï¡–πÕ—Ö…—MÖµ¡±î§ÄÅë’¡±•çÖ—ïM—Ö…—QΩ±ï…Öπçî(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄòòÅÕ—êËÈÖâÃ°çÖπë•ëÖ—ï1ïπù—†Ä¥Å≠ï¡—1ïπù—†§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ©’çîËÈ©µÖ‡†‡∞ÅçÖπë•ëÖ—ï1ïπù—†ÄºÄ–¿§Ï(ÄÄÄÄÄÄÄÅÙ§Ï(ÄÄÄÄÄÄÄÅ•òÄ†Öë’¡±•çÖ—î§(ÄÄÄÄÄÄÄÄÄÄÄÅë•Ÿï…Õîπ¡’Õ°}âÖç¨°çÖπë•ëÖ—î§Ï(ÄÄÄÄÄÄÄÅ•òÄ°ë•Ÿï…ÕîπÕ•Èî†§Ä¯ÙÅÕ—Ö—•ç}çÖÕ–ÒÕ•Èï}–¯°©’çîËÈ©µÖ‡†ƒ∞ÅµÖ·•µ’µÖπë•ëÖ—ïÃ§§§(ÄÄÄÄÄÄÄÄÄÄÄÅâ…ïÖ¨Ï(ÄÄÄÅÙ(ÄÄÄÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃÄÙÅÕ—êËÈµΩŸî°ë•Ÿï…Õî§Ï(ÄÄÄÅ…ï¡Ω…–π±Ω›Ωπô•ëïπçîÄÙÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπïµ¡—‰†§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÒÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπô…Ωπ–†§πΩŸï…Ö±∞ÄÄÿ»∏¡ò(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÒÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπô…Ωπ–†§π¡ï…•Ωë•ç•—‰ÄÄ‘‡∏¡ò(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÒÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπô…Ωπ–†§π…ï¡Ö•»ÄÄ‘‘∏¡òÏ(ÄÄÄÅ…ï—’…∏Å…ï¡Ω…–Ï)Ù()1ΩΩ¡πÖ±ÂÕ•ÕIï¡Ω…–Å1ΩΩ¡πÖ±ÂÈï»ËÈÖπÖ±ÂÈïIΩ—Ö—ïIï¡Ö•»†(ÄÄÄÅçΩπÕ–Å©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯òÅÖ’ë•º∞(ÄÄÄÅçΩπÕ–ÅëΩ’â±îÅÕÖµ¡±ïIÖ—î∞(ÄÄÄÅçΩπÕ–Å•π–ÅµÖ·•µ’µÖπë•ëÖ—ïÃ∞(ÄÄÄÅçΩπÕ–Å•π–ÅµÖ·•µ’µIï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃ§)Ï(ÄÄÄÅ1ΩΩ¡πÖ±ÂÕ•ÕIï¡Ω…–Å…ï¡Ω…–Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕÖµ¡±ïÃÄÙÅÖ’ë•ºπùï—9’µMÖµ¡±ïÃ†§Ï(ÄÄÄÅ•òÄ°Ö’ë•ºπùï—9’µ°Öππï±Ã†§ÄÙÙÄ¿ÅÒÅÕÖµ¡±ïÃÄÄ»‘ÿÅÒÅÕÖµ¡±ïIÖ—îÄÙÄ¿∏¿§(ÄÄÄÄÄÄÄÅ…ï—’…∏Å…ï¡Ω…–Ï((ÄÄÄÅçΩπÕ–ÅÖ’—ºÅµÖ·•µ’µÖëîÄÙÅ©’çîËÈ©±•µ•–†(ÄÄÄÄÄÄÄÄ¿∞ÅÕÖµ¡±ïÃÄºÄ‡∞ÅµÖ·•µ’µIï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃ§Ï(ÄÄÄÅÕ—êËÈŸïç—Ω»Ò•π–¯Å…ï¡Ö•…=¡—•ΩπÃÅÏÄ¿ÅÙÏ(ÄÄÄÅôΩ»Ä°çΩπÕ–ÅÖ’—ºÅµ•±±•ÕïçΩπëÃÄËÅÏÄ»¿∞Ä–¿∞Ä‡¿∞Äƒ–¿∞Ä»»¿ÅÙ§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ï¡Ö•»ÄÙÅ©’çîËÈ©µ•∏†(ÄÄÄÄÄÄÄÄÄÄÄÅµÖ·•µ’µÖëî∞Å©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Åµ•±±•ÕïçΩπëÃÄ®Ä¿∏¿¿ƒ§§Ï(ÄÄÄÄÄÄÄÅ•òÄ°…ï¡Ö•»Ä¯ÙÄ»§(ÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ö•…=¡—•ΩπÃπ¡’Õ°}âÖç¨°…ï¡Ö•»§Ï(ÄÄÄÅÙ(ÄÄÄÅÕ—êËÈÕΩ…–°…ï¡Ö•…=¡—•ΩπÃπâïù•∏†§∞Å…ï¡Ö•…=¡—•ΩπÃπïπê†§§Ï(ÄÄÄÅ…ï¡Ö•…=¡—•ΩπÃπï…ÖÕî°Õ—êËÈ’π•≈’î°…ï¡Ö•…=¡—•ΩπÃπâïù•∏†§∞Å…ï¡Ö•…=¡—•ΩπÃπïπê†§§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ö•…=¡—•ΩπÃπïπê†§§Ï((ÄÄÄÅ1ΩΩ¡πÖ±ÂÕ•ÕIïÕ’±–ÅâïÕ—Iï¡Ö•»Ï(ÄÄÄÅâïÕ—Iï¡Ö•»πΩŸï…Ö±∞ÄÙÄ¥ƒ∏¡òÏ(ÄÄÄÅôΩ»Ä°çΩπÕ–ÅÖ’—ºÅ…ï¡Ö•»ÄËÅ…ï¡Ö•…=¡—•ΩπÃ§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅÖ’—ºÅçÖπë•ëÖ—îÄÙÅïŸÖ±’Ö—ï•·ïëIÖπùî°Ö’ë•º∞ÅÕÖµ¡±ïIÖ—î∞Ä¿∞ÅÕÖµ¡±ïÃ∞Å…ï¡Ö•»§Ï(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ïµΩŸïë…Öç—•Ω∏ÄÙÅÕ—Ö—•ç}çÖÕ–Òô±ΩÖ–¯°…ï¡Ö•»§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄºÅÕ—Ö—•ç}çÖÕ–Òô±ΩÖ–¯°ÕÖµ¡±ïÃ§Ï(ÄÄÄÄÄÄÄÅçÖπë•ëÖ—îπΩŸï…Ö±∞Ä¥ÙÄƒ»∏¡òÄ®Å…ïµΩŸïë…Öç—•Ω∏Ï(ÄÄÄÄÄÄÄÅ•òÄ°çÖπë•ëÖ—îπΩŸï…Ö±∞Ä¯ÅâïÕ—Iï¡Ö•»πΩŸï…Ö±∞§(ÄÄÄÄÄÄÄÄÄÄÄÅâïÕ—Iï¡Ö•»ÄÙÅçÖπë•ëÖ—îÏ(ÄÄÄÅÙ(ÄÄÄÅ•òÄ°âïÕ—Iï¡Ö•»πΩŸï…Ö±∞ÄÄ¿∏¡ò§(ÄÄÄÄÄÄÄÅ…ï—’…∏Å…ï¡Ω…–Ï((ÄÄÄÅçΩπÕ–ÅÖ’—ºÅù’Ö…êÄÙÅ©’çîËÈ©±•µ•–†(ÄÄÄÄÄÄÄÄÃ»∞Å©’çîËÈ©µÖ‡†Ã»∞ÅÕÖµ¡±ïÃÄºÄÃ§∞(ÄÄÄÄÄÄÄÅ©’çîËÈ©µÖ‡°âïÕ—Iï¡Ö•»π…ï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃÄ¨ÄÃ»∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏Ã‘§§§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅô•…Õ—’–ÄÙÅ©’çîËÈ©µ•∏°ÕÖµ¡±ïÃÄ¥Äƒ∞Åù’Ö…ê§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ±ÖÕ—’–ÄÙÅ©’çîËÈ©µÖ‡°ô•…Õ—’–∞ÅÕÖµ¡±ïÃÄ¥Åù’Ö…ê§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕ—ï¿ÄÙÅ©’çîËÈ©µÖ‡†ƒ∞Å©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏¿ƒ§§Ï(ÄÄÄÅÕ—…’ç–ÅIΩ—Ö—•ΩπÖπë•ëÖ—î(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅ•π–Åç’–ÄÙÄ¿Ï(ÄÄÄÄÄÄÄÅô±ΩÖ–ÅÕÖôï—‰ÄÙÄ¿∏¡òÏ(ÄÄÄÅÙÏ(ÄÄÄÅÕ—êËÈŸïç—Ω»ÒIΩ—Ö—•ΩπÖπë•ëÖ—î¯Å…Ω—Ö—•ΩπÃÏ(ÄÄÄÅôΩ»Ä°•π–Åç’–ÄÙÅô•…Õ—’–ÏÅç’–ÄÙÅ±ÖÕ—’–ÏÅç’–Ä¨ÙÅÕ—ï¿§(ÄÄÄÄÄÄÄÅ…Ω—Ö—•ΩπÃπ¡’Õ°}âÖç¨°ÏÅç’–∞ÅçÖ±ç’±Ö—ïIΩ—Ö—•ΩπMÖôï—‰°Ö’ë•º∞ÅÕÖµ¡±ïIÖ—î∞Åç’–§ÅÙ§Ï(ÄÄÄÅÕ—êËÈÕΩ…–°…Ω—Ö—•ΩπÃπâïù•∏†§∞Å…Ω—Ö—•ΩπÃπïπê†§∞ÅmtÄ°çΩπÕ–ÅÖ’—ºòÅ±ïô–∞ÅçΩπÕ–ÅÖ’—ºòÅ…•ù°–§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅ…ï—’…∏Å±ïô–πÕÖôï—‰Ä¯Å…•ù°–πÕÖôï—‰Ï(ÄÄÄÅÙ§Ï((ÄÄÄÅçΩπÕ–ÅÖ’—ºÅë•Õ—•πç—•Õ—ÖπçîÄÙÅ©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏–¿§Ï(ÄÄÄÅôΩ»Ä°çΩπÕ–ÅÖ’—ºòÅ…Ω—Ö—•Ω∏ÄËÅ…Ω—Ö—•ΩπÃ§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅë’¡±•çÖ—îÄÙÅÕ—êËÈÖπÂ}Ωò†(ÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπâïù•∏†§∞Å…ï¡Ω…–πçÖπë•ëÖ—ïÃπïπê†§∞ÅlôtÄ°çΩπÕ–ÅÖ’—ºòÅ≠ï¡–§(ÄÄÄÄÄÄÄÄÄÄÄÅÏ(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ…ï—’…∏ÅÕ—êËÈÖâÃ°≠ï¡–π…Ω—Ö—•ΩπMÖµ¡±îÄ¥Å…Ω—Ö—•Ω∏πç’–§ÄÅë•Õ—•πç—•Õ—ÖπçîÏ(ÄÄÄÄÄÄÄÄÄÄÄÅÙ§Ï(ÄÄÄÄÄÄÄÅ•òÄ°ë’¡±•çÖ—î§(ÄÄÄÄÄÄÄÄÄÄÄÅçΩπ—•π’îÏ(ÄÄÄÄÄÄÄÅÖ’—ºÅ…ïÕ’±–ÄÙÅâïÕ—Iï¡Ö•»Ï(ÄÄÄÄÄÄÄÅ…ïÕ’±–πÕ—Ö…—MÖµ¡±îÄÙÄ¿Ï(ÄÄÄÄÄÄÄÅ…ïÕ’±–πïπëMÖµ¡±îÄÙÅÕÖµ¡±ïÃÏ(ÄÄÄÄÄÄÄÅ…ïÕ’±–π…Ω—Ö—•ΩπMÖµ¡±îÄÙÅ…Ω—Ö—•Ω∏πç’–Ï(ÄÄÄÄÄÄÄÅ…ïÕ’±–πΩŸï…Ö±∞ÄÙÄ¿∏ÿ·òÄ®ÅâïÕ—Iï¡Ö•»πΩŸï…Ö±∞Ä¨Ä¿∏Ã…òÄ®Å…Ω—Ö—•Ω∏πÕÖôï—‰Ï(ÄÄÄÄÄÄÄÅ…ïÕ’±–π¡ï…•Ωë•ç•—‰ÄÙÅ…Ω—Ö—•Ω∏πÕÖôï—‰Ï(ÄÄÄÄÄÄÄÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπ¡’Õ°}âÖç¨°…ïÕ’±–§Ï(ÄÄÄÄÄÄÄÅ•òÄ°…ï¡Ω…–πçÖπë•ëÖ—ïÃπÕ•Èî†§(ÄÄÄÄÄÄÄÄÄÄÄÄ¯ÙÅÕ—Ö—•ç}çÖÕ–ÒÕ•Èï}–¯°©’çîËÈ©µÖ‡†ƒ∞ÅµÖ·•µ’µÖπë•ëÖ—ïÃ§§§(ÄÄÄÄÄÄÄÄÄÄÄÅâ…ïÖ¨Ï(ÄÄÄÅÙ((ÄÄÄÅ…ï¡Ω…–π±Ω›Ωπô•ëïπçîÄÙÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπïµ¡—‰†§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÒÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπô…Ωπ–†§πΩŸï…Ö±∞ÄÄÿ‡∏¡ò(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÒÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπô…Ωπ–†§π…ï¡Ö•»ÄÄ‘‡∏¡òÏ(ÄÄÄÅ…ï—’…∏Å…ï¡Ω…–Ï)Ù()1ΩΩ¡πÖ±ÂÕ•ÕIï¡Ω…–Å1ΩΩ¡πÖ±ÂÈï»ËÈÖπÖ±ÂÈïIΩ—Ö—ïIï¡Ö•…·Öç–†(ÄÄÄÅçΩπÕ–Å©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯òÅÖ’ë•º∞(ÄÄÄÅçΩπÕ–ÅëΩ’â±îÅÕÖµ¡±ïIÖ—î∞(ÄÄÄÅçΩπÕ–Å•π–Å—Ö…ùï—=’—¡’—MÖµ¡±ïÃ∞(ÄÄÄÅçΩπÕ–Å•π–ÅµÖ·•µ’µÖπë•ëÖ—ïÃ∞(ÄÄÄÅçΩπÕ–Å•π–ÅµÖ·•µ’µIï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃ§)Ï(ÄÄÄÅ1ΩΩ¡πÖ±ÂÕ•ÕIï¡Ω…–Å…ï¡Ω…–Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕÖµ¡±ïÃÄÙÅÖ’ë•ºπùï—9’µMÖµ¡±ïÃ†§Ï(ÄÄÄÅ•òÄ°Ö’ë•ºπùï—9’µ°Öππï±Ã†§ÄÙÙÄ¿ÅÒÅÕÖµ¡±ïIÖ—îÄÙÄ¿∏¿(ÄÄÄÄÄÄÄÅÒÅ—Ö…ùï—=’—¡’—MÖµ¡±ïÃÄÄ»‘ÿÅÒÅ—Ö…ùï—=’—¡’—MÖµ¡±ïÃÄ¯ÅÕÖµ¡±ïÃ§(ÄÄÄÄÄÄÄÅ…ï—’…∏Å…ï¡Ω…–Ï((ÄÄÄÅçΩπÕ–ÅÖ’—ºÅµÖ·•µ’µÖëîÄÙÅ©’çîËÈ©±•µ•–†(ÄÄÄÄÄÄÄÄ¿∞Å—Ö…ùï—=’—¡’—MÖµ¡±ïÃÄºÄ‡∞ÅµÖ·•µ’µIï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃ§Ï(ÄÄÄÅÕ—êËÈŸïç—Ω»Ò•π–¯Å…ï¡Ö•…=¡—•ΩπÃÅÏÄ¿ÅÙÏ(ÄÄÄÅôΩ»Ä°çΩπÕ–ÅÖ’—ºÅµ•±±•ÕïçΩπëÃÄËÅÏÄ»¿∞Ä–¿∞Ä‡¿∞Äƒ–¿∞Ä»»¿ÅÙ§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ï¡Ö•»ÄÙÅ©’çîËÈ©µ•∏†(ÄÄÄÄÄÄÄÄÄÄÄÅµÖ·•µ’µÖëî∞Å©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Åµ•±±•ÕïçΩπëÃÄ®Ä¿∏¿¿ƒ§§Ï(ÄÄÄÄÄÄÄÅ•òÄ°…ï¡Ö•»Ä¯ÙÄ»ÄòòÅ—Ö…ùï—=’—¡’—MÖµ¡±ïÃÄ¨Å…ï¡Ö•»ÄÙÅÕÖµ¡±ïÃ§(ÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ö•…=¡—•ΩπÃπ¡’Õ°}âÖç¨°…ï¡Ö•»§Ï(ÄÄÄÅÙ(ÄÄÄÅÕ—êËÈÕΩ…–°…ï¡Ö•…=¡—•ΩπÃπâïù•∏†§∞Å…ï¡Ö•…=¡—•ΩπÃπïπê†§§Ï(ÄÄÄÅ…ï¡Ö•…=¡—•ΩπÃπï…ÖÕî°Õ—êËÈ’π•≈’î°…ï¡Ö•…=¡—•ΩπÃπâïù•∏†§∞Å…ï¡Ö•…=¡—•ΩπÃπïπê†§§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ö•…=¡—•ΩπÃπïπê†§§Ï((ÄÄÄÅÕ—…’ç–Å]•πëΩ›Öπë•ëÖ—î(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅ1ΩΩ¡πÖ±ÂÕ•ÕIïÕ’±–Å…ïÕ’±–Ï(ÄÄÄÅÙÏ(ÄÄÄÅÕ—êËÈŸïç—Ω»Ò]•πëΩ›Öπë•ëÖ—î¯Å›•πëΩ›ÃÏ(ÄÄÄÅôΩ»Ä°çΩπÕ–ÅÖ’—ºÅ…ï¡Ö•»ÄËÅ…ï¡Ö•…=¡—•ΩπÃ§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕ¡Ö∏ÄÙÅ—Ö…ùï—=’—¡’—MÖµ¡±ïÃÄ¨Å…ï¡Ö•»Ï(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅµÖ·•µ’µM—Ö…–ÄÙÅÕÖµ¡±ïÃÄ¥ÅÕ¡Ö∏Ï(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕ—ï¿ÄÙÅ©’çîËÈ©µÖ‡†(ÄÄÄÄÄÄÄÄÄÄÄÄƒ∞ÅµÖ·•µ’µM—Ö…–Ä¯Ä¿Ä¸Å©’çîËÈ©µÖ‡°©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏¿»‘§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅµÖ·•µ’µM—Ö…–ÄºÄ–‡§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄËÄƒ§Ï(ÄÄÄÄÄÄÄÅôΩ»Ä°•π–ÅÕ—Ö…–ÄÙÄ¿ÏÏÅÕ—Ö…–ÄÙÅ©’çîËÈ©µ•∏°µÖ·•µ’µM—Ö…–∞ÅÕ—Ö…–Ä¨ÅÕ—ï¿§§(ÄÄÄÄÄÄÄÅÏ(ÄÄÄÄÄÄÄÄÄÄÄÅÖ’—ºÅçÖπë•ëÖ—îÄÙÅïŸÖ±’Ö—ï•·ïëIÖπùî†(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÖ’ë•º∞ÅÕÖµ¡±ïIÖ—î∞ÅÕ—Ö…–∞ÅÕ—Ö…–Ä¨ÅÕ¡Ö∏∞Å…ï¡Ö•»§Ï(ÄÄÄÄÄÄÄÄÄÄÄÅçÖπë•ëÖ—îπΩŸï…Ö±∞Ä¥ÙÄ‘∏¡òÄ®ÅÕ—Ö—•ç}çÖÕ–Òô±ΩÖ–¯°…ï¡Ö•»§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄºÅÕ—Ö—•ç}çÖÕ–Òô±ΩÖ–¯°Õ¡Ö∏§Ï(ÄÄÄÄÄÄÄÄÄÄÄÅ›•πëΩ›Ãπ¡’Õ°}âÖç¨°ÏÅçÖπë•ëÖ—îÅÙ§Ï(ÄÄÄÄÄÄÄÄÄÄÄÅ•òÄ°Õ—Ö…–ÄÙÙÅµÖ·•µ’µM—Ö…–§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅâ…ïÖ¨Ï(ÄÄÄÄÄÄÄÅÙ(ÄÄÄÅÙ(ÄÄÄÅ•òÄ°›•πëΩ›Ãπïµ¡—‰†§§(ÄÄÄÄÄÄÄÅ…ï—’…∏Å…ï¡Ω…–Ï((ÄÄÄÅÕ—êËÈÕΩ…–°›•πëΩ›Ãπâïù•∏†§∞Å›•πëΩ›Ãπïπê†§∞ÅmtÄ°çΩπÕ–ÅÖ’—ºòÅ±ïô–∞ÅçΩπÕ–ÅÖ’—ºòÅ…•ù°–§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅ…ï—’…∏Å±ïô–π…ïÕ’±–πΩŸï…Ö±∞Ä¯Å…•ù°–π…ïÕ’±–πΩŸï…Ö±∞Ï(ÄÄÄÅÙ§Ï(ÄÄÄÅ•òÄ°›•πëΩ›ÃπÕ•Èî†§Ä¯Äƒ¡‘§(ÄÄÄÄÄÄÄÅ›•πëΩ›Ãπ…ïÕ•Èî†ƒ¡‘§Ï((ÄÄÄÅÕ—êËÈŸïç—Ω»Ò1ΩΩ¡πÖ±ÂÕ•ÕIïÕ’±–¯ÅçÖπë•ëÖ—ïÃÏ(ÄÄÄÅôΩ»Ä°Ö’—ºÅ›•πëΩ‹ÄËÅ›•πëΩ›Ã§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕ¡Ö∏ÄÙÅ›•πëΩ‹π…ïÕ’±–πïπëMÖµ¡±îÄ¥Å›•πëΩ‹π…ïÕ’±–πÕ—Ö…—MÖµ¡±îÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅù’Ö…êÄÙÅ©’çîËÈ©±•µ•–†(ÄÄÄÄÄÄÄÄÄÄÄÄÃ»∞Å©’çîËÈ©µÖ‡†Ã»∞ÅÕ¡Ö∏ÄºÄÃ§∞(ÄÄÄÄÄÄÄÄÄÄÄÅ©’çîËÈ©µÖ‡°›•πëΩ‹π…ïÕ’±–π…ï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃÄ¨ÄÃ»∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏»‘§§§Ï(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅô•…Õ—’–ÄÙÅ›•πëΩ‹π…ïÕ’±–πÕ—Ö…—MÖµ¡±îÄ¨Åù’Ö…êÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ±ÖÕ—’–ÄÙÅ›•πëΩ‹π…ïÕ’±–πïπëMÖµ¡±îÄ¥Åù’Ö…êÏ(ÄÄÄÄÄÄÄÅ•òÄ°ô•…Õ—’–Ä¯ÙÅ±ÖÕ—’–§(ÄÄÄÄÄÄÄÄÄÄÄÅçΩπ—•π’îÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅç’—M—ï¿ÄÙÅ©’çîËÈ©µÖ‡†ƒ∞Å©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏¿ƒ§§Ï(ÄÄÄÄÄÄÄÅÖ’—ºÅâïÕ—’–ÄÙÅô•…Õ—’–Ï(ÄÄÄÄÄÄÄÅÖ’—ºÅâïÕ—MÖôï—‰ÄÙÄ¥ƒ∏¡òÏ(ÄÄÄÄÄÄÄÅôΩ»Ä°•π–Åç’–ÄÙÅô•…Õ—’–ÏÅç’–ÄÙÅ±ÖÕ—’–ÏÅç’–Ä¨ÙÅç’—M—ï¿§(ÄÄÄÄÄÄÄÅÏ(ÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕÖôï—‰ÄÙÅçÖ±ç’±Ö—ïIΩ—Ö—•ΩπMÖôï—‰°Ö’ë•º∞ÅÕÖµ¡±ïIÖ—î∞Åç’–§Ï(ÄÄÄÄÄÄÄÄÄÄÄÅ•òÄ°ÕÖôï—‰Ä¯ÅâïÕ—MÖôï—‰§(ÄÄÄÄÄÄÄÄÄÄÄÅÏ(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅâïÕ—MÖôï—‰ÄÙÅÕÖôï—‰Ï(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅâïÕ—’–ÄÙÅç’–Ï(ÄÄÄÄÄÄÄÄÄÄÄÅÙ(ÄÄÄÄÄÄÄÅÙ(ÄÄÄÄÄÄÄÅ›•πëΩ‹π…ïÕ’±–π…Ω—Ö—•ΩπMÖµ¡±îÄÙÅâïÕ—’–Ï(ÄÄÄÄÄÄÄÅ›•πëΩ‹π…ïÕ’±–π¡ï…•Ωë•ç•—‰ÄÙÅ©’çîËÈ©µÖ‡†¿∏¡ò∞ÅâïÕ—MÖôï—‰§Ï(ÄÄÄÄÄÄÄÅ›•πëΩ‹π…ïÕ’±–πΩŸï…Ö±∞ÄÙÄ¿∏ÿ·òÄ®Å›•πëΩ‹π…ïÕ’±–πΩŸï…Ö±∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¨Ä¿∏Ã…òÄ®Å›•πëΩ‹π…ïÕ’±–π¡ï…•Ωë•ç•—‰Ï(ÄÄÄÄÄÄÄÅçÖπë•ëÖ—ïÃπ¡’Õ°}âÖç¨°›•πëΩ‹π…ïÕ’±–§Ï(ÄÄÄÅÙ(ÄÄÄÅÕ—êËÈÕΩ…–°çÖπë•ëÖ—ïÃπâïù•∏†§∞ÅçÖπë•ëÖ—ïÃπïπê†§∞ÅmtÄ°çΩπÕ–ÅÖ’—ºòÅ±ïô–∞ÅçΩπÕ–ÅÖ’—ºòÅ…•ù°–§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅ…ï—’…∏Å±ïô–πΩŸï…Ö±∞Ä¯Å…•ù°–πΩŸï…Ö±∞Ï(ÄÄÄÅÙ§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅë•Õ—•πç—•Õ—ÖπçîÄÙÅ©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏»¿§Ï(ÄÄÄÅôΩ»Ä°çΩπÕ–ÅÖ’—ºòÅçÖπë•ëÖ—îÄËÅçÖπë•ëÖ—ïÃ§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅë’¡±•çÖ—îÄÙÅÕ—êËÈÖπÂ}Ωò†(ÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπâïù•∏†§∞Å…ï¡Ω…–πçÖπë•ëÖ—ïÃπïπê†§∞ÅlôtÄ°çΩπÕ–ÅÖ’—ºòÅ≠ï¡–§(ÄÄÄÄÄÄÄÄÄÄÄÅÏ(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ…ï—’…∏ÅÕ—êËÈÖâÃ°≠ï¡–πÕ—Ö…—MÖµ¡±îÄ¥ÅçÖπë•ëÖ—îπÕ—Ö…—MÖµ¡±î§ÄÅë•Õ—•πç—•Õ—Öπçî(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄòòÅÕ—êËÈÖâÃ°≠ï¡–π…Ω—Ö—•ΩπMÖµ¡±îÄ¥ÅçÖπë•ëÖ—îπ…Ω—Ö—•ΩπMÖµ¡±î§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅë•Õ—•πç—•Õ—ÖπçîÏ(ÄÄÄÄÄÄÄÄÄÄÄÅÙ§Ï(ÄÄÄÄÄÄÄÅ•òÄ†Öë’¡±•çÖ—î§(ÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπ¡’Õ°}âÖç¨°çÖπë•ëÖ—î§Ï(ÄÄÄÄÄÄÄÅ•òÄ°…ï¡Ω…–πçÖπë•ëÖ—ïÃπÕ•Èî†§(ÄÄÄÄÄÄÄÄÄÄÄÄ¯ÙÅÕ—Ö—•ç}çÖÕ–ÒÕ•Èï}–¯°©’çîËÈ©µÖ‡†ƒ∞ÅµÖ·•µ’µÖπë•ëÖ—ïÃ§§§(ÄÄÄÄÄÄÄÄÄÄÄÅâ…ïÖ¨Ï(ÄÄÄÅÙ(ÄÄÄÅ…ï¡Ω…–π±Ω›Ωπô•ëïπçîÄÙÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπïµ¡—‰†§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÒÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπô…Ωπ–†§πΩŸï…Ö±∞ÄÄÿ‡∏¡ò(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÒÅ…ï¡Ω…–πçÖπë•ëÖ—ïÃπô…Ωπ–†§π…ï¡Ö•»ÄÄ‘‡∏¡òÏ(ÄÄÄÅ…ï—’…∏Å…ï¡Ω…–Ï)Ù()©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯Å1ΩΩ¡πÖ±ÂÈï»ËÈ…ïπëï…IΩ—Ö—ïIï¡Ö•»†(ÄÄÄÅçΩπÕ–Å©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯òÅÕΩ’…çî∞(ÄÄÄÅçΩπÕ–Å1ΩΩ¡πÖ±ÂÕ•ÕIïÕ’±–òÅ…ïÕ’±–§)Ï(ÄÄÄÅ•òÄ°ÕΩ’…çîπùï—9’µ°Öππï±Ã†§ÄÙÙÄ¿ÅÒÅ…ïÕ’±–π…Ω—Ö—•ΩπMÖµ¡±îÄÄ¿(ÄÄÄÄÄÄÄÅÒÅ…ïÕ’±–πÕ—Ö…—MÖµ¡±îÄÄ¿ÅÒÅ…ïÕ’±–πïπëMÖµ¡±îÄ¯ÅÕΩ’…çîπùï—9’µMÖµ¡±ïÃ†§(ÄÄÄÄÄÄÄÅÒÅ…ïÕ’±–πïπëMÖµ¡±îÄ¥Å…ïÕ’±–πÕ—Ö…—MÖµ¡±îÄÄÃ»§(ÄÄÄÄÄÄÄÅ…ï—’…∏ÅÌÙÏ((ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ÖπùïM—Ö…–ÄÙÅ…ïÕ’±–πÕ—Ö…—MÖµ¡±îÏ(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ÖπùïMÖµ¡±ïÃÄÙÅ…ïÕ’±–πïπëMÖµ¡±îÄ¥Å…ÖπùïM—Ö…–Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…Ω—Ö—•Ω∏ÄÙÅ©’çîËÈ©±•µ•–†(ÄÄÄÄÄÄÄÅ…ÖπùïM—Ö…–Ä¨Äƒ∞Å…ïÕ’±–πïπëMÖµ¡±îÄ¥Äƒ∞Å…ïÕ’±–π…Ω—Ö—•ΩπMÖµ¡±î§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ï±Ö—•ŸïIΩ—Ö—•Ω∏ÄÙÅ…Ω—Ö—•Ω∏Ä¥Å…ÖπùïM—Ö…–Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅôÖëîÄÙÅ©’çîËÈ©±•µ•–†(ÄÄÄÄÄÄÄÄ¿∞Å©’çîËÈ©µ•∏°…ï±Ö—•ŸïIΩ—Ö—•Ω∏∞Å…ÖπùïMÖµ¡±ïÃÄ¥Å…ï±Ö—•ŸïIΩ—Ö—•Ω∏§∞(ÄÄÄÄÄÄÄÅ…ïÕ’±–π…ï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃ§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ïπëï…ïëMÖµ¡±ïÃÄÙÅ…ÖπùïMÖµ¡±ïÃÄ¥ÅôÖëîÏ(ÄÄÄÅ©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯Å…ïπëï…ïê°ÕΩ’…çîπùï—9’µ°Öππï±Ã†§∞Å…ïπëï…ïëMÖµ¡±ïÃ§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ—Ö•±1ïπù—†ÄÙÅ…ÖπùïMÖµ¡±ïÃÄ¥Å…ï±Ö—•ŸïIΩ—Ö—•Ω∏Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ¡…ïô•·1ïπù—†ÄÙÅ—Ö•±1ïπù—†Ä¥ÅôÖëîÏ(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅÕ’ôô•·1ïπù—†ÄÙÅ…ï±Ö—•ŸïIΩ—Ö—•Ω∏Ä¥ÅôÖëîÏ(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ’Õï1•πïÖ…ÖëîÄÙÅ…ïÕ’±–π¡°ÖÕîÄ¯ÙÄ‹‘∏¡òÏ((ÄÄÄÅôΩ»Ä°•π–Åç°Öππï∞ÄÙÄ¿ÏÅç°Öππï∞ÄÅ…ïπëï…ïêπùï—9’µ°Öππï±Ã†§ÏÄ¨≠ç°Öππï∞§(ÄÄÄÅÏ(ÄÄÄÄÄÄÄÅ•òÄ°¡…ïô•·1ïπù—†Ä¯Ä¿§(ÄÄÄÄÄÄÄÄÄÄÄÅ…ïπëï…ïêπçΩ¡Â…Ω¥°ç°Öππï∞∞Ä¿∞ÅÕΩ’…çî∞Åç°Öππï∞∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ…Ω—Ö—•Ω∏∞Å¡…ïô•·1ïπù—†§Ï(ÄÄÄÄÄÄÄÅôΩ»Ä°•π–ÅÕÖµ¡±îÄÙÄ¿ÏÅÕÖµ¡±îÄÅôÖëîÏÄ¨≠ÕÖµ¡±î§(ÄÄÄÄÄÄÄÅÏ(ÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ¡ΩÕ•—•Ω∏ÄÙÅÕ—Ö—•ç}çÖÕ–Òô±ΩÖ–¯°ÕÖµ¡±îÄ¨Äƒ§(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄºÅÕ—Ö—•ç}çÖÕ–Òô±ΩÖ–¯°ôÖëîÄ¨Äƒ§Ï(ÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ—Ö•±Ö•∏ÄÙÅ’Õï1•πïÖ…ÖëîÄ¸Äƒ∏¡òÄ¥Å¡ΩÕ•—•Ω∏(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄËÅÕ—êËÈçΩÃ°¡ΩÕ•—•Ω∏Ä®Å©’çîËÈ5Ö—°ΩπÕ—Öπ—ÃÒô±ΩÖ–¯ËÈ°Ö±ôA§§Ï(ÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ°ïÖëÖ•∏ÄÙÅ’Õï1•πïÖ…ÖëîÄ¸Å¡ΩÕ•—•Ω∏(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄËÅÕ—êËÈÕ•∏°¡ΩÕ•—•Ω∏Ä®Å©’çîËÈ5Ö—°ΩπÕ—Öπ—ÃÒô±ΩÖ–¯ËÈ°Ö±ôA§§Ï(ÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ—Ö•∞ÄÙÅÕΩ’…çîπùï—MÖµ¡±î†(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅç°Öππï∞∞Å…ïÕ’±–πïπëMÖµ¡±îÄ¥ÅôÖëîÄ¨ÅÕÖµ¡±î§Ï(ÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–ÅÖ’—ºÅ°ïÖêÄÙÅÕΩ’…çîπùï—MÖµ¡±î†(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅç°Öππï∞∞Å…ÖπùïM—Ö…–Ä¨ÅÕÖµ¡±î§Ï(ÄÄÄÄÄÄÄÄÄÄÄÅ…ïπëï…ïêπÕï—MÖµ¡±î°ç°Öππï∞∞Å¡…ïô•·1ïπù—†Ä¨ÅÕÖµ¡±î∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ—Ö•±Ö•∏Ä®Å—Ö•∞Ä¨Å°ïÖëÖ•∏Ä®Å°ïÖê§Ï(ÄÄÄÄÄÄÄÅÙ(ÄÄÄÄÄÄÄÅ•òÄ°Õ’ôô•·1ïπù—†Ä¯Ä¿§(ÄÄÄÄÄÄÄÄÄÄÄÅ…ïπëï…ïêπçΩ¡Â…Ω¥°ç°Öππï∞∞Å¡…ïô•·1ïπù—†Ä¨ÅôÖëî∞ÅÕΩ’…çî∞Åç°Öππï∞∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ…ÖπùïM—Ö…–Ä¨ÅôÖëî∞ÅÕ’ôô•·1ïπù—†§Ï(ÄÄÄÅÙ((ÄÄÄÅ©’çîËÈ•ùπΩ…ïUπ’Õïê°Iïπëï…E’Ö±•—‰ËÈ…ï¡Ö•…9Ωπ•π•—ïπëIïµΩŸïå°…ïπëï…ïê§§Ï(ÄÄÄÅ©’çîËÈ•ùπΩ…ïUπ’Õïê°Iïπëï…E’Ö±•—‰ËÈÖ¡¡±Â•…ç’±Ö…Q…’ïAïÖ≠ï•±•πú°…ïπëï…ïê∞Ä¥ƒ∏¡ò§§Ï(ÄÄÄÅ…ï—’…∏Å…ïπëï…ïêÏ)Ù()1ΩΩ¡πÖ±ÂÕ•ÕIïÕ’±–Å1ΩΩ¡πÖ±ÂÈï»ËÈô•πë	ïÕ—1ΩΩ¿°çΩπÕ–Å©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯òÅÖ’ë•º∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–ÅëΩ’â±îÅÕÖµ¡±ïIÖ—î∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–Å•π–Å…ï≈’ïÕ—ïë1ΩΩ¡MÖµ¡±ïÃ∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–Å•π–ÅÕïÖ…ç°IÖë•’ÕMÖµ¡±ïÃ§)Ï(ÄÄÄÅ1ΩΩ¡πÖ±ÂÕ•ÕIïÕ’±–ÅôÖ±±âÖç¨Ï(ÄÄÄÅôÖ±±âÖç¨πïπëMÖµ¡±îÄÙÅ©’çîËÈ©µ•∏°Ö’ë•ºπùï—9’µMÖµ¡±ïÃ†§∞Å…ï≈’ïÕ—ïë1ΩΩ¡MÖµ¡±ïÃ§Ï(ÄÄÄÅ•òÄ°Ö’ë•ºπùï—9’µ°Öππï±Ã†§ÄÙÙÄ¿ÅÒÅÖ’ë•ºπùï—9’µMÖµ¡±ïÃ†§ÄÄ‡§(ÄÄÄÄÄÄÄÅ…ï—’…∏ÅôÖ±±âÖç¨Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ¡ï…•ΩêÄÙÅAï…•ΩëÖπë•ëÖ—îÅÏÅ…ï≈’ïÕ—ïë1ΩΩ¡MÖµ¡±ïÃ∞Äƒ¿¿∏¡òÅÙÏ(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ïÕ’±–ÄÙÅÕïÖ…ç°—Aï…•Ωê°Ö’ë•º∞ÅÕÖµ¡±ïIÖ—î∞Å¡ï…•Ωê∞ÅÕïÖ…ç°IÖë•’ÕMÖµ¡±ïÃ∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄ¿∞ÅÕÖµ¡±ïIµÃ°Ö’ë•º∞Ä¿∞ÅÖ’ë•ºπùï—9’µMÖµ¡±ïÃ†§§§Ï(ÄÄÄÅ…ï—’…∏Å…ïÕ’±–πΩŸï…Ö±∞ÄÄ¿∏¡òÄ¸ÅôÖ±±âÖç¨ÄËÅ…ïÕ’±–Ï)Ù()1ΩΩ¡πÖ±ÂÕ•ÕIïÕ’±–Å1ΩΩ¡πÖ±ÂÈï»ËÈïŸÖ±’Ö—ï•·ïëIÖπùî°çΩπÕ–Å©’çîËÈ’ë•Ω	’ôôï»Òô±ΩÖ–¯òÅÖ’ë•º∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–ÅëΩ’â±îÅÕÖµ¡±ïIÖ—î∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–Å•π–ÅÕ—Ö…—MÖµ¡±î∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–Å•π–ÅïπëMÖµ¡±î∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅçΩπÕ–Å•π–Å…ï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃ§)Ï(ÄÄÄÅ1ΩΩ¡πÖ±ÂÕ•ÕIïÕ’±–Åïµ¡—‰Ï(ÄÄÄÅ•òÄ°Ö’ë•ºπùï—9’µ°Öππï±Ã†§ÄÙÙÄ¿ÅÒÅÕ—Ö…—MÖµ¡±îÄÄ¿ÅÒÅïπëMÖµ¡±îÄ¯ÅÖ’ë•ºπùï—9’µMÖµ¡±ïÃ†§(ÄÄÄÄÄÄÄÅÒÅïπëMÖµ¡±îÄ¥ÅÕ—Ö…—MÖµ¡±îÄÄÃ»§(ÄÄÄÄÄÄÄÅ…ï—’…∏Åïµ¡—‰Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ›•πëΩ‹ÄÙÅ©’çîËÈ©±•µ•–†ƒÿ∞Å©’çîËÈ©µ•∏†‘ƒ»∞Ä°ïπëMÖµ¡±îÄ¥ÅÕ—Ö…—MÖµ¡±î§ÄºÄ–§∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ©’çîËÈ…Ω’πëQΩ%π–°ÕÖµ¡±ïIÖ—îÄ®Ä¿∏¿ƒ»§§Ï(ÄÄÄÅçΩπÕ–ÅÖ’—ºÅ…ï¡Ö•»ÄÙÅ©’çîËÈ©±•µ•–†¿∞Ä°ïπëMÖµ¡±îÄ¥ÅÕ—Ö…—MÖµ¡±î§ÄºÄÃ∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ…ï¡Ö•…=Ÿï…±Ö¡MÖµ¡±ïÃ§Ï(ÄÄÄÅ…ï—’…∏ÅïŸÖ±’Ö—ïÖπë•ëÖ—î°Ö’ë•º∞ÅÕ—Ö…—MÖµ¡±î∞ÅïπëMÖµ¡±î∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅïπëMÖµ¡±îÄ¥ÅÕ—Ö…—MÖµ¡±îÄ¥Å…ï¡Ö•»∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅ›•πëΩ‹∞Å—…’î∞Äƒ¿¿∏¡ò∞Å…ï¡Ö•»∞(ÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÄÅÕÖµ¡±ïIµÃ°Ö’ë•º∞Ä¿∞ÅÖ’ë•ºπùï—9’µMÖµ¡±ïÃ†§§∞ÅÕÖµ¡±ïIÖ—î§Ï)Ù(

@@ -1,4 +1,4 @@
-#pragma once
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠#pragma once
 
 #include <juce_gui_extra/juce_gui_extra.h>
 
@@ -147,18 +147,21 @@ private:
     juce::Slider crossfadeSlider;
     juce::Slider mixSlider;
     juce::Slider durationSlider;
+    juce::Slider repairDurationSlider;
     juce::Slider flattenSlider;
     juce::Slider sourceMatchSlider;
     juce::ComboBox generationModeBox;
     juce::Label crossfadeLabel;
     juce::Label mixLabel;
     juce::Label durationLabel;
+    juce::Label repairDurationLabel;
     juce::Label flattenLabel;
     juce::Label sourceMatchLabel;
     juce::Label modeLabel;
     std::unique_ptr<SliderAttachment> crossfadeAttachment;
     std::unique_ptr<SliderAttachment> mixAttachment;
     std::unique_ptr<SliderAttachment> durationAttachment;
+    std::unique_ptr<SliderAttachment> repairDurationAttachment;
     std::unique_ptr<SliderAttachment> flattenAttachment;
     std::unique_ptr<SliderAttachment> sourceMatchAttachment;
     std::unique_ptr<ComboBoxAttachment> modeAttachment;

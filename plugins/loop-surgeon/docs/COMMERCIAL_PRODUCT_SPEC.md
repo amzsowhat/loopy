@@ -1,4 +1,4 @@
-# Loop Surgeon commercial product contract
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠# Loop Surgeon commercial product contract
 
 This document is the release boundary. Both modes are first-class parts of one plug-in. A version
 is not called sale-ready until every mandatory item has objective checks and hands-on DAW listening
@@ -23,9 +23,9 @@ must not collapse the selection into a short repeated fragment.
 ### Texture Loop
 
 For converting a source event into a sustained layer of the same material. It must remove ordered
-ADSR, pass-by and directional trajectories without copying, reversing or simply time-stretching the
-source. Output length is exact. Flatten controls intentional macro movement; Source Match controls
-the depth of loudness, spectral/spatial, phase/correlation and channel-position matching.
+ADSR, pass-by and directional trajectories without reversing or simply time-stretching the source.
+Output length is exact. Stability controls macro movement removal; Rebuild moves from source-local
+exemplars toward a clean deterministic/stochastic material reconstruction.
 
 ## Primary flow
 
@@ -48,12 +48,13 @@ the depth of loudness, spectral/spatial, phase/correlation and channel-position 
   deliberate circular rotation and internal overlap.
 - Texture Loop has no copied short cycle, repeated attack train, reverse artefact, retained pass-by
   trajectory or simple whole-file stretching.
-- Texture Loop retains recognisable source material while respecting the user's Flatten and Source
-  Match settings.
+- Texture Loop keeps a defined material colour and texture attributes. Exact source waveform and
+  event similarity are optional at higher Rebuild settings.
 
 ## Mandatory product guarantees
 
-- Texture Loop length is sample-exact; Rotate & Repair reports selected and post-overlap lengths.
+- Both modes can be sample-exact. R&R Final Length defaults to the selection and may be explicitly
+  set to any duration that fits inside Source In/Out.
 - Source In/Out remains fixed after generation and is a hard boundary in both modes.
 - Rotate & Repair exposes one editable Loop Start because its output boundary is a rotated adjacent
   source cut; the repaired old seam sits inside the result.
@@ -69,5 +70,6 @@ tonal beds and difficult stereo sources. Every class requires blind A/B against 
 result, long-loop endurance listening, 44.1/48/96 kHz coverage, recall, export/reimport and host
 automation checks.
 
-The current 0.6.0 pre-release source does not yet satisfy this contract: automatic builds are
-disabled, this revision has not been compiled, and the listening/host evidence is still missing.
+The current 0.7.0 pre-release compiles and passes deterministic tests locally. Automatic builds are
+disabled; validator, trusted-meter, corpus, blind-listening and physical Apple Silicon evidence are
+still missing, so it does not yet satisfy this sale-ready contract.

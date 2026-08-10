@@ -1,4 +1,4 @@
-#pragma once
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠#pragma once
 
 #include <juce_audio_basics/juce_audio_basics.h>
 
@@ -12,8 +12,8 @@ struct TextureSynthesisSettings
     // 0 keeps the source's measured amount of movement, 1 removes macro envelope movement.
     // The source timeline itself is never replayed or stretched.
     float flatten = 0.72f;
-    // Mix between the raw stationary render and matching the source's robust loudness,
-    // stereo position and inter-channel phase/correlation.
+    // Reconstruction depth: 0 favours forward-running source exemplars, 1 favours the clean
+    // deterministic/stochastic material model. The legacy field name is retained until release.
     float sourceMatch = 0.85f;
     uint32_t seed = 0x4c535501u;
 };

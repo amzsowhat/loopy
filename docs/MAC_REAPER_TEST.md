@@ -1,8 +1,8 @@
-# macOS / REAPER test checklist
+­r‡^Ñf¥–Ø¦{~,yÊ'vÃ®¶›­# macOS / REAPER test checklist
 
 Use native Apple Silicon REAPER. Install `Loop Surgeon.vst3` under
 `~/Library/Audio/Plug-Ins/VST3/`, then run **Preferences > Plug-ins > VST > Re-scan**. The current
-0.6.0 source has no new package yet; do not use an older binary to judge these changes.
+0.7.0 source has no Apple Silicon package yet; do not use an older binary to judge these changes.
 
 ## Functional test
 
@@ -12,7 +12,7 @@ Use native Apple Silicon REAPER. Install `Loop Surgeon.vst3` under
    the result keeps the selected long material, the green Loop Start is draggable, and neither the
    internal repair nor full-buffer wrap is audible.
 3. In **Texture Loop**, use a one-shot/pass-by source. Set exact Output Length, then compare low/high
-   Flatten and Source Match values.
+   Stability and Rebuild values.
 4. Confirm Source and Generated start the chosen audition; Preview/Stop must stop and restart
    cleanly.
 5. Compare both retained candidates and use New Variation.

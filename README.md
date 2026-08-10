@@ -1,4 +1,4 @@
-# Sound VST Project
+≠rá^—f•ñÿ¶{~,y 'v√Æ∂õ≠# Sound VST Project
 
 A cloud-first monorepo for multiple independent VST3 audio tools. Each plug-in has its own product
 directory, documentation, source, tests, and build target, while repository-level configuration
@@ -15,8 +15,8 @@ keeps Codex sessions and CI consistent across machines.
 Loop Surgeon builds as both a VST3 effect and a Standalone application. Drop in source audio, limit
 the material with Source In/Out, then choose one of two equal modes. **Rotate & Repair** preserves a
 complete long ambience, rotates at an internal natural cut, and repairs the moved old head/tail seam.
-**Texture Loop** learns robust source colour and synthesizes a new exact-length circular result
-without copying, reversing, stretching, or retaining the source's ordered ADSR/pass-by trajectory.
+**Texture Loop** reconstructs a new exact-length material bed from resonant, stochastic and source-
+detail layers without reversing, stretching, or retaining the source's ordered ADSR/pass-by path.
 The active result and source/edit context are stored in the DAW project and export as a 24-bit WAV.
 
 ## Build on Windows
@@ -37,9 +37,8 @@ Release builds use `vs2022-release` and `build-release`.
 
 ## Windows / REAPER status
 
-The current 0.6.0 revision is source-only. GitHub Actions builds are manual-only because the account
-quota is exhausted, and this revision has not been compiled or packaged. Earlier 0.5.2 binaries do
-not contain Rotate & Repair, Flatten, Source Match, the new quality gate, or full source recall.
+The current 0.7.0 revision compiles and passes deterministic tests locally. GitHub Actions remain
+disabled because the account quota is exhausted; downloadable packages must be produced locally.
 
 Unzip the package and copy the complete `Loop Surgeon.vst3` folder to:
 
@@ -55,7 +54,7 @@ for the smoke-test checklist.
 
 ### M-series Mac status
 
-There is no 0.6.0 Apple Silicon package yet. Earlier binaries are not a valid test of the current
+There is no 0.7.0 Apple Silicon package yet. Earlier binaries are not a valid test of the current
 workflow or algorithms.
 
 Unzip it and copy `Loop Surgeon.vst3` to `~/Library/Audio/Plug-Ins/VST3/`. If macOS blocks

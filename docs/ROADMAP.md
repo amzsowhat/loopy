@@ -1,15 +1,14 @@
-# Roadmap
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠# Roadmap
 
 ## P2 Loop Surgeon
 
-### 0.6.0 pre-release source
+### 0.7.0 pre-release
 
 - one VST3/Standalone product with two equal modes: Rotate & Repair and Texture Loop;
 - fixed Source In/Out selection in both modes;
-- full-selection circular rotation plus internal head/tail repair for designed ambience loops;
-- exact-length stationary texture synthesis for removing one-shot ADSR/pass-by motion;
-- user Flatten and combined Source Match depth for loudness, phase/correlation, stereo position and
-  channel balance;
+- sample-exact R&R Final Length search plus full-selection circular repair;
+- hybrid resonant/stochastic/detail Texture reconstruction for removing one-shot ADSR/pass-by;
+- user Stability and Rebuild depth;
 - source/generated audition with explicit Preview/Stop;
 - circular true-peak ceiling, closure, spectrum, loudness, phase, position, stability and repeat-risk
   quality gates;
@@ -17,12 +16,12 @@
 - 24-bit WAV export, DAW file drag and embedded project recall;
 - automatic GitHub Actions triggers disabled while the account quota is exhausted.
 
-This revision is source-only. It has not been compiled, packaged, listened to, meter-validated or
-host-validated.
+Windows Release compilation and deterministic tests pass locally. Packaging, subjective REAPER
+listening, trusted-meter comparison and host validation remain outstanding.
 
 ### Required before a sale candidate
 
-- compile and run deterministic tests on Windows x64 and Apple Silicon;
+- compile and run deterministic tests on Apple Silicon;
 - fix all compiler, test, validator and REAPER failures;
 - compare K-weighted loudness and circular true-peak estimates with trusted meters;
 - test a licensed multi-category source corpus at 44.1, 48 and 96 kHz;

@@ -1,4 +1,4 @@
-#pragma once
+≠rá^—f•ñÿ¶{~,y 'v√Æ∂õ≠#pragma once
 
 #include <juce_audio_basics/juce_audio_basics.h>
 
@@ -47,6 +47,15 @@ public:
     [[nodiscard]] static LoopAnalysisReport analyzeRotateRepair(
         const juce::AudioBuffer<float>& sourceAudio,
         double sampleRate,
+        int maximumCandidates = 3,
+        int maximumRepairOverlapSamples = 0);
+
+    // Searches inside the user selection for a contiguous source span whose repaired render is
+    // exactly targetOutputSamples long. No repetition or time stretching is introduced.
+    [[nodiscard]] static LoopAnalysisReport analyzeRotateRepairExact(
+        const juce::AudioBuffer<float>& sourceAudio,
+        double sampleRate,
+        int targetOutputSamples,
         int maximumCandidates = 3,
         int maximumRepairOverlapSamples = 0);
 

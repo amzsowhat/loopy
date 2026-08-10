@@ -1,5 +1,5 @@
-param(
-    [string] $Version = "0.6.0-pre"
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠param(
+    [string] $Version = "0.7.0-pre"
 )
 
 $ErrorActionPreference = "Stop"

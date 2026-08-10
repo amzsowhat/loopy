@@ -1,112 +1,86 @@
-# P2 Loop Surgeon
+­r‡^Ñf¥–Ø¦{~,yÊ'vÃ®¶›­# P2 Loop Surgeon
 
-Current target: **0.6.1 pre-release**. Windows x64 Release compilation and deterministic tests are
-run locally. Automatic GitHub Actions builds remain disabled while the account quota is exhausted.
+Current target: **0.7.0 pre-release**. Loop Surgeon is one VST3 effect/Standalone product with two
+equally important modes. File import/drop is the primary workflow; DAW-input capture is secondary.
 
-Loop Surgeon is one VST3 effect/Standalone product with two equally important processing modes.
-File import is the primary workflow; DAW-input capture is secondary.
+## Basic workflow
 
-## Processing modes
+1. Drop or choose WAV, AIFF, FLAC, or OGG audio.
+2. Drag blue **Source In/Out** to define the only material the engine may use.
+3. Choose **Rotate & Repair** or **Texture Loop**.
+4. Set the visible final length and mode controls, then press the single Generate button.
+5. Use **Source**, **Generated**, and **Preview/Stop** for A/B listening.
+6. Drag the approved 24-bit WAV to the DAW or use **Save WAV...**.
 
-- **Rotate & Repair** is for a longer ambience or environment edit that already has the desired
-  content and duration but whose original head and tail do not join. It keeps the complete blue
-  Source In/Out selection, chooses an internal natural cut as the new green **Loop Start**, rotates
-  the two forward-running parts, and crossfades the old end/start seam after moving it inside the
-  result. It never searches for or repeats a short period.
-- **Texture Loop** is for turning a one-shot or changing source into a sustained layer made from
-  that source's material. It rearranges stable, forward-running source exemplars at matched
-  boundaries, discards the ordered ADSR/pass-by timeline, and builds an exact-length circular
-  result while retaining local phase, resonances and microstructure. **Flatten** controls how much
-  measured macro movement remains; **Source Match** controls loudness, stereo position and
-  inter-channel phase/correlation matching.
+The source, range, active result, parameters and R&R Loop Start are embedded in DAW project state.
 
-## Workflow
+## Rotate & Repair
 
-1. Choose a mode, then drop a WAV, AIFF, FLAC, or OGG file or click **Choose Audio...**.
-2. Drag blue **Source In/Out**. This is a hard processing boundary in both modes.
-3. In Rotate & Repair, set the maximum **Seam Repair** overlap and click **Repair Selected Loop**.
-   Drag the green **Loop Start** to change where the completed loop begins without creating a new
-   discontinuity.
-4. In Texture Loop, set exact **Output Length**, **Flatten**, and **Source Match**, then click
-   **Generate Texture Loop**. Two deterministic candidates are retained; **New Variation** creates
-   another pair.
-5. Use **Source**, **Generated**, and **Preview/Stop** for controlled A/B audition.
-6. Inspect the source/output spectrum overlay, phase scope, correlation and position readouts.
-7. Drag an approved 24-bit WAV directly to the DAW, or use **Save WAV...**.
+Use R&R when the selected ambience/environment already contains the desired content, but its head
+and tail do not join.
 
-The active result, source audio, source range, loop-start marker and parameters are embedded in DAW
-project state. Alternate generated candidates are not embedded. Imported source and Texture Loop
-output are each limited to 60 seconds. Rotate & Repair output equals the selected duration minus the
-chosen overlap; the UI reports both selected and actual output length.
+- **Final Length = Selection** preserves the complete blue range and performs the standard
+  cut-rotate-overlap repair.
+- A typed Final Length searches inside Source In/Out for the best contiguous span whose repaired
+  output is sample-exactly that length.
+- A length greater than Source In/Out is rejected. R&R never stretches, reverses, or secretly
+  repeats material.
+- The green **Loop Start** moves the completed loop start without creating a new discontinuity.
 
-## Texture Loop algorithm
+## Texture Loop
 
-1. Resample only Source In/Out to the host rate and inspect up to 256 distributed active frames.
-2. Reject silence and extreme hit-level outliers, then retain stable source exemplars rather than
-   reducing the material to a median magnitude curve.
-3. Keep each exemplar forward-running with its original waveform phase, narrow resonances,
-   modulation and stereo relationship intact. No reversal or time-stretch is used.
-4. Build a non-repeating transition path by matching each exemplar tail to candidate heads while
-   penalising recent reuse, chronological pass-by continuation and repeatedly selected material.
-5. Place transitions at deliberately non-uniform intervals and reconstruct an exact-length
-   circular buffer with complementary crossfades. Flatten performs circular gain riding on the
-   assembled material, removing the one-shot macro envelope without whitening its spectrum.
-6. Source Match applies active-frame gated K-weighted loudness matching, broadband inter-channel
-   correlation, Mid/Side width and left/right position matching at the requested depth. Silent
-   one-shot tails do not become the target level.
-7. Remove DC/non-finite samples, enforce a -1 dBTP circular true-peak ceiling, and reject results
-   that fail closure, source-frame timbre identity, loudness, phase, position, stability or
-   repeat-risk gates. Coarse spectrum matching alone cannot pass the timbre gate.
+Use Texture when a one-shot or moving source should become a clean sustained material layer.
 
-## Rotate & Repair algorithm
+- **Output Length** is sample-exact.
+- **Stability** controls removal of the source macro envelope/pass-by movement.
+- **Rebuild** moves from forward-running source exemplars toward a reconstructed material model.
+  At 100%, the engine prioritises a clean, defined texture over preservation of the source event
+  sequence or waveform.
+- **New Variation** changes the deterministic seed while retaining project recall.
 
-1. Treat the complete Source In/Out selection as the intended long loop.
-2. Evaluate several overlap lengths for the bad original end-to-start seam using waveform, level,
-   slope, spectrum, phase, transient and stereo evidence.
-3. Scan internal cuts and prefer a stable, non-transient location for the new Loop Start.
-4. Render `[Loop Start ... old end]`, repair the old end/start inside the result, then append
-   `[old start ... Loop Start]`. The exported loop boundary is therefore an originally adjacent
-   pair of source samples.
-5. Remove DC/non-finite samples and enforce the same -1 dBTP circular true-peak ceiling.
+The 0.7 engine contains three internal paths:
+
+1. A phase-continuous resonant layer preserves stable narrow-band material cues without freezing a
+   single sample frame.
+2. A stochastic residual layer carries broadband air/water/noise texture using the measured source
+   spectral envelope instead of white/pink-noise substitution.
+3. A low-level forward exemplar layer restores source-local detail at lower Rebuild values.
+
+The layers are colour-matched, circularly level-stabilised, spatially constrained, generated longer
+than requested, internally seam-repaired, and then reduced to the exact requested duration.
 
 ## Parameters
 
 | ID | Range | Default | Purpose |
 | --- | --- | --- | --- |
-| `loopLength` | 0.25â€“16 s | 4 s | Secondary DAW-capture duration |
-| `syncToHost` | off/on | on | Secondary capture alignment |
-| `bars` | 1/2/4/8 | 1 | Secondary capture size |
-| `crossfadeMs` | 1â€“250 ms | 25 ms | Rotate & Repair overlap limit |
-| `mix` | 0â€“100% | 100% | Audition dry/generated mix only |
-| `generationMode` | Rotate & Repair / Texture Loop | Rotate & Repair | Processing mode |
-| `textureDuration` | 4â€“60 s | 24 s | Exact Texture Loop length |
-| `variation` | 0â€“100% | 72% | Exemplar order, transition and interval variation |
-| `flatten` | 0â€“100% | 72% | Removal of source macro dynamics/motion |
-| `sourceMatch` | 0â€“100% | 85% | Loudness and spatial matching depth |
+| `generationMode` | R&R / Texture | R&R | Explicit creative intent |
+| `repairDuration` | Selection or 0.1â€“60 s | Selection | Exact R&R final length |
+| `crossfadeMs` | 1â€“250 ms | 25 ms | Maximum R&R seam overlap |
+| `textureDuration` | 4â€“60 s | 24 s | Exact Texture final length |
+| `flatten` | 0â€“100% | 72% | Texture Stability; ID retained for state compatibility |
+| `sourceMatch` | 0â€“100% | 85% | Texture Rebuild; ID retained for state compatibility |
+| `variation` | 0â€“100% | 72% | Host-automatable material movement/variation |
+| `mix` | 0â€“100% | 100% | Audition mix only |
 
 ## Real-time and memory rules
 
-- Decode, resampling, analysis, synthesis, state compression and WAV writing stay off the audio
-  thread. The audio thread does not allocate, lock, perform file I/O or format logs.
-- Two long texture candidates are retained using ownership swaps. At 60 seconds/48 kHz/stereo,
-  source plus two float results are about 69 MB, excluding bounded workspaces and the capture
-  buffer. Generation can temporarily use more while comparing a replacement candidate.
-- Project state embeds the active output and source for portable recall; long sessions therefore
-  increase DAW project size and save time.
+- Decode, resampling, synthesis, state compression and WAV writing stay off the audio thread.
+- The audio thread does not allocate, lock, perform file I/O, or format logs.
+- Imported source and Texture output are limited to 60 seconds.
+- Two texture candidates are retained. At 48 kHz stereo, a 60-second source plus two float results
+  uses about 69 MB before temporary generation workspaces.
 
-## Unfinished release evidence
+## Verified and unfinished evidence
 
-- Windows x64 Release compilation and deterministic engine tests pass locally. VST3 Validator,
-  Windows REAPER re-test of 0.6.1, and Apple Silicon REAPER remain outstanding.
-- The supplied underwater ice impact has been rendered through the offline 0.6.1 path and clears
-  the new source-frame timbre metric; subjective material identity still requires listening review.
-- The K-weighted loudness and four-point circular true-peak implementations need numerical
-  comparison with trusted meters before release.
-- Spatial matching preserves robust band energy plus broadband position/correlation; it does not
-  reproduce every frequency-dependent moving phase trajectory.
-- A licensed multi-category corpus, blind comparisons with competent manual loops, long-duration
-  listening and 44.1/48/96 kHz host coverage are still mandatory.
-- Waveform zoom, typed/sample-level positions, snapping, nudge, undo/redo and WAV `cue`/`smpl`
+- Windows x64 Release VST3 and deterministic engine tests pass locally for 0.7.0.
+- The supplied underwater ice impact renders through the offline 0.7 path and passes automated
+  closure, true-peak, spectrum-colour, stereo, stability and repeat-risk gates.
+- Automated gates do not prove subjective commercial quality. Fresh REAPER listening on the ice
+  source, a licensed multi-category corpus, blind comparisons, VST3 Validator, trusted-meter
+  comparison, 44.1/48/96 kHz host coverage and Apple Silicon REAPER remain required.
+- The present Texture engine is a first hybrid reconstruction implementation. It does not yet
+  perform learned semantic material separation, modal tracking, sparse micro-event detection or a
+  neural offline enhancement pass.
+- Waveform zoom, typed/sample-level range positions, snapping, nudge, undo/redo and WAV cue/smpl
   metadata remain unfinished.
-- File decode/resampling, state compression and WAV export are synchronous UI/host-state jobs and
-  can pause briefly on maximum-length files.
+

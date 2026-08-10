@@ -1,4 +1,4 @@
-#pragma once
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠#pragma once
 
 #include <juce_audio_basics/juce_audio_basics.h>
 #include <juce_core/juce_core.h>
@@ -37,6 +37,7 @@ public:
 
     void setLoopLengthSeconds(float seconds) noexcept;
     void setCrossfadeMilliseconds(float milliseconds) noexcept;
+    void setRepairDurationSeconds(float seconds) noexcept;
     void setTextureDurationSeconds(float seconds) noexcept;
     void setTextureVariation(float amount) noexcept;
     void setTextureFlatten(float amount) noexcept;
@@ -143,6 +144,8 @@ private:
     double sampleRate = 44100.0;
     float loopLengthSeconds = 4.0f;
     std::atomic<float> crossfadeMilliseconds { 25.0f };
+    // Zero follows the complete Source In/Out selection.
+    std::atomic<float> repairDurationSeconds { 0.0f };
     std::atomic<float> textureDurationSeconds { 24.0f };
     std::atomic<float> textureVariation { 0.72f };
     std::atomic<float> textureFlatten { 0.72f };

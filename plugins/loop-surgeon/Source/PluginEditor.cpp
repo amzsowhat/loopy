@@ -1,4 +1,4 @@
-#include "PluginEditor.h"
+­r‡^Ñf¥–Ø¦{}ìyÊ'vÃ®¶›­#include "PluginEditor.h"
 
 #include <utility>
 
@@ -352,542 +352,4 @@ void SignalAnalysisView::paint(juce::Graphics& graphics)
     graphics.setColour(juce::Colour(border));
     graphics.drawRect(phaseSquare, 1.0f);
     graphics.setColour(juce::Colour(border).withAlpha(0.55f));
-    graphics.drawLine(phaseSquare.getCentreX(), phaseSquare.getY(),
-                      phaseSquare.getCentreX(), phaseSquare.getBottom());
-    graphics.drawLine(phaseSquare.getX(), phaseSquare.getCentreY(),
-                      phaseSquare.getRight(), phaseSquare.getCentreY());
-    graphics.setColour(juce::Colour(loopGreen).withAlpha(0.60f));
-    for (const auto& point : snapshot.phasePoints)
-    {
-        const auto side = 0.5f * (point[0] - point[1]);
-        const auto mid = 0.5f * (point[0] + point[1]);
-        const auto x = phaseSquare.getCentreX() + side * phaseSquare.getWidth() * 0.45f;
-        const auto y = phaseSquare.getCentreY() - mid * phaseSquare.getHeight() * 0.45f;
-        graphics.fillEllipse(x - 0.75f, y - 0.75f, 1.5f, 1.5f);
-    }
-
-    graphics.setColour(juce::Colour(textMuted));
-    graphics.drawText("CORRELATION", meterArea.removeFromTop(12.0f),
-                      juce::Justification::centredLeft);
-    auto correlationTrack = meterArea.removeFromTop(9.0f).reduced(0.0f, 2.0f);
-    graphics.setColour(juce::Colour(0xff263545));
-    graphics.fillRoundedRectangle(correlationTrack, 2.5f);
-    const auto correlation = juce::jlimit(-1.0f, 1.0f, snapshot.outputCorrelation);
-    const auto markerX = correlationTrack.getX()
-        + 0.5f * (correlation + 1.0f) * correlationTrack.getWidth();
-    graphics.setColour(correlation < 0.0f ? juce::Colour(warningAmber)
-                                          : juce::Colour(loopGreen));
-    graphics.fillRoundedRectangle(markerX - 2.0f, correlationTrack.getY() - 2.0f,
-                                  4.0f, correlationTrack.getHeight() + 4.0f, 2.0f);
-    graphics.setColour(juce::Colour(textPrimary));
-    graphics.setFont(juce::FontOptions(10.0f, juce::Font::bold));
-    graphics.drawText(juce::String(correlation, 2), meterArea.removeFromTop(18.0f),
-                      juce::Justification::centredLeft);
-    const auto imbalance = snapshot.outputImbalanceDb;
-    const auto side = imbalance > 0.25f ? "L " : imbalance < -0.25f ? "R " : "C ";
-    graphics.setColour(juce::Colour(textMuted));
-    graphics.drawText("POSITION  " + juce::String(side)
-                          + juce::String(std::abs(imbalance), 1) + " dB",
-                      meterArea.removeFromTop(16.0f), juce::Justification::centredLeft);
-}
-
-RenderDragButton::RenderDragButton()
-    : juce::TextButton("Drag Loop to DAW")
-{
-    setTooltip("Drag the approved 24-bit WAV result to the DAW timeline");
-}
-
-void RenderDragButton::mouseDown(const juce::MouseEvent& event)
-{
-    dragStarted = false;
-    juce::TextButton::mouseDown(event);
-}
-
-void RenderDragButton::mouseDrag(const juce::MouseEvent& event)
-{
-    juce::TextButton::mouseDrag(event);
-    if (dragStarted || event.getDistanceFromDragStart() < 5 || !prepareFile)
-        return;
-
-    const auto file = prepareFile();
-    if (!file.existsAsFile())
-    {
-        if (reportStatus)
-            reportStatus("Could not prepare a DAW render");
-        return;
-    }
-
-    dragStarted = juce::DragAndDropContainer::performExternalDragDropOfFiles(
-        { file.getFullPathName() }, false, this);
-    if (reportStatus)
-        reportStatus(dragStarted ? "Drop the loop on the DAW timeline"
-                                 : "The host did not start the file drag");
-}
-
-void RenderDragButton::mouseUp(const juce::MouseEvent& event)
-{
-    juce::TextButton::mouseUp(event);
-    dragStarted = false;
-}
-
-LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
-    LoopSurgeonAudioProcessor& owner)
-    : AudioProcessorEditor(&owner), processor(owner)
-{
-    setLookAndFeel(&lookAndFeel);
-
-    titleLabel.setText("LOOP SURGEON", juce::dontSendNotification);
-    titleLabel.setFont(juce::FontOptions(25.0f, juce::Font::bold));
-    titleLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
-    addAndMakeVisible(titleLabel);
-
-    versionLabel.setText("0.6.0 PRE-RELEASE", juce::dontSendNotification);
-    versionLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
-    versionLabel.setJustificationType(juce::Justification::centredRight);
-    versionLabel.setColourâ€¦1842 tokens truncatedâ€¦       parameters, "flatten", flattenSlider);
-    sourceMatchAttachment = std::make_unique<SliderAttachment>(
-        parameters, "sourceMatch", sourceMatchSlider);
-
-    modeLabel.setText("MODE", juce::dontSendNotification);
-    modeLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
-    modeLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
-    addAndMakeVisible(modeLabel);
-    generationModeBox.addItem("Rotate & Repair", 1);
-    generationModeBox.addItem("Texture Loop", 2);
-    generationModeBox.onChange = [this]
-    {
-        updatePrimaryAction();
-        if (processor.getSourceName().isNotEmpty())
-            lastMessage = "Mode changed - press Generate to apply";
-    };
-    addAndMakeVisible(generationModeBox);
-    modeAttachment = std::make_unique<ComboBoxAttachment>(
-        parameters, "generationMode", generationModeBox);
-
-    setResizable(true, true);
-    setResizeLimits(920, 760, 1320, 940);
-    setSize(1040, 800);
-    updatePrimaryAction();
-    startTimerHz(12);
-}
-
-LoopSurgeonAudioProcessorEditor::~LoopSurgeonAudioProcessorEditor()
-{
-    stopTimer();
-    setLookAndFeel(nullptr);
-}
-
-void LoopSurgeonAudioProcessorEditor::drawCard(
-    juce::Graphics& graphics, const juce::Rectangle<int> card,
-    const juce::String& title, const juce::Colour accent) const
-{
-    graphics.setColour(juce::Colour(panel));
-    graphics.fillRoundedRectangle(card.toFloat(), 10.0f);
-    graphics.setColour(juce::Colour(border));
-    graphics.drawRoundedRectangle(card.toFloat().reduced(0.5f), 10.0f, 1.0f);
-
-    auto heading = card.reduced(14).removeFromTop(23);
-    graphics.setColour(juce::Colour(0xffdbe4ed));
-    graphics.setFont(juce::FontOptions(11.5f, juce::Font::bold));
-    graphics.drawText(title, heading, juce::Justification::centredLeft);
-    graphics.setColour(accent);
-    graphics.fillRoundedRectangle(
-        juce::Rectangle<float>(static_cast<float>(card.getX() + 14),
-                               static_cast<float>(card.getY() + 34), 44.0f, 2.0f),
-        1.0f);
-}
-
-void LoopSurgeonAudioProcessorEditor::paint(juce::Graphics& graphics)
-{
-    juce::ColourGradient gradient(juce::Colour(0xff111923), 0.0f, 0.0f,
-                                  juce::Colour(background), 0.0f,
-                                  static_cast<float>(getHeight()), false);
-    graphics.setGradientFill(gradient);
-    graphics.fillAll();
-
-    drawCard(graphics, sourceCard, "SOURCE", juce::Colour(searchBlue));
-    drawCard(graphics, waveformCard, "SOURCE RANGE", juce::Colour(searchBlue));
-    drawCard(graphics, auditionCard, "AUDITION", juce::Colour(loopGreen));
-    drawCard(graphics, finishCard, "GENERATION", juce::Colour(loopGreen));
-
-    graphics.setColour(juce::Colour(border));
-    graphics.drawHorizontalLine(footerArea.getY(), static_cast<float>(footerArea.getX()),
-                                static_cast<float>(footerArea.getRight()));
-}
-
-void LoopSurgeonAudioProcessorEditor::resized()
-{
-    auto area = getLocalBounds().reduced(24);
-    auto header = area.removeFromTop(44);
-    titleLabel.setBounds(header.removeFromLeft(360));
-    versionLabel.setBounds(header.removeFromRight(180));
-
-    area.removeFromTop(6);
-    sourceCard = area.removeFromTop(80);
-    area.removeFromTop(10);
-    waveformCard = area.removeFromTop(244);
-    area.removeFromTop(10);
-
-    auto bottom = area.removeFromTop(196);
-    const auto leftWidth = (bottom.getWidth() - 10) / 2;
-    auditionCard = bottom.removeFromLeft(leftWidth);
-    bottom.removeFromLeft(10);
-    finishCard = bottom;
-    area.removeFromTop(8);
-    footerArea = area;
-
-    auto sourceContent = sourceCard.reduced(14);
-    sourceContent.removeFromTop(27);
-    auto sourceText = sourceContent.removeFromLeft(360);
-    dropLabel.setBounds({});
-    sourceLabel.setBounds(sourceText.removeFromTop(28));
-    auto sourceActions = sourceContent;
-    clearButton.setBounds(sourceActions.removeFromRight(122).reduced(0, 5));
-    sourceActions.removeFromRight(8);
-    captureButton.setBounds(sourceActions.removeFromRight(148).reduced(0, 5));
-    sourceActions.removeFromRight(8);
-    importButton.setBounds(sourceActions.removeFromRight(146).reduced(0, 5));
-
-    auto waveContent = waveformCard.reduced(14);
-    waveContent.removeFromTop(27);
-    waveformView.setBounds(waveContent.removeFromTop(166));
-    waveContent.removeFromTop(8);
-    auto rangeRow = waveContent.removeFromTop(35);
-    resetRangeButton.setBounds(rangeRow.removeFromRight(120));
-    rangeRow.removeFromRight(8);
-    analyzeRangeButton.setBounds(rangeRow.removeFromRight(176));
-    rangeRow.removeFromRight(12);
-    rangeLabel.setBounds(rangeRow);
-
-    auto audition = auditionCard.reduced(14);
-    audition.removeFromTop(28);
-    candidateBox.setBounds(audition.removeFromTop(34));
-    audition.removeFromTop(8);
-    auto transport = audition.removeFromTop(38);
-    previewTransportButton.setBounds(transport.removeFromLeft(116));
-    transport.removeFromLeft(8);
-    originalPreviewButton.setBounds(transport.removeFromLeft(86));
-    transport.removeFromLeft(6);
-    loopPreviewButton.setBounds(transport.removeFromLeft(104));
-    audition.removeFromTop(10);
-    auto auditionMix = audition.removeFromTop(40);
-    mixLabel.setBounds(auditionMix.removeFromLeft(112));
-    mixSlider.setBounds(auditionMix);
-    audition.removeFromTop(8);
-    regenerateButton.setBounds(audition.removeFromTop(34).removeFromLeft(150));
-
-    auto finish = finishCard.reduced(14);
-    finish.removeFromTop(28);
-    auto modeRow = finish.removeFromTop(34);
-    modeLabel.setBounds(modeRow.removeFromLeft(112));
-    generationModeBox.setBounds(modeRow);
-    finish.removeFromTop(7);
-    auto durationRow = finish.removeFromTop(36);
-    durationLabel.setBounds(durationRow.removeFromLeft(112));
-    durationSlider.setBounds(durationRow);
-    auto seamRow = durationLabel.getBounds().getUnion(durationSlider.getBounds());
-    crossfadeLabel.setBounds(seamRow.removeFromLeft(112));
-    crossfadeSlider.setBounds(seamRow);
-    finish.removeFromTop(5);
-    auto flattenRow = finish.removeFromTop(36);
-    flattenLabel.setBounds(flattenRow.removeFromLeft(112));
-    flattenSlider.setBounds(flattenRow);
-    finish.removeFromTop(5);
-    auto matchRow = finish.removeFromTop(36);
-    sourceMatchLabel.setBounds(matchRow.removeFromLeft(112));
-    sourceMatchSlider.setBounds(matchRow);
-
-    auto footer = footerArea;
-    exportButton.setBounds(footer.removeFromRight(140).reduced(0, 7));
-    footer.removeFromRight(8);
-    dragToDawButton.setBounds(footer.removeFromRight(184).reduced(0, 7));
-    footer.removeFromRight(14);
-    statusLabel.setBounds(footer.removeFromTop(25));
-    qualityView.setBounds(footer.removeFromBottom(27));
-    footer.removeFromTop(3);
-    footer.removeFromBottom(3);
-    signalAnalysisView.setBounds(footer);
-}
-
-bool LoopSurgeonAudioProcessorEditor::isInterestedInFileDrag(
-    const juce::StringArray& files)
-{
-    return files.size() == 1
-           && juce::File(files[0]).hasFileExtension("wav;aif;aiff;flac;ogg");
-}
-
-void LoopSurgeonAudioProcessorEditor::filesDropped(
-    const juce::StringArray& files, int, int)
-{
-    if (files.size() == 1)
-        importFile(juce::File(files[0]));
-}
-
-void LoopSurgeonAudioProcessorEditor::importFile(const juce::File& file)
-{
-    processor.setPreviewPlaying(false);
-    lastMessage = processor.importAudioFile(file);
-    if (lastMessage.isEmpty())
-        lastMessage = "Source loaded";
-    updatePrimaryAction();
-}
-
-void LoopSurgeonAudioProcessorEditor::chooseImportFile()
-{
-    fileChooser = std::make_unique<juce::FileChooser>(
-        "Choose source audio", juce::File {}, "*.wav;*.aif;*.aiff;*.flac;*.ogg");
-    fileChooser->launchAsync(juce::FileBrowserComponent::openMode
-                                 | juce::FileBrowserComponent::canSelectFiles,
-                             [this] (const juce::FileChooser& chooser)
-                             {
-                                 const auto file = chooser.getResult();
-                                 if (file.existsAsFile())
-                                     importFile(file);
-                             });
-}
-
-void LoopSurgeonAudioProcessorEditor::chooseExportFile()
-{
-    fileChooser = std::make_unique<juce::FileChooser>(
-        "Export generated audio",
-        juce::File::getSpecialLocation(juce::File::userDocumentsDirectory)
-            .getChildFile("Loop Surgeon.wav"),
-        "*.wav");
-    fileChooser->launchAsync(juce::FileBrowserComponent::saveMode
-                                 | juce::FileBrowserComponent::canSelectFiles
-                                 | juce::FileBrowserComponent::warnAboutOverwriting,
-                             [this] (const juce::FileChooser& chooser)
-                             {
-                                 const auto file = chooser.getResult();
-                                 if (file != juce::File {})
-                                 {
-                                     lastMessage = processor.exportLoopFile(file);
-                                     if (lastMessage.isEmpty())
-                                         lastMessage = "24-bit WAV exported";
-                                 }
-                             });
-}
-
-juce::File LoopSurgeonAudioProcessorEditor::prepareDawDragFile()
-{
-    auto renderDirectory = juce::File::getSpecialLocation(
-        juce::File::userApplicationDataDirectory)
-        .getChildFile("Sound VST Project")
-        .getChildFile("Loop Surgeon")
-        .getChildFile("DAW Renders");
-    if (renderDirectory.createDirectory().failed())
-        return {};
-
-    const auto stamp = juce::Time::getCurrentTime().formatted("%Y%m%d-%H%M%S");
-    const auto file = renderDirectory.getNonexistentChildFile(
-        "Loop-Surgeon-" + stamp, ".wav", false);
-    const auto error = processor.exportLoopFile(file);
-    if (error.isNotEmpty())
-    {
-        lastMessage = error;
-        return {};
-    }
-    return file;
-}
-
-void LoopSurgeonAudioProcessorEditor::timerCallback()
-{
-    const auto source = processor.getSourceName();
-    sourceLabel.setText(source.isEmpty() ? "No source loaded" : source,
-                        juce::dontSendNotification);
-    const auto candidateCount = processor.getCandidateCount();
-    const auto candidateRevision = processor.getCandidateRevision();
-    const auto sourceRevision = processor.getSourceRevision();
-    const auto sourceChanged = source != displayedSource
-                               || sourceRevision != displayedSourceRevision;
-    if (sourceChanged)
-    {
-        displayedSource = source;
-        displayedSourceRevision = sourceRevision;
-        waveformView.setWaveform(processor.getWaveformPreview());
-        waveformView.setSourceRange(
-            processor.getAnalysisRangeStartProportion(),
-            processor.getAnalysisRangeEndProportion());
-        waveformView.setRotation(-1.0f);
-    }
-    if (sourceChanged || candidateCount != displayedCandidateCount
-        || candidateRevision != displayedCandidateRevision)
-    {
-        displayedCandidateCount = candidateCount;
-        displayedCandidateRevision = candidateRevision;
-        candidateBox.clear(juce::dontSendNotification);
-        for (int index = 0; index < candidateCount; ++index)
-            candidateBox.addItem(processor.getCandidateDescription(index), index + 1);
-        if (candidateCount > 0)
-            candidateBox.setSelectedItemIndex(0, juce::dontSendNotification);
-    }
-
-    updateRangeLabel();
-    updatePrimaryAction();
-
-    const auto state = processor.getLoopState();
-    const auto ready = state == LoopEngine::State::ready;
-    const auto textureResult = ready
-        && processor.getLastUsedGenerationMode()
-               == LoopEngine::GenerationMode::textureLoop;
-    const auto selectedTextureMode = generationModeBox.getSelectedItemIndex() == 1;
-    candidateBox.setTextWhenNothingSelected(selectedTextureMode
-        ? "Texture variations" : "Repair options");
-    qualityView.setTextureMode(ready ? textureResult : selectedTextureMode);
-    if (ready && !textureResult && !waveformView.isEditingRotation())
-        waveformView.setRotation(processor.getRotationProportion());
-    else if (!ready || textureResult)
-        waveformView.setRotation(-1.0f);
-    const auto approved = ready && processor.hasPassedQualityGate();
-    signalAnalysisView.setSnapshot(ready ? processor.getSignalSnapshot()
-                                         : RenderQuality::SignalSnapshot {});
-    exportButton.setEnabled(approved);
-    dragToDawButton.setEnabled(approved);
-    candidateBox.setEnabled(ready);
-    previewTransportButton.setEnabled(ready);
-    originalPreviewButton.setEnabled(ready);
-    loopPreviewButton.setEnabled(ready);
-    analyzeRangeButton.setEnabled(source.isNotEmpty() && state != LoopEngine::State::analysing);
-    resetRangeButton.setEnabled(source.isNotEmpty());
-    regenerateButton.setEnabled(ready
-        && processor.getLastUsedGenerationMode()
-               == LoopEngine::GenerationMode::textureLoop);
-    regenerateButton.setVisible(selectedTextureMode);
-    clearButton.setEnabled(source.isNotEmpty() || ready);
-
-    const auto directModeSelected = generationModeBox.getSelectedItemIndex() == 0;
-    durationLabel.setVisible(!directModeSelected);
-    durationSlider.setVisible(!directModeSelected);
-    flattenLabel.setVisible(!directModeSelected);
-    flattenSlider.setVisible(!directModeSelected);
-    sourceMatchLabel.setVisible(!directModeSelected);
-    sourceMatchSlider.setVisible(!directModeSelected);
-    crossfadeLabel.setVisible(directModeSelected);
-    crossfadeSlider.setVisible(directModeSelected);
-
-    const auto previewMode = processor.getPreviewMode();
-    originalPreviewButton.setToggleState(previewMode == LoopEngine::PreviewMode::original,
-                                         juce::dontSendNotification);
-    loopPreviewButton.setToggleState(previewMode == LoopEngine::PreviewMode::loop,
-                                     juce::dontSendNotification);
-    const auto previewing = processor.isPreviewPlaying();
-    previewTransportButton.setButtonText(previewing ? "Stop" : "Preview");
-    previewTransportButton.setColour(
-        juce::TextButton::buttonColourId,
-        juce::Colour(previewing ? 0xff8a4949 : 0xff287b60));
-
-    if (lastMessage.isNotEmpty())
-    {
-        statusLabel.setText(lastMessage, juce::dontSendNotification);
-        lastMessage.clear();
-    }
-    else
-    {
-        switch (state)
-        {
-            case LoopEngine::State::empty:
-                statusLabel.setText("No source",
-                                    juce::dontSendNotification);
-                break;
-            case LoopEngine::State::sourceReady:
-                statusLabel.setText(
-                    "Source ready - set range and mode, then Generate",
-                    juce::dontSendNotification);
-                break;
-            case LoopEngine::State::armed:
-                statusLabel.setText("Waiting for DAW capture",
-                                    juce::dontSendNotification);
-                break;
-            case LoopEngine::State::capturing:
-                statusLabel.setText(
-                    "Capturing " + juce::String(
-                        juce::roundToInt(processor.getCaptureProgress() * 100.0f)) + "%",
-                    juce::dontSendNotification);
-                break;
-            case LoopEngine::State::analysing:
-                statusLabel.setText(
-                    juce::String("Generating  ") + juce::String(juce::roundToInt(
-                        processor.getAnalysisProgress() * 100.0f)) + "%",
-                                    juce::dontSendNotification);
-                break;
-            case LoopEngine::State::ready:
-                statusLabel.setText(
-                    processor.isLowConfidence()
-                        ? "Loop ready â€” low confidence: compare candidates carefully"
-                        : "Loop ready â€” press Preview, then Export when satisfied",
-                    juce::dontSendNotification);
-                break;
-            case LoopEngine::State::failed:
-                statusLabel.setText(
-                    "No reliable loop found â€” widen the blue range or try different material",
-                    juce::dontSendNotification);
-                break;
-        }
-    }
-
-    if (state == LoopEngine::State::ready)
-    {
-        const auto passedGate = processor.hasPassedQualityGate();
-        statusLabel.setColour(juce::Label::textColourId,
-                              juce::Colour(passedGate ? loopGreen : warningAmber));
-        statusLabel.setText(
-            juce::String(textureResult ? "Texture Loop ready"
-                                       : "Rotate & Repair loop ready")
-                + (passedGate
-                    ? " - QC PASS " + juce::String(processor.getRenderQualityScore(), 0)
-                    : " - QC BLOCKED: regenerate or refine"),
-            juce::dontSendNotification);
-    }
-    else
-    {
-        statusLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
-    }
-
-    qualityView.setScores(
-        processor.getSeamQuality(),
-        textureResult ? processor.getLevelScore() : processor.getRepairScore(),
-        processor.getSpectrumScore(), processor.getPhaseScore(),
-        processor.getStereoScore(),
-        textureResult ? processor.getRepeatSafetyScore()
-                      : processor.getPeriodicityScore());
-    repaint();
-}
-
-void LoopSurgeonAudioProcessorEditor::updateRangeLabel()
-{
-    const auto duration = processor.getSourceDurationSeconds();
-    const auto start = duration * waveformView.getSourceIn();
-    const auto end = duration * waveformView.getSourceOut();
-    const auto repairedOutput = processor.getLoopState() == LoopEngine::State::ready
-        && processor.getLastUsedGenerationMode() == LoopEngine::GenerationMode::rotateRepair
-        ? juce::String("     OUTPUT  ")
-              + juce::String(processor.getRenderedDurationSeconds(), 2) + " s"
-        : juce::String {};
-    rangeLabel.setText(
-        "IN  " + juce::String(start, 2) + " s     OUT  " + juce::String(end, 2)
-            + " s     SELECTED  " + juce::String(juce::jmax(0.0, end - start), 2) + " s"
-            + repairedOutput,
-        juce::dontSendNotification);
-}
-
-void LoopSurgeonAudioProcessorEditor::updatePrimaryAction()
-{
-    const auto selectedMode = generationModeBox.getSelectedItemIndex();
-    analyzeRangeButton.setButtonText(
-        selectedMode == 0 ? "Repair Selected Loop"
-                          : "Generate Texture Loop");
-}
-
-void LoopSurgeonAudioProcessorEditor::configureSlider(
-    juce::Slider& slider, juce::Label& label, const juce::String& text)
-{
-    slider.setSliderStyle(juce::Slider::LinearHorizontal);
-    slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 76, 25);
-    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff2d3c4b));
-    slider.setColour(juce::Slider::thumbColourId, juce::Colour(loopGreen));
-    addAndMakeVisible(slider);
-    label.setText(text, juce::dontSendNotification);
-    label.setFont(juce::FontOptions(10.5f, juce::Font::bold));
-    label.setColour(juce::Label::textColourId, juce::Colour(textMuted));
-    addAndMakeVisible(label);
-}
+    graphics.drawLine(phaseSquare.getCentreç5¶‰Ëkºwµçy•I½Ü¹É•µ½Ù•É½µI¥¡Ğ ÄÈÀ¤¤ì(€€€É…¹•I½Ü¹É•µ½Ù•É½µI¥¡Ğ à¤ì(€€€…¹…±åé•I…¹•	ÕÑÑ½¸¹Í•Ñ	½Õ¹‘Ì¡É…¹•I½Ü¹É•µ½Ù•É½µI¥¡Ğ ÄÜØ¤¤ì(€€€É…¹•I½Ü¹É•µ½Ù•É½µI¥¡Ğ ÄÈ¤ì(€€€É…¹•1…‰•°¹Í•Ñ	½Õ¹‘Ì¡É…¹•I½Ü¤ì((€€€…ÕÑ¼…Õ‘¥Ñ¥½¸€ô…Õ‘¥Ñ¥½¹…É¹É•‘Õ• ÄĞ¤ì(€€€…Õ‘¥Ñ¥½¸¹É•µ½Ù•É½µQ½À Èà¤ì(€€€…¹‘¥‘…Ñ•	½à¹Í•Ñ	½Õ¹‘Ì¡…Õ‘¥Ñ¥½¸¹É•µ½Ù•É½µQ½À ÌĞ¤¤ì(€€€…Õ‘¥Ñ¥½¸¹É•µ½Ù•É½µQ½À à¤ì(€€€…ÕÑ¼ÑÉ…¹ÍÁ½ÉĞ€ô…Õ‘¥Ñ¥½¸¹É•µ½Ù•É½µQ½À Ìà¤ì(€€€ÁÉ•Ù¥•İQÉ…¹ÍÁ½ÉÑ	ÕÑÑ½¸¹Í•Ñ	½Õ¹‘Ì¡ÑÉ…¹ÍÁ½ÉĞ¹É•µ½Ù•É½µ1•™Ğ ÄÄØ¤¤ì(€€€ÑÉ…¹ÍÁ½ÉĞ¹É•µ½Ù•É½µ1•™Ğ à¤ì(€€€½É¥¥¹…±AÉ•Ù¥•İ	ÕÑÑ½¸¹Í•Ñ	½Õ¹‘Ì¡ÑÉ…¹ÍÁ½ÉĞ¹É•µ½Ù•É½µ1•™Ğ àØ¤¤ì(€€€ÑÉ…¹ÍÁ½ÉĞ¹É•µ½Ù•É½µ1•™Ğ Ø¤ì(€€€±½½ÁAÉ•Ù¥•İ	ÕÑÑ½¸¹Í•Ñ	½Õ¹‘Ì¡ÑÉ…¹ÍÁ½ÉĞ¹É•µ½Ù•É½µ1•™Ğ ÄÀĞ¤¤ì(€€€…Õ‘¥Ñ¥½¸¹É•µ½Ù•É½µQ½À ÄÀ¤ì(€€€…ÕÑ¼…Õ‘¥Ñ¥½¹5¥à€ô…Õ‘¥Ñ¥½¸¹É•µ½Ù•É½µQ½À ĞÀ¤ì(€€€µ¥á1…‰•°¹Í•Ñ	½Õ¹‘Ì¡…Õ‘¥Ñ¥½¹5¥à¹É•µ½Ù•É½µ1•™Ğ ÄÄÈ¤¤ì(€€€µ¥áM±¥‘•È¹Í•Ñ	½Õ¹‘Ì¡…Õ‘¥Ñ¥½¹5¥à¤ì(€€€…Õ‘¥Ñ¥½¸¹É•µ½Ù•É½µQ½À à¤ì(€€€É••¹•É…Ñ•	ÕÑÑ½¸¹Í•Ñ	½Õ¹‘Ì¡…Õ‘¥Ñ¥½¸¹É•µ½Ù•É½µQ½À ÌĞ¤¹É•µ½Ù•É½µ1•™Ğ ÄÔÀ¤¤ì((€€€…ÕÑ¼™¥¹¥Í €ô™¥¹¥Í¡…É¹É•‘Õ• ÄĞ¤ì(€€€™¥¹¥Í ¹É•µ½Ù•É½µQ½À Èà¤ì(€€€…ÕÑ¼µ½‘•I½Ü€ô™¥¹¥Í ¹É•µ½Ù•É½µQ½À ÌĞ¤ì(€€€µ½‘•1…‰•°¹Í•Ñ	½Õ¹‘Ì¡µ½‘•I½Ü¹É•µ½Ù•É½µ1•™Ğ ÄÄÈ¤¤ì(€€€•¹•É…Ñ¥½¹5½‘•	½à¹Í•Ñ	½Õ¹‘Ì¡µ½‘•I½Ü¤ì(€€€™¥¹¥Í ¹É•µ½Ù•É½µQ½À Ü¤ì(€€€…ÕÑ¼‘ÕÉ…Ñ¥½¹I½Ü€ô™¥¹¥Í ¹É•µ½Ù•É½µQ½À ÌØ¤ì(€€€‘ÕÉ…Ñ¥½¹1…‰•°¹Í•Ñ	½Õ¹‘Ì¡‘ÕÉ…Ñ¥½¹I½Ü¹É•µ½Ù•É½µ1•™Ğ ÄÄÈ¤¤ì(€€€‘ÕÉ…Ñ¥½¹M±¥‘•È¹Í•Ñ	½Õ¹‘Ì¡‘ÕÉ…Ñ¥½¹I½Ü¤ì(€€€É•Á…¥ÉÕÉ…Ñ¥½¹1…‰•°¹Í•Ñ	½Õ¹‘Ì¡‘ÕÉ…Ñ¥½¹1…‰•°¹•Ñ	½Õ¹‘Ì ¤¤ì(€€€É•Á…¥ÉÕÉ…Ñ¥½¹M±¥‘•È¹Í•Ñ	½Õ¹‘Ì¡‘ÕÉ…Ñ¥½¹M±¥‘•È¹•Ñ	½Õ¹‘Ì ¤¤ì(€€€…ÕÑ¼Í•…µI½Ü€ô‘ÕÉ…Ñ¥½¹1…‰•°¹•Ñ	½Õ¹‘Ì ¤¹•ÑU¹¥½¸¡‘ÕÉ…Ñ¥½¹M±¥‘•È¹•Ñ	½Õ¹‘Ì ¤¤ì(€€€É½ÍÍ™…‘•1…‰•°¹Í•Ñ	½Õ¹‘Ì¡Í•…µI½Ü¹É•µ½Ù•É½µ1•™Ğ ÄÄÈ¤¤ì(€€€É½ÍÍ™…‘•M±¥‘•È¹Í•Ñ	½Õ¹‘Ì¡Í•…µI½Ü¤ì(€€€™¥¹¥Í ¹É•µ½Ù•É½µQ½À Ô¤ì(€€€…ÕÑ¼™±…ÑÑ•¹I½Ü€ô™¥¹¥Í ¹É•µ½Ù•É½µQ½À ÌØ¤ì(€€€™±…ÑÑ•¹1…‰•°¹Í•Ñ	½Õ¹‘Ì¡™±…ÑÑ•¹I½Ü¹É•µ½Ù•É½µ1•™Ğ ÄÄÈ¤¤ì(€€€™±…ÑÑ•¹M±¥‘•È¹Í•Ñ	½Õ¹‘Ì¡™±…ÑÑ•¹I½Ü¤ì(€€€™¥¹¥Í ¹É•µ½Ù•É½µQ½À Ô¤ì(€€€…ÕÑ¼µ…Ñ¡I½Ü€ô™¥¹¥Í ¹É•µ½Ù•É½µQ½À ÌØ¤ì(€€€Í½ÕÉ•5…Ñ¡1…‰•°¹Í•Ñ	½Õ¹‘Ì¡µ…Ñ¡I½Ü¹É•µ½Ù•É½µ1•™Ğ ÄÄÈ¤¤ì(€€€Í½ÕÉ•5…Ñ¡M±¥‘•È¹Í•Ñ	½Õ¹‘Ì¡µ…Ñ¡I½Ü¤ì((€€€…ÕÑ¼™½½Ñ•È€ô™½½Ñ•ÉÉ•„ì(€€€•áÁ½ÉÑ	ÕÑÑ½¸¹Í•Ñ	½Õ¹‘Ì¡™½½Ñ•È¹É•µ½Ù•É½µI¥¡Ğ ÄĞÀ¤¹É•‘Õ• À°€Ü¤¤ì(€€€™½½Ñ•È¹É•µ½Ù•É½µI¥¡Ğ à¤ì(€€€‘É…Q½…İ	ÕÑÑ½¸¹Í•Ñ	½Õ¹‘Ì¡™½½Ñ•È¹É•µ½Ù•É½µI¥¡Ğ ÄàĞ¤¹É•‘Õ• À°€Ü¤¤ì(€€€™½½Ñ•È¹É•µ½Ù•É½µI¥¡Ğ ÄĞ¤ì(€€€ÍÑ…ÑÕÍ1…‰•°¹Í•Ñ	½Õ¹‘Ì¡™½½Ñ•È¹É•µ½Ù•É½µQ½À ÈÔ¤¤ì(€€€ÅÕ…±¥ÑåY¥•Ü¹Í•Ñ	½Õ¹‘Ì¡™½½Ñ•È¹É•µ½Ù•É½µ	½ÑÑ½´ ÈÜ¤¤ì(€€€™½½Ñ•È¹É•µ½Ù•É½µQ½À Ì¤ì(€€€™½½Ñ•È¹É•µ½Ù•É½µ	½ÑÑ½´ Ì¤ì(€€€Í¥¹…±¹…±åÍ¥ÍY¥•Ü¹Í•Ñ	½Õ¹‘Ì¡™½½Ñ•È¤ì)ô()‰½½°1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½Èèé¥Í%¹Ñ•É•ÍÑ•‘%¹¥±•É…œ (€€€½¹ÍĞ©Õ”èéMÑÉ¥¹ÉÉ…ä˜™¥±•Ì¤)ì(€€€É•ÑÕÉ¸™¥±•Ì¹Í¥é” ¤€ôô€Ä(€€€€€€€€€€€˜˜©Õ”èé¥±”¡™¥±•ÍlÁt¤¹¡…Í¥±•áÑ•¹Í¥½¸ ‰İ…Øí…¥˜í…¥™˜í™±…Œí½œˆ¤ì)ô()Ù½¥1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½Èèé™¥±•ÍÉ½ÁÁ• (€€€½¹ÍĞ©Õ”èéMÑÉ¥¹ÉÉ…ä˜™¥±•Ì°¥¹Ğ°¥¹Ğ¤)ì(€€€¥˜€¡™¥±•Ì¹Í¥é” ¤€ôô€Ä¤(€€€€€€€¥µÁ½ÉÑ¥±”¡©Õ”èé¥±”¡™¥±•ÍlÁt¤¤ì)ô()Ù½¥1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½Èèé¥µÁ½ÉÑ¥±”¡½¹ÍĞ©Õ”èé¥±”˜™¥±”¤)ì(€€€ÁÉ½•ÍÍ½È¹Í•ÑAÉ•Ù¥•İA±…å¥¹œ¡™…±Í”¤ì(€€€±…ÍÑ5•ÍÍ…”€ôÁÉ½•ÍÍ½È¹¥µÁ½ÉÑÕ‘¥½¥±”¡™¥±”¤ì(€€€¥˜€¡±…ÍÑ5•ÍÍ…”¹¥ÍµÁÑä ¤¤(€€€€€€€±…ÍÑ5•ÍÍ…”€ô€‰M½ÕÉ”±½…‘•ˆì(€€€ÕÁ‘…Ñ•AÉ¥µ…ÉåÑ¥½¸ ¤ì)ô()Ù½¥1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½Èèé¡½½Í•%µÁ½ÉÑ¥±” ¤)ì(€€€™¥±•¡½½Í•È€ôÍÑèéµ…­•}Õ¹¥ÅÕ”ñ©Õ”èé¥±•¡½½Í•Èø (€€€€€€€€‰¡½½Í”Í½ÕÉ”…Õ‘¥¼ˆ°©Õ”èé¥±”íô°€ˆ¨¹İ…Øì¨¹…¥˜ì¨¹…¥™˜ì¨¹™±…Œì¨¹½œˆ¤ì(€€€™¥±•¡½½Í•È´ù±…Õ¹¡Íå¹Œ¡©Õ”èé¥±•	É½İÍ•É½µÁ½¹•¹Ğèé½Á•¹5½‘”(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ğ©Õ”èé¥±•	É½İÍ•É½µÁ½¹•¹Ğèé…¹M•±•Ñ¥±•Ì°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€mÑ¡¥Ít€¡½¹ÍĞ©Õ”èé¥±•¡½½Í•È˜¡½½Í•È¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€½¹ÍĞ…ÕÑ¼™¥±”€ô¡½½Í•È¹•ÑI•ÍÕ±Ğ ¤ì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜€¡™¥±”¹•á¥ÍÑÍÍ¥±” ¤¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥µÁ½ÉÑ¥±”¡™¥±”¤ì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ô¤ì)ô()Ù½¥1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½Èèé¡½½Í•áÁ½ÉÑ¥±” ¤)ì(€€€™¥±•¡½½Í•È€ôÍÑèéµ…­•}Õ¹¥ÅÕ”ñ©Õ”èé¥±•¡½½Í•Èø (€€€€€€€€‰áÁ½ÉĞ•¹•É…Ñ•…Õ‘¥¼ˆ°(€€€€€€€©Õ”èé¥±”èé•ÑMÁ•¥…±1½…Ñ¥½¸¡©Õ”èé¥±”èéÕÍ•É½Õµ•¹ÑÍ¥É•Ñ½Éä¤(€€€€€€€€€€€€¹•Ñ¡¥±‘¥±” ‰1½½ÀMÕÉ•½¸¹İ…Øˆ¤°(€€€€€€€€ˆ¨¹İ…Øˆ¤ì(€€€™¥±•¡½½Í•È´ù±…Õ¹¡Íå¹Œ¡©Õ”èé¥±•	É½İÍ•É½µÁ½¹•¹ĞèéÍ…Ù•5½‘”(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ğ©Õ”èé¥±•	É½İÍ•É½µÁ½¹•¹Ğèé…¹M•±•Ñ¥±•Ì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ğ©Õ”èé¥±•	É½İÍ•É½µÁ½¹•¹Ğèéİ…É¹‰½ÕÑ=Ù•ÉİÉ¥Ñ¥¹œ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€mÑ¡¥Ít€¡½¹ÍĞ©Õ”èé¥±•¡½½Í•È˜¡½½Í•È¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€½¹ÍĞ…ÕÑ¼™¥±”€ô¡½½Í•È¹•ÑI•ÍÕ±Ğ ¤ì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜€¡™¥±”€„ô©Õ”èé¥±”íô¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€±…ÍÑ5•ÍÍ…”€ôÁÉ½•ÍÍ½È¹•áÁ½ÉÑ1½½Á¥±”¡™¥±”¤ì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¥˜€¡±…ÍÑ5•ÍÍ…”¹¥ÍµÁÑä ¤¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€±…ÍÑ5•ÍÍ…”€ô€ˆÈĞµ‰¥Ğ]X•áÁ½ÉÑ•ˆì(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ô(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ô¤ì)ô()©Õ”èé¥±”1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½ÈèéÁÉ•Á…É•…İÉ…¥±” ¤)ì(€€€…ÕÑ¼É•¹‘•É¥É•Ñ½Éä€ô©Õ”èé¥±”èé•ÑMÁ•¥…±1½…Ñ¥½¸ (€€€€€€€©Õ”èé¥±”èéÕÍ•ÉÁÁ±¥…Ñ¥½¹…Ñ…¥É•Ñ½Éä¤(€€€€€€€€¹•Ñ¡¥±‘¥±” ‰M½Õ¹YMPAÉ½©•Ğˆ¤(€€€€€€€€¹•Ñ¡¥±‘¥±” ‰1½½ÀMÕÉ•½¸ˆ¤(€€€€€€€€¹•Ñ¡¥±‘¥±” ‰\I•¹‘•ÉÌˆ¤ì(€€€¥˜€¡É•¹‘•É¥É•Ñ½Éä¹É•…Ñ•¥É•Ñ½Éä ¤¹™…¥±• ¤¤(€€€€€€€É•ÑÕÉ¸íôì((€€€½¹ÍĞ…ÕÑ¼ÍÑ…µÀ€ô©Õ”èéQ¥µ”èé•ÑÕÉÉ•¹ÑQ¥µ” ¤¹™½Éµ…ÑÑ• ˆ•d•´•´• •4•Lˆ¤ì(€€€½¹ÍĞ…ÕÑ¼™¥±”€ôÉ•¹‘•É¥É•Ñ½Éä¹•Ñ9½¹•á¥ÍÑ•¹Ñ¡¥±‘¥±” (€€€€€€€€‰1½½ÀµMÕÉ•½¸´ˆ€¬ÍÑ…µÀ°€ˆ¹İ…Øˆ°™…±Í”¤ì(€€€½¹ÍĞ…ÕÑ¼•ÉÉ½È€ôÁÉ½•ÍÍ½È¹•áÁ½ÉÑ1½½Á¥±”¡™¥±”¤ì(€€€¥˜€¡•ÉÉ½È¹¥Í9½ÑµÁÑä ¤¤(€€€ì(€€€€€€€±…ÍÑ5•ÍÍ…”€ô•ÉÉ½Èì(€€€€€€€É•ÑÕÉ¸íôì(€€€ô(€€€É•ÑÕÉ¸™¥±”ì)ô()Ù½¥1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½ÈèéÑ¥µ•É…±±‰…¬ ¤)ì(€€€½¹ÍĞ…ÕÑ¼Í½ÕÉ”€ôÁÉ½•ÍÍ½È¹•ÑM½ÕÉ•9…µ” ¤ì(€€€Í½ÕÉ•1…‰•°¹Í•ÑQ•áĞ¡Í½ÕÉ”¹¥ÍµÁÑä ¤€ü€‰9¼Í½ÕÉ”±½…‘•ˆ€èÍ½ÕÉ”°(€€€€€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€½¹ÍĞ…ÕÑ¼…¹‘¥‘…Ñ•½Õ¹Ğ€ôÁÉ½•ÍÍ½È¹•Ñ…¹‘¥‘…Ñ•½Õ¹Ğ ¤ì(€€€½¹ÍĞ…ÕÑ¼…¹‘¥‘…Ñ•I•Ù¥Í¥½¸€ôÁÉ½•ÍÍ½È¹•Ñ…¹‘¥‘…Ñ•I•Ù¥Í¥½¸ ¤ì(€€€½¹ÍĞ…ÕÑ¼Í½ÕÉ•I•Ù¥Í¥½¸€ôÁÉ½•ÍÍ½È¹•ÑM½ÕÉ•I•Ù¥Í¥½¸ ¤ì(€€€½¹ÍĞ…ÕÑ¼Í½ÕÉ•¡…¹•€ôÍ½ÕÉ”€„ô‘¥ÍÁ±…å•‘M½ÕÉ”(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€ñğÍ½ÕÉ•I•Ù¥Í¥½¸€„ô‘¥ÍÁ±…å•‘M½ÕÉ•I•Ù¥Í¥½¸ì(€€€¥˜€¡Í½ÕÉ•¡…¹•¤(€€€ì(€€€€€€€‘¥ÍÁ±…å•‘M½ÕÉ”€ôÍ½ÕÉ”ì(€€€€€€€‘¥ÍÁ±…å•‘M½ÕÉ•I•Ù¥Í¥½¸€ôÍ½ÕÉ•I•Ù¥Í¥½¸ì(€€€€€€€İ…Ù•™½ÉµY¥•Ü¹Í•Ñ]…Ù•™½É´¡ÁÉ½•ÍÍ½È¹•Ñ]…Ù•™½ÉµAÉ•Ù¥•Ü ¤¤ì(€€€€€€€İ…Ù•™½ÉµY¥•Ü¹Í•ÑM½ÕÉ•I…¹” (€€€€€€€€€€€ÁÉ½•ÍÍ½È¹•Ñ¹…±åÍ¥ÍI…¹•MÑ…ÉÑAÉ½Á½ÉÑ¥½¸ ¤°(€€€€€€€€€€€ÁÉ½•ÍÍ½È¹•Ñ¹…±åÍ¥ÍI…¹•¹‘AÉ½Á½ÉÑ¥½¸ ¤¤ì(€€€€€€€İ…Ù•™½ÉµY¥•Ü¹Í•ÑI½Ñ…Ñ¥½¸ ´Ä¸Á˜¤ì(€€€ô(€€€¥˜€¡Í½ÕÉ•¡…¹•ñğ…¹‘¥‘…Ñ•½Õ¹Ğ€„ô‘¥ÍÁ±…å•‘…¹‘¥‘…Ñ•½Õ¹Ğ(€€€€€€€ñğ…¹‘¥‘…Ñ•I•Ù¥Í¥½¸€„ô‘¥ÍÁ±…å•‘…¹‘¥‘…Ñ•I•Ù¥Í¥½¸¤(€€€ì(€€€€€€€‘¥ÍÁ±…å•‘…¹‘¥‘…Ñ•½Õ¹Ğ€ô…¹‘¥‘…Ñ•½Õ¹Ğì(€€€€€€€‘¥ÍÁ±…å•‘…¹‘¥‘…Ñ•I•Ù¥Í¥½¸€ô…¹‘¥‘…Ñ•I•Ù¥Í¥½¸ì(€€€€€€€…¹‘¥‘…Ñ•	½à¹±•…È¡©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€€€€€™½È€¡¥¹Ğ¥¹‘•à€ô€Àì¥¹‘•à€ğ…¹‘¥‘…Ñ•½Õ¹Ğì€¬­¥¹‘•à¤(€€€€€€€€€€€…¹‘¥‘…Ñ•	½à¹…‘‘%Ñ•´¡ÁÉ½•ÍÍ½È¹•Ñ…¹‘¥‘…Ñ••ÍÉ¥ÁÑ¥½¸¡¥¹‘•à¤°¥¹‘•à€¬€Ä¤ì(€€€€€€€¥˜€¡…¹‘¥‘…Ñ•½Õ¹Ğ€ø€À¤(€€€€€€€€€€€…¹‘¥‘…Ñ•	½à¹Í•ÑM•±•Ñ•‘%Ñ•µ%¹‘•à À°©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€ô((€€€ÕÁ‘…Ñ•I…¹•1…‰•° ¤ì(€€€ÕÁ‘…Ñ•AÉ¥µ…ÉåÑ¥½¸ ¤ì((€€€½¹ÍĞ…ÕÑ¼ÍÑ…Ñ”€ôÁÉ½•ÍÍ½È¹•Ñ1½½ÁMÑ…Ñ” ¤ì(€€€½¹ÍĞ…ÕÑ¼É•…‘ä€ôÍÑ…Ñ”€ôô1½½Á¹¥¹”èéMÑ…Ñ”èéÉ•…‘äì(€€€½¹ÍĞ…ÕÑ¼Ñ•áÑÕÉ•I•ÍÕ±Ğ€ôÉ•…‘ä(€€€€€€€€˜˜ÁÉ½•ÍÍ½È¹•Ñ1…ÍÑUÍ•‘•¹•É…Ñ¥½¹5½‘” ¤(€€€€€€€€€€€€€€€ôô1½½Á¹¥¹”èé•¹•É…Ñ¥½¹5½‘”èéÑ•áÑÕÉ•1½½Àì(€€€½¹ÍĞ…ÕÑ¼Í•±•Ñ•‘Q•áÑÕÉ•5½‘”€ô•¹•É…Ñ¥½¹5½‘•	½à¹•ÑM•±•Ñ•‘%Ñ•µ%¹‘•à ¤€ôô€Äì(€€€…¹‘¥‘…Ñ•	½à¹Í•ÑQ•áÑ]¡•¹9½Ñ¡¥¹M•±•Ñ•¡Í•±•Ñ•‘Q•áÑÕÉ•5½‘”(€€€€€€€€ü€‰Q•áÑÕÉ”Ù…É¥…Ñ¥½¹Ìˆ€è€‰I•Á…¥È½ÁÑ¥½¹Ìˆ¤ì(€€€ÅÕ…±¥ÑåY¥•Ü¹Í•ÑQ•áÑÕÉ•5½‘”¡É•…‘ä€üÑ•áÑÕÉ•I•ÍÕ±Ğ€èÍ•±•Ñ•‘Q•áÑÕÉ•5½‘”¤ì(€€€¥˜€¡É•…‘ä€˜˜€…Ñ•áÑÕÉ•I•ÍÕ±Ğ€˜˜€…İ…Ù•™½ÉµY¥•Ü¹¥Í‘¥Ñ¥¹I½Ñ…Ñ¥½¸ ¤¤(€€€€€€€İ…Ù•™½ÉµY¥•Ü¹Í•ÑI½Ñ…Ñ¥½¸¡ÁÉ½•ÍÍ½È¹•ÑI½Ñ…Ñ¥½¹AÉ½Á½ÉÑ¥½¸ ¤¤ì(€€€•±Í”¥˜€ …É•…‘äñğÑ•áÑÕÉ•I•ÍÕ±Ğ¤(€€€€€€€İ…Ù•™½ÉµY¥•Ü¹Í•ÑI½Ñ…Ñ¥½¸ ´Ä¸Á˜¤ì(€€€½¹ÍĞ…ÕÑ¼…ÁÁÉ½Ù•€ôÉ•…‘ä€˜˜ÁÉ½•ÍÍ½È¹¡…ÍA…ÍÍ•‘EÕ…±¥Ñå…Ñ” ¤ì(€€€Í¥¹…±¹…±åÍ¥ÍY¥•Ü¹Í•ÑM¹…ÁÍ¡½Ğ¡É•…‘ä€üÁÉ½•ÍÍ½È¹•ÑM¥¹…±M¹…ÁÍ¡½Ğ ¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€èI•¹‘•ÉEÕ…±¥ÑäèéM¥¹…±M¹…ÁÍ¡½Ğíô¤ì(€€€•áÁ½ÉÑ	ÕÑÑ½¸¹Í•Ñ¹…‰±•¡…ÁÁÉ½Ù•¤ì(€€€‘É…Q½…İ	ÕÑÑ½¸¹Í•Ñ¹…‰±•¡…ÁÁÉ½Ù•¤ì(€€€…¹‘¥‘…Ñ•	½à¹Í•Ñ¹…‰±•¡É•…‘ä¤ì(€€€ÁÉ•Ù¥•İQÉ…¹ÍÁ½ÉÑ	ÕÑÑ½¸¹Í•Ñ¹…‰±•¡É•…‘ä¤ì(€€€½É¥¥¹…±AÉ•Ù¥•İ	ÕÑÑ½¸¹Í•Ñ¹…‰±•¡É•…‘ä¤ì(€€€±½½ÁAÉ•Ù¥•İ	ÕÑÑ½¸¹Í•Ñ¹…‰±•¡É•…‘ä¤ì(€€€…¹…±åé•I…¹•	ÕÑÑ½¸¹Í•Ñ¹…‰±•¡Í½ÕÉ”¹¥Í9½ÑµÁÑä ¤€˜˜ÍÑ…Ñ”€„ô1½½Á¹¥¹”èéMÑ…Ñ”èé…¹…±åÍ¥¹œ¤ì(€€€É•Í•ÑI…¹•	ÕÑÑ½¸¹Í•Ñ¹…‰±•¡Í½ÕÉ”¹¥Í9½ÑµÁÑä ¤¤ì(€€€É••¹•É…Ñ•	ÕÑÑ½¸¹Í•Ñ¹…‰±•¡É•…‘ä(€€€€€€€€˜˜ÁÉ½•ÍÍ½È¹•Ñ1…ÍÑUÍ•‘•¹•É…Ñ¥½¹5½‘” ¤(€€€€€€€€€€€€€€€ôô1½½Á¹¥¹”èé•¹•É…Ñ¥½¹5½‘”èéÑ•áÑÕÉ•1½½À¤ì(€€€É••¹•É…Ñ•	ÕÑÑ½¸¹Í•ÑY¥Í¥‰±”¡Í•±•Ñ•‘Q•áÑÕÉ•5½‘”¤ì(€€€±•…É	ÕÑÑ½¸¹Í•Ñ¹…‰±•¡Í½ÕÉ”¹¥Í9½ÑµÁÑä ¤ñğÉ•…‘ä¤ì((€€€½¹ÍĞ…ÕÑ¼‘¥É•Ñ5½‘•M•±•Ñ•€ô•¹•É…Ñ¥½¹5½‘•	½à¹•ÑM•±•Ñ•‘%Ñ•µ%¹‘•à ¤€ôô€Àì(€€€‘ÕÉ…Ñ¥½¹1…‰•°¹Í•ÑY¥Í¥‰±” …‘¥É•Ñ5½‘•M•±•Ñ•¤ì(€€€‘ÕÉ…Ñ¥½¹M±¥‘•È¹Í•ÑY¥Í¥‰±” …‘¥É•Ñ5½‘•M•±•Ñ•¤ì(€€€É•Á…¥ÉÕÉ…Ñ¥½¹1…‰•°¹Í•ÑY¥Í¥‰±”¡‘¥É•Ñ5½‘•M•±•Ñ•¤ì(€€€É•Á…¥ÉÕÉ…Ñ¥½¹M±¥‘•È¹Í•ÑY¥Í¥‰±”¡‘¥É•Ñ5½‘•M•±•Ñ•¤ì(€€€™±…ÑÑ•¹1…‰•°¹Í•ÑY¥Í¥‰±” …‘¥É•Ñ5½‘•M•±•Ñ•¤ì(€€€™±…ÑÑ•¹M±¥‘•È¹Í•ÑY¥Í¥‰±” …‘¥É•Ñ5½‘•M•±•Ñ•¤ì(€€€Í½ÕÉ•5…Ñ¡1…‰•°¹Í•ÑY¥Í¥‰±” …‘¥É•Ñ5½‘•M•±•Ñ•¤ì(€€€Í½ÕÉ•5…Ñ¡M±¥‘•È¹Í•ÑY¥Í¥‰±” …‘¥É•Ñ5½‘•M•±•Ñ•¤ì(€€€É½ÍÍ™…‘•1…‰•°¹Í•ÑY¥Í¥‰±”¡‘¥É•Ñ5½‘•M•±•Ñ•¤ì(€€€É½ÍÍ™…‘•M±¥‘•È¹Í•ÑY¥Í¥‰±”¡‘¥É•Ñ5½‘•M•±•Ñ•¤ì((€€€½¹ÍĞ…ÕÑ¼ÁÉ•Ù¥•İ5½‘”€ôÁÉ½•ÍÍ½È¹•ÑAÉ•Ù¥•İ5½‘” ¤ì(€€€½É¥¥¹…±AÉ•Ù¥•İ	ÕÑÑ½¸¹Í•ÑQ½±•MÑ…Ñ”¡ÁÉ•Ù¥•İ5½‘”€ôô1½½Á¹¥¹”èéAÉ•Ù¥•İ5½‘”èé½É¥¥¹…°°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€±½½ÁAÉ•Ù¥•İ	ÕÑÑ½¸¹Í•ÑQ½±•MÑ…Ñ”¡ÁÉ•Ù¥•İ5½‘”€ôô1½½Á¹¥¹”èéAÉ•Ù¥•İ5½‘”èé±½½À°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€½¹ÍĞ…ÕÑ¼ÁÉ•Ù¥•İ¥¹œ€ôÁÉ½•ÍÍ½È¹¥ÍAÉ•Ù¥•İA±…å¥¹œ ¤ì(€€€ÁÉ•Ù¥•İQÉ…¹ÍÁ½ÉÑ	ÕÑÑ½¸¹Í•Ñ	ÕÑÑ½¹Q•áĞ¡ÁÉ•Ù¥•İ¥¹œ€ü€‰MÑ½Àˆ€è€‰AÉ•Ù¥•Üˆ¤ì(€€€ÁÉ•Ù¥•İQÉ…¹ÍÁ½ÉÑ	ÕÑÑ½¸¹Í•Ñ½±½ÕÈ (€€€€€€€©Õ”èéQ•áÑ	ÕÑÑ½¸èé‰ÕÑÑ½¹½±½ÕÉ%°(€€€€€€€©Õ”èé½±½ÕÈ¡ÁÉ•Ù¥•İ¥¹œ€ü€Áá™˜á„ĞäĞä€è€Áá™˜ÈàİˆØÀ¤¤ì((€€€¥˜€¡±…ÍÑ5•ÍÍ…”¹¥Í9½ÑµÁÑä ¤¤(€€€ì(€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•ÑQ•áĞ¡±…ÍÑ5•ÍÍ…”°©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€€€€€±…ÍÑ5•ÍÍ…”¹±•…È ¤ì(€€€ô(€€€•±Í”(€€€ì(€€€€€€€Íİ¥Ñ €¡ÍÑ…Ñ”¤(€€€€€€€ì(€€€€€€€€€€€…Í”1½½Á¹¥¹”èéMÑ…Ñ”èé•µÁÑäè(€€€€€€€€€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•ÑQ•áĞ ‰9¼Í½ÕÉ”ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€€€€€€€€€€€€€‰É•…¬ì(€€€€€€€€€€€…Í”1½½Á¹¥¹”èéMÑ…Ñ”èéÍ½ÕÉ•I•…‘äè(€€€€€€€€€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•ÑQ•áĞ (€€€€€€€€€€€€€€€€€€€€‰M½ÕÉ”É•…‘ä€´Í•ĞÉ…¹”…¹µ½‘”°Ñ¡•¸•¹•É…Ñ”ˆ°(€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€€€€€€€€€€€€€‰É•…¬ì(€€€€€€€€€€€…Í”1½½Á¹¥¹”èéMÑ…Ñ”èé…Éµ•è(€€€€€€€€€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•ÑQ•áĞ ‰]…¥Ñ¥¹œ™½È\…ÁÑÕÉ”ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€€€€€€€€€€€€€‰É•…¬ì(€€€€€€€€€€€…Í”1½½Á¹¥¹”èéMÑ…Ñ”èé…ÁÑÕÉ¥¹œè(€€€€€€€€€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•ÑQ•áĞ (€€€€€€€€€€€€€€€€€€€€‰…ÁÑÕÉ¥¹œ€ˆ€¬©Õ”èéMÑÉ¥¹œ (€€€€€€€€€€€€€€€€€€€€€€€©Õ”èéÉ½Õ¹‘Q½%¹Ğ¡ÁÉ½•ÍÍ½È¹•Ñ…ÁÑÕÉ•AÉ½É•ÍÌ ¤€¨€ÄÀÀ¸Á˜¤¤€¬€ˆ”ˆ°(€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€€€€€€€€€€€€€‰É•…¬ì(€€€€€€€€€€€…Í”1½½Á¹¥¹”èéMÑ…Ñ”èé…¹…±åÍ¥¹œè(€€€€€€€€€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•ÑQ•áĞ (€€€€€€€€€€€€€€€€€€€©Õ”èéMÑÉ¥¹œ ‰•¹•É…Ñ¥¹œ€€ˆ¤€¬©Õ”èéMÑÉ¥¹œ¡©Õ”èéÉ½Õ¹‘Q½%¹Ğ (€€€€€€€€€€€€€€€€€€€€€€€ÁÉ½•ÍÍ½È¹•Ñ¹…±åÍ¥ÍAÉ½É•ÍÌ ¤€¨€ÄÀÀ¸Á˜¤¤€¬€ˆ”ˆ°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€€€€€€€€€€€€€‰É•…¬ì(€€€€€€€€€€€…Í”1½½Á¹¥¹”èéMÑ…Ñ”èéÉ•…‘äè(€€€€€€€€€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•ÑQ•áĞ (€€€€€€€€€€€€€€€€€€€ÁÉ½•ÍÍ½È¹¥Í1½İ½¹™¥‘•¹” ¤(€€€€€€€€€€€€€€€€€€€€€€€€ü€‰1½½ÀÉ•…‘äƒŠP±½Ü½¹™¥‘•¹”è½µÁ…É”…¹‘¥‘…Ñ•Ì…É•™Õ±±äˆ(€€€€€€€€€€€€€€€€€€€€€€€€è€‰1½½ÀÉ•…‘äƒŠPÁÉ•ÍÌAÉ•Ù¥•Ü°Ñ¡•¸áÁ½ÉĞİ¡•¸Í…Ñ¥Í™¥•ˆ°(€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€€€€€€€€€€€€€‰É•…¬ì(€€€€€€€€€€€…Í”1½½Á¹¥¹”èéMÑ…Ñ”èé™…¥±•è(€€€€€€€€€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•ÑQ•áĞ (€€€€€€€€€€€€€€€€€€€€‰9¼É•±¥…‰±”±½½À™½Õ¹ƒŠPİ¥‘•¸Ñ¡”‰±Õ”É…¹”½ÈÑÉä‘¥™™•É•¹Ğµ…Ñ•É¥…°ˆ°(€€€€€€€€€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€€€€€€€€€€€€€‰É•…¬ì(€€€€€€€ô(€€€ô((€€€¥˜€¡ÍÑ…Ñ”€ôô1½½Á¹¥¹”èéMÑ…Ñ”èéÉ•…‘ä¤(€€€ì(€€€€€€€½¹ÍĞ…ÕÑ¼Á…ÍÍ•‘…Ñ”€ôÁÉ½•ÍÍ½È¹¡…ÍA…ÍÍ•‘EÕ…±¥Ñå…Ñ” ¤ì(€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•Ñ½±½ÕÈ¡©Õ”èé1…‰•°èéÑ•áÑ½±½ÕÉ%°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€©Õ”èé½±½ÕÈ¡Á…ÍÍ•‘…Ñ”€ü±½½ÁÉ••¸€èİ…É¹¥¹µ‰•È¤¤ì(€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•ÑQ•áĞ (€€€€€€€€€€€©Õ”èéMÑÉ¥¹œ¡Ñ•áÑÕÉ•I•ÍÕ±Ğ€ü€‰Q•áÑÕÉ”1½½ÀÉ•…‘äˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€è€‰I½Ñ…Ñ”€˜I•Á…¥È±½½ÀÉ•…‘äˆ¤(€€€€€€€€€€€€€€€€¬€¡Á…ÍÍ•‘…Ñ”(€€€€€€€€€€€€€€€€€€€€ü€ˆ€´EAML€ˆ€¬©Õ”èéMÑÉ¥¹œ¡ÁÉ½•ÍÍ½È¹•ÑI•¹‘•ÉEÕ…±¥ÑåM½É” ¤°€À¤(€€€€€€€€€€€€€€€€€€€€è€ˆ€´E	1=-èÉ••¹•É…Ñ”½ÈÉ•™¥¹”ˆ¤°(€€€€€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€ô(€€€•±Í”(€€€ì(€€€€€€€ÍÑ…ÑÕÍ1…‰•°¹Í•Ñ½±½ÕÈ¡©Õ”èé1…‰•°èéÑ•áÑ½±½ÕÉ%°©Õ”èé½±½ÕÈ¡±½½ÁÉ••¸¤¤ì(€€€ô((€€€ÅÕ…±¥ÑåY¥•Ü¹Í•ÑM½É•Ì (€€€€€€€ÁÉ½•ÍÍ½È¹•ÑM•…µEÕ…±¥Ñä ¤°(€€€€€€€Ñ•áÑÕÉ•I•ÍÕ±Ğ€üÁÉ½•ÍÍ½È¹•Ñ1•Ù•±M½É” ¤€èÁÉ½•ÍÍ½È¹•ÑI•Á…¥ÉM½É” ¤°(€€€€€€€ÁÉ½•ÍÍ½È¹•ÑMÁ•ÑÉÕµM½É” ¤°ÁÉ½•ÍÍ½È¹•ÑA¡…Í•M½É” ¤°(€€€€€€€ÁÉ½•ÍÍ½È¹•ÑMÑ•É•½M½É” ¤°(€€€€€€€Ñ•áÑÕÉ•I•ÍÕ±Ğ€üÁÉ½•ÍÍ½È¹•ÑI•Á•…ÑM…™•ÑåM½É” ¤(€€€€€€€€€€€€€€€€€€€€€€èÁÉ½•ÍÍ½È¹•ÑA•É¥½‘¥¥ÑåM½É” ¤¤ì(€€€É•Á…¥¹Ğ ¤ì)ô()Ù½¥1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½ÈèéÕÁ‘…Ñ•I…¹•1…‰•° ¤)ì(€€€½¹ÍĞ…ÕÑ¼‘ÕÉ…Ñ¥½¸€ôÁÉ½•ÍÍ½È¹•ÑM½ÕÉ•ÕÉ…Ñ¥½¹M•½¹‘Ì ¤ì(€€€½¹ÍĞ…ÕÑ¼ÍÑ…ÉĞ€ô‘ÕÉ…Ñ¥½¸€¨İ…Ù•™½ÉµY¥•Ü¹•ÑM½ÕÉ•%¸ ¤ì(€€€½¹ÍĞ…ÕÑ¼•¹€ô‘ÕÉ…Ñ¥½¸€¨İ…Ù•™½ÉµY¥•Ü¹•ÑM½ÕÉ•=ÕĞ ¤ì(€€€½¹ÍĞ…ÕÑ¼É•Á…¥É•‘=ÕÑÁÕĞ€ôÁÉ½•ÍÍ½È¹•Ñ1½½ÁMÑ…Ñ” ¤€ôô1½½Á¹¥¹”èéMÑ…Ñ”èéÉ•…‘ä(€€€€€€€€˜˜ÁÉ½•ÍÍ½È¹•Ñ1…ÍÑUÍ•‘•¹•É…Ñ¥½¹5½‘” ¤€ôô1½½Á¹¥¹”èé•¹•É…Ñ¥½¹5½‘”èéÉ½Ñ…Ñ•I•Á…¥È(€€€€€€€€ü©Õ”èéMÑÉ¥¹œ ˆ€€€€=UQAUP€€ˆ¤(€€€€€€€€€€€€€€¬©Õ”èéMÑÉ¥¹œ¡ÁÉ½•ÍÍ½È¹•ÑI•¹‘•É•‘ÕÉ…Ñ¥½¹M•½¹‘Ì ¤°€È¤€¬€ˆÌˆ(€€€€€€€€è©Õ”èéMÑÉ¥¹œíôì(€€€É…¹•1…‰•°¹Í•ÑQ•áĞ (€€€€€€€€‰%8€€ˆ€¬©Õ”èéMÑÉ¥¹œ¡ÍÑ…ÉĞ°€È¤€¬€ˆÌ€€€€=UP€€ˆ€¬©Õ”èéMÑÉ¥¹œ¡•¹°€È¤(€€€€€€€€€€€€¬€ˆÌ€€€€M1Q€€ˆ€¬©Õ”èéMÑÉ¥¹œ¡©Õ”èé©µ…à À¸À°•¹€´ÍÑ…ÉĞ¤°€È¤€¬€ˆÌˆ(€€€€€€€€€€€€¬É•Á…¥É•‘=ÕÑÁÕĞ°(€€€€€€€©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì)ô()Ù½¥1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½ÈèéÕÁ‘…Ñ•AÉ¥µ…ÉåÑ¥½¸ ¤)ì(€€€½¹ÍĞ…ÕÑ¼Í•±•Ñ•‘5½‘”€ô•¹•É…Ñ¥½¹5½‘•	½à¹•ÑM•±•Ñ•‘%Ñ•µ%¹‘•à ¤ì(€€€…¹…±åé•I…¹•	ÕÑÑ½¸¹Í•Ñ	ÕÑÑ½¹Q•áĞ (€€€€€€€Í•±•Ñ•‘5½‘”€ôô€À€ü€‰I•Á…¥ÈM•±•Ñ•1½½Àˆ(€€€€€€€€€€€€€€€€€€€€€€€€€€è€‰•¹•É…Ñ”Q•áÑÕÉ”1½½Àˆ¤ì)ô()Ù½¥1½½ÁMÕÉ•½¹Õ‘¥½AÉ½•ÍÍ½É‘¥Ñ½Èèé½¹™¥ÕÉ•M±¥‘•È (€€€©Õ”èéM±¥‘•È˜Í±¥‘•È°©Õ”èé1…‰•°˜±…‰•°°½¹ÍĞ©Õ”èéMÑÉ¥¹œ˜Ñ•áĞ¤)ì(€€€Í±¥‘•È¹Í•ÑM±¥‘•ÉMÑå±”¡©Õ”èéM±¥‘•Èèé1¥¹•…É!½É¥é½¹Ñ…°¤ì(€€€Í±¥‘•È¹Í•ÑQ•áÑ	½áMÑå±”¡©Õ”èéM±¥‘•ÈèéQ•áÑ	½áI¥¡Ğ°™…±Í”°€ÜØ°€ÈÔ¤ì(€€€Í±¥‘•È¹Í•Ñ½±½ÕÈ¡©Õ”èéM±¥‘•ÈèéÑÉ…­½±½ÕÉ%°©Õ”èé½±½ÕÈ Áá™˜ÉÍŒÑˆ¤¤ì(€€€Í±¥‘•È¹Í•Ñ½±½ÕÈ¡©Õ”èéM±¥‘•ÈèéÑ¡Õµ‰½±½ÕÉ%°©Õ”èé½±½ÕÈ¡±½½ÁÉ••¸¤¤ì(€€€…‘‘¹‘5…­•Y¥Í¥‰±”¡Í±¥‘•È¤ì(€€€±…‰•°¹Í•ÑQ•áĞ¡Ñ•áĞ°©Õ”èé‘½¹ÑM•¹‘9½Ñ¥™¥…Ñ¥½¸¤ì(€€€±…‰•°¹Í•Ñ½¹Ğ¡©Õ”èé½¹Ñ=ÁÑ¥½¹Ì ÄÀ¸Õ˜°©Õ”èé½¹Ğèé‰½±¤¤ì(€€€±…‰•°¹Í•Ñ½±½ÕÈ¡©Õ”èé1…‰•°èéÑ•áÑ½±½ÕÉ%°©Õ”èé½±½ÕÈ¡Ñ•áÑ5ÕÑ•¤¤ì(€€€…‘‘¹‘5…­•Y¥Í¥‰±”¡±…‰•°¤ì)ô(

@@ -1,4 +1,4 @@
-#include "PluginProcessor.h"
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠#include "PluginProcessor.h"
 
 #include "PluginEditor.h"
 
@@ -83,6 +83,8 @@ void LoopSurgeonAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         loopEngine.setLoopLengthSeconds(juce::jlimit(0.25f, 16.0f, captureLength));
     }
     loopEngine.setCrossfadeMilliseconds(parameters.getRawParameterValue("crossfadeMs")->load());
+    loopEngine.setRepairDurationSeconds(
+        parameters.getRawParameterValue("repairDuration")->load());
     loopEngine.setTextureDurationSeconds(
         parameters.getRawParameterValue("textureDuration")->load());
     loopEngine.setTextureVariation(parameters.getRawParameterValue("variation")->load());
@@ -102,6 +104,8 @@ void LoopSurgeonAudioProcessor::syncGenerationControlsForAnalysis() noexcept
 {
     loopEngine.setCrossfadeMilliseconds(
         parameters.getRawParameterValue("crossfadeMs")->load());
+    loopEngine.setRepairDurationSeconds(
+        parameters.getRawParameterValue("repairDuration")->load());
     loopEngine.setTextureDurationSeconds(
         parameters.getRawParameterValue("textureDuration")->load());
     loopEngine.setTextureVariation(
@@ -251,6 +255,19 @@ LoopSurgeonAudioProcessor::createParameterLayout()
         0));
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "repairDuration", 1 },
+        "R&R Final Length",
+        juce::NormalisableRange<float> { 0.0f, 60.0f, 0.1f, 0.55f },
+        0.0f,
+        juce::AudioParameterFloatAttributes()
+            .withLabel("s")
+            .withStringFromValueFunction([] (const float value, int)
+            {
+                return value < 0.05f ? juce::String("Selection")
+                                     : juce::String(value, 1) + " s";
+            })));
+
+    layout.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "crossfadeMs", 1 },
         "Crossfade",
         juce::NormalisableRange<float> { 1.0f, 250.0f, 0.1f, 0.5f },
@@ -291,7 +308,7 @@ LoopSurgeonAudioProcessor::createParameterLayout()
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "flatten", 1 },
-        "Texture Flatten",
+        "Texture Stability",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
         0.72f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(
@@ -302,7 +319,7 @@ LoopSurgeonAudioProcessor::createParameterLayout()
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "sourceMatch", 1 },
-        "Texture Source Match",
+        "Texture Rebuild",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
         0.85f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(

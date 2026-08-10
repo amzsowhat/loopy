@@ -1,49 +1,40 @@
-# Loop Surgeon algorithms
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠# Loop Surgeon algorithms
 
-Loop Surgeon exposes two equal, user-selected modes. Auto routing was removed because the two jobs
-have different creative intent that the source waveform alone cannot determine reliably.
+The user explicitly chooses between two equally important jobs. Source In/Out is a hard boundary.
 
 ## Rotate & Repair
 
-Use this when Source In/Out already contains the intended long ambience or environment edit.
+With Final Length set to Selection, the complete source range is evaluated at several overlap
+lengths. The engine chooses a safe internal rotation point, moves the original bad end/start join
+inside the result, and crossfades it. The exported boundary is an originally adjacent source cut.
 
-1. Evaluate the original end/start mismatch with short and longer waveform, level, derivative,
-   spectrum, transient, phase and stereo windows.
-2. Test several overlap lengths up to Seam Repair and keep the least destructive internal repair.
-3. Scan internal source cuts for stable level/spectrum/stereo context and low transient energy.
-4. Rotate the complete forward-running range at the chosen cut.
-5. Crossfade the old end into the old start inside the result. The final loop boundary now joins
-   the two source samples that were adjacent at the internal cut.
-6. Remove non-finite samples/DC and enforce a circular -1 dBTP peak ceiling.
+With an explicit Final Length, the engine scans contiguous windows inside Source In/Out. Each
+candidate source span is `requested length + overlap`; render overlap therefore produces the exact
+requested sample count. Impossible lengths are rejected. R&R never stretches, reverses or fills
+missing duration by repetition.
 
-This automates the standard manual cut-rotate-overlap workflow and does not extract a short period.
-The overlap shortens the result slightly; the UI reports actual output length.
+## Texture Loop 0.7 hybrid reconstruction
 
-## Texture Loop
+1. Resample only Source In/Out and inspect up to 256 distributed active frames.
+2. Reject silence and extreme hit-level outliers. Build robust Mid/Side stationary magnitude and
+   broader material-colour models.
+3. Detect locally prominent spectral peaks. Recreate these with phase-continuous trajectories so
+   stable resonances survive without freezing one frame.
+4. Recreate the remaining broadband residual with source-shaped stochastic phase. Slow movement
+   interpolates between real analysed frame envelopes instead of replaying the original timeline.
+5. Retain a forward-running exemplar path as the low-Rebuild detail layer. Rebuild crossfades from
+   this source-local path toward the reconstructed resonant/stochastic model.
+6. Apply smoothed spectral-colour correction, circular level stabilisation and bounded spatial
+   matching. Generate 120 ms longer than requested, rotate at a stable internal cut, repair the
+   construction boundary internally, and return the exact requested length.
+7. Remove DC/non-finite samples, enforce a -1 dBTP ceiling, and score circular closure, material
+   colour, loudness, phase, stereo position, stability and repeat risk.
 
-Use this when the goal is a sustained layer made from a source's material without its original
-ADSR, pass-by or directional timeline.
+## Current modelling boundary
 
-1. Use only Source In/Out and sample up to 256 distributed active 4096-point frames.
-2. Reject silence and extreme hit outliers. Take per-bin temporal medians of Mid/Side log spectra.
-3. Adaptively smooth isolated narrow peaks while retaining broad spectral colour.
-4. Draw deterministic non-coherent Gaussian complex spectra around those models. No source segment
-   is copied, reversed or time-stretched.
-5. Apply multi-rate integer-cycle spectral drift, then circular sine-window overlap-add with
-   per-sample energy normalization.
-6. Measure the source's active macro-level range. Flatten controls a newly generated circular
-   movement envelope; the ordered source envelope is never reused.
-7. Source Match controls active-frame gated K-weighted loudness correction, Mid/Side width,
-   broadband channel correlation and left/right energy position. The ordered one-shot envelope and
-   silent tail are excluded from the loudness target.
-8. Remove non-finite samples/DC, enforce a circular -1 dBTP ceiling and score closure, timbre,
-   loudness, phase, position, stability and repeat risk.
+This is a deterministic lightweight VST-compatible hybrid, not semantic source separation. It
+cannot yet identify named layers such as ice crack, water, impact and reverb, nor can it preserve a
+specific distribution of sparse micro-events independently of the bed. Automated QC rejects
+structural failures but cannot certify subjective material quality; corpus listening remains a
+release requirement.
 
-The exported WAV eventually repeats at its full requested length. The target is absence of an
-obvious shorter envelope or spectral cycle inside that buffer.
-
-## Known modelling boundary
-
-Texture Loop preserves band-specific Mid/Side energy and broadband position/correlation. It does
-not yet reconstruct a full frequency-dependent complex stereo covariance matrix. The source code
-also still needs fresh compiler, meter, corpus and host validation before commercial release.

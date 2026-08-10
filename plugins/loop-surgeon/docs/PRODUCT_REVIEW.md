@@ -1,4 +1,4 @@
-# Loop Surgeon 0.6.1 pre-release review
+≠rá^—f•ñÿ¶{}Ïy 'v√Æ∂õ≠# Loop Surgeon 0.7.0 pre-release review
 
 ## Product correction
 
@@ -19,11 +19,10 @@ There is no Auto mode. The user selects the treatment appropriate to the source.
 - load-only file import followed by an explicit Generate action, so mode and range are chosen before
   expensive processing starts;
 - full-selection forward-only Rotate & Repair with adaptive internal seam overlap;
-- Texture Loop source-exemplar selection, phase-preserving forward segments, boundary-matched
-  transition paths, reuse penalties, non-uniform circular placement and complementary crossfades;
-- explicit Flatten and Source Match controls;
-- active-frame gated K-weighted loudness matching, stereo correlation/width and left/right position
-  matching with one user Source Match depth;
+- exact R&R Final Length search inside Source In/Out, with Selection as the default;
+- Texture Loop hybrid phase-continuous resonance, stochastic residual and forward-detail paths;
+- explicit Stability and Rebuild controls while retaining stable pre-release parameter IDs;
+- material-colour correction plus bounded loudness, stereo correlation/width and position matching;
 - DC/non-finite repair and a -1 dBTP circular oversampled peak ceiling;
 - repeat-risk, closure, timbre, loudness, phase, position and stability gates that block export;
 - real source/output spectrum overlay, phase scope, correlation and position display;
@@ -42,7 +41,7 @@ underwater ice impact was also rendered through the offline Texture path. Its ne
 timbre score is materially higher than the removed random-phase renderer, while its 200 ms macro
 level range remains controlled. This is automated evidence, not a substitute for listening.
 
-VST3 Validator, Windows REAPER listening for 0.6.1, native Apple Silicon REAPER, trusted meter
+VST3 Validator, Windows REAPER listening for 0.7.0, native Apple Silicon REAPER, trusted meter
 comparison and a licensed multi-category listening corpus remain unverified.
 
 ## Remaining commercial blockers
