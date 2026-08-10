@@ -19,6 +19,8 @@ struct LoopAnalysisResult
     float periodicity = 0.0f;
     float repair = 0.0f;
     int repairOverlapSamples = 0;
+    // >= 0 marks full-selection Rotate & Repair. start/end remain the source range.
+    int rotationSample = -1;
 };
 
 struct LoopAnalysisReport
@@ -39,6 +41,18 @@ public:
         int maximumLoopSamples,
         int maximumCandidates = 3,
         int repairOverlapSamples = 0);
+
+    // Preserves the selected source as a long-form loop. The original end/start seam is moved
+    // inside the result and crossfaded; the final loop boundary uses adjacent source samples.
+    [[nodiscard]] static LoopAnalysisReport analyzeRotateRepair(
+        const juce::AudioBuffer<float>& sourceAudio,
+        double sampleRate,
+        int maximumCandidates = 3,
+        int maximumRepairOverlapSamples = 0);
+
+    [[nodiscard]] static juce::AudioBuffer<float> renderRotateRepair(
+        const juce::AudioBuffer<float>& sourceAudio,
+        const LoopAnalysisResult& result);
 
     // Kept for host-range capture where the requested duration is already known.
     [[nodiscard]] static LoopAnalysisResult findBestLoop(
