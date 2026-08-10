@@ -41,9 +41,13 @@ public:
     [[nodiscard]] bool isPreviewPlaying() const noexcept { return loopEngine.isPreviewPlaying(); }
     juce::String importAudioFile(const juce::File& file);
     juce::String exportLoopFile(const juce::File& file) const;
-    void clearLoop() noexcept { loopEngine.clear(); }
+    void clearLoop() { loopEngine.clear(); }
     [[nodiscard]] LoopEngine::State getLoopState() const noexcept { return loopEngine.getState(); }
     [[nodiscard]] float getCaptureProgress() const noexcept { return loopEngine.getCaptureProgress(); }
+    [[nodiscard]] float getAnalysisProgress() const noexcept
+    {
+        return loopEngine.getAnalysisProgress();
+    }
     [[nodiscard]] float getSeamQuality() const noexcept { return loopEngine.getSeamQuality(); }
     [[nodiscard]] float getWaveformScore() const noexcept { return loopEngine.getWaveformScore(); }
     [[nodiscard]] float getLevelScore() const noexcept { return loopEngine.getLevelScore(); }
@@ -54,20 +58,45 @@ public:
     [[nodiscard]] float getTransientScore() const noexcept { return loopEngine.getTransientScore(); }
     [[nodiscard]] float getPeriodicityScore() const noexcept { return loopEngine.getPeriodicityScore(); }
     [[nodiscard]] float getRepairScore() const noexcept { return loopEngine.getRepairScore(); }
+    [[nodiscard]] float getRepeatSafetyScore() const noexcept { return loopEngine.getRepeatSafetyScore(); }
+    [[nodiscard]] float getTruePeakDbtp() const noexcept { return loopEngine.getTruePeakDbtp(); }
+    [[nodiscard]] float getRenderQualityScore() const noexcept { return loopEngine.getRenderQualityScore(); }
+    [[nodiscard]] bool hasPassedQualityGate() const noexcept { return loopEngine.hasPassedQualityGate(); }
     [[nodiscard]] bool isLowConfidence() const noexcept { return loopEngine.isLowConfidence(); }
     [[nodiscard]] juce::String getSourceName() const { return loopEngine.getSourceName(); }
     [[nodiscard]] double getSourceDurationSeconds() const { return loopEngine.getSourceDurationSeconds(); }
+    [[nodiscard]] double getRenderedDurationSeconds() const noexcept
+    {
+        return loopEngine.getRenderedDurationSeconds();
+    }
     bool analyzeSourceRange(float start, float end);
     bool regenerateTexture(float start, float end);
-    bool setManualLoopRange(float start, float end) { return loopEngine.setManualLoopRange(start, end); }
+    bool setManualRotationPoint(float proportion)
+    {
+        return loopEngine.setManualRotationPoint(proportion);
+    }
     [[nodiscard]] int getCandidateCount() const { return loopEngine.getCandidateCount(); }
     [[nodiscard]] uint64_t getCandidateRevision() const noexcept { return loopEngine.getCandidateRevision(); }
     [[nodiscard]] uint64_t getSourceRevision() const noexcept { return loopEngine.getSourceRevision(); }
     [[nodiscard]] juce::String getCandidateDescription(int index) const { return loopEngine.getCandidateDescription(index); }
     void selectCandidate(int index) { loopEngine.selectCandidate(index); }
     [[nodiscard]] std::vector<float> getWaveformPreview() const { return loopEngine.getWaveformPreview(); }
-    [[nodiscard]] float getLoopStartProportion() const noexcept { return loopEngine.getLoopStartProportion(); }
-    [[nodiscard]] float getLoopEndProportion() const noexcept { return loopEngine.getLoopEndProportion(); }
+    [[nodiscard]] float getRotationProportion() const noexcept
+    {
+        return loopEngine.getRotationProportion();
+    }
+    [[nodiscard]] float getAnalysisRangeStartProportion() const noexcept
+    {
+        return loopEngine.getAnalysisRangeStartProportion();
+    }
+    [[nodiscard]] float getAnalysisRangeEndProportion() const noexcept
+    {
+        return loopEngine.getAnalysisRangeEndProportion();
+    }
+    [[nodiscard]] RenderQuality::SignalSnapshot getSignalSnapshot() const
+    {
+        return loopEngine.getSignalSnapshot();
+    }
     [[nodiscard]] LoopEngine::GenerationMode getLastUsedGenerationMode() const noexcept
     {
         return loopEngine.getLastUsedGenerationMode();
