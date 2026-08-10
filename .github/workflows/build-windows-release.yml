@@ -32,8 +32,8 @@ jobs:
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          & "plugins/loop-surgeon/scripts/package-windows.ps1" -Version "0.5.2-alpha"
-          Copy-Item -LiteralPath "build/packages/Loop-Surgeon-0.5.2-alpha-Windows-x64-VST3.zip" -Destination "Loop-Surgeon-Windows-x64-VST3.zip"
+          & "plugins/loop-surgeon/scripts/package-windows.ps1" -Version "0.6.0-pre"
+          Copy-Item -LiteralPath "build/packages/Loop-Surgeon-0.6.0-pre-Windows-x64-VST3.zip" -Destination "Loop-Surgeon-Windows-x64-VST3.zip"
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
@@ -43,17 +43,17 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Upload Windows package to alpha release
+      - name: Upload Windows package to pre-release
         if: github.event_name != 'pull_request'
         env:
           GH_TOKEN: ${{ github.token }}
         shell: pwsh
         run: |
           $ErrorActionPreference = "Stop"
-          $tag = "v0.5.2-alpha"
+          $tag = "v0.6.0-pre"
           if (-not (gh release view $tag 2>$null)) {
-            gh release create $tag --target $env:GITHUB_SHA --title "Loop Surgeon 0.5.2 Alpha" --notes "Replaces correlated long-grain looping with source-modelled spectral texture synthesis, removing copied pass-by trajectories and comb-like tonal artifacts. Adds explicit Direct Seam Loop bounds, deterministic variations, project recall, and WAV export." --prerelease
+            gh release create $tag --target $env:GITHUB_SHA --title "Loop Surgeon 0.6.0 Pre-release" --notes "Adds equal Rotate & Repair and Texture Loop workflows, Flatten and Source Match, circular true-peak/QC, analysis views, portable recall, and DAW drag. Requires host validation before sale." --prerelease
           }
           gh release upload $tag "Loop-Surgeon-Windows-x64-VST3.zip" --clobber
-          git tag "v0.5.2-alpha-windows-ready" $env:GITHUB_SHA
-          git push origin "refs/tags/v0.5.2-alpha-windows-ready" --force
+          git tag "v0.6.0-pre-windows-ready" $env:GITHUB_SHA
+          git push origin "refs/tags/v0.6.0-pre-windows-ready" --force
