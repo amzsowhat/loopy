@@ -1,34 +1,28 @@
 # Loop Surgeon algorithms
 
-## Rotate & Repair — active
+## Rotate & Repair
 
-Source In/Out is a hard boundary. With Final Length set to Selection, the complete range is examined
-at several short overlap lengths. The engine selects an internal adjacent cut, rotates the range so
-that cut becomes the exported boundary, then repairs the moved original head/tail join.
+Source In/Out is a hard boundary. With Final Length set to Selection, the engine selects an internal
+adjacent cut, rotates the range so that cut becomes the exported boundary, then repairs the moved
+original head/tail join. With an explicit Final Length it searches contiguous spans inside the
+selection and returns the exact requested sample count.
 
-With an explicit Final Length, the engine scans contiguous spans inside Source In/Out. Each span
-contains the requested output plus repair overlap, so the rendered sample count is exact. The search
-uses waveform, slope, phase, spectral and stereo differences as an internal objective function. That
-number only orders candidates; it is not shown to the user and is not an audio-quality verdict.
+Candidate comparison uses waveform, derivative, phase, spectrum and stereo differences only to
+order possible joins. It is not exposed as a quality rating and never blocks export.
 
-## Texture 0.9 — rejected
+## Texture Loop: circular material-flow construction
 
-The rejected engine shuffled normalized STFT states, moved frequency regions on independent closed
-trajectories and reconstructed bins with synthetic phase evolution. It suppressed direct source
-repetition but destroyed too much cross-frequency phase and temporal microstructure. Listening
-results were industrial/noise-like and materially unrecognisable. It is withdrawn rather than tuned.
+1. Read only the selected Source In/Out waveform; mono or stereo channels remain phase-aligned.
+2. Measure a slow RMS envelope and remove it by the Stability amount with bounded, smoothed gain.
+3. Divide the conditioned waveform into overlapping long regions. Flow, Drift and Fracture change
+   traversal scale, not material classification.
+4. Choose the next region using boundary correlation, level/derivative continuity, recent-use
+   avoidance and Transform-controlled departure from the original timeline.
+5. Place every region into an exact-length circular buffer with a square-root Hann overlap. Regions
+   crossing the end wrap through the beginning, so the loop boundary is part of the construction.
+6. Apply bounded channel-energy balancing, DC/non-finite repair and a -1 dBTP ceiling.
 
-## Spectral Orbit lab — listening hypothesis
-
-1. Analyse the input into overlapping complex STFT frames without randomizing bin phase.
-2. Map frequency to delay using one explicit user-shapeable curve.
-3. Move each complex coefficient around a closed output-time ring and apply the phase rotation of
-   the actual delay.
-4. Recirculate the transported spectrum for a bounded number of feedback laps; the ring wraps by
-   construction and creates sweep, fold or Barberpole trajectories.
-5. Reconstruct with circular overlap-add, remove DC/non-finite samples, match bounded RMS and enforce
-   a -1 dBTP ceiling.
-
-The current lab is not yet accepted. Human listening decides whether the mechanism is useful and has
-a coherent character. Automated checks are limited to file validity and numeric safety.
+The mode does not synthesize white noise, randomize FFT phase, add frequency-delay motion, quantize
+to tempo, pitch-shift, stretch or reverse the source. It deliberately targets non-rhythmic SFX
+material flow rather than electronic or EDM-style processing.
 
