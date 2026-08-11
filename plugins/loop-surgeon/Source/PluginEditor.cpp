@@ -232,62 +232,7 @@ void LoopWaveformView::mouseUp(const juce::MouseEvent&)
         onRotationCommitted();
 }
 
-void LoopQualityView::setScores(const float quality, const float repair,
-                                const float spectrum, const float phase,
-                                const float stereo, const float transient)
-{
-    scores = { quality, repair, spectrum, phase, stereo, transient };
-    repaint();
-}
-
-void LoopQualityView::setTextureMode(const bool shouldUseTextureLabels)
-{
-    if (textureMode == shouldUseTextureLabels)
-        return;
-    textureMode = shouldUseTextureLabels;
-    repaint();
-}
-
-void LoopQualityView::paint(juce::Graphics& graphics)
-{
-    constexpr std::array<const char*, 6> textureLabels {
-        "CLOSURE", "LOUDNESS", "TIMBRE", "PHASE", "POSITION", "REPEAT"
-    };
-    constexpr std::array<const char*, 6> seamLabels {
-        "LOOP START", "REPAIR", "SPECTRUM", "PHASE", "IMAGE", "CONTINUITY"
-    };
-    const auto& labels = textureMode ? textureLabels : seamLabels;
-    auto row = getLocalBounds();
-    const auto gap = 7;
-    const auto width = (row.getWidth() - gap * 5) / 6;
-    for (size_t index = 0; index < scores.size(); ++index)
-    {
-        auto cell = row.removeFromLeft(width);
-        if (index + 1 < scores.size())
-            row.removeFromLeft(gap);
-        auto labelArea = cell.removeFromTop(15);
-        graphics.setFont(juce::FontOptions(9.0f, juce::Font::bold));
-        graphics.setColour(juce::Colour(textMuted));
-        graphics.drawText(labels[index], labelArea.removeFromLeft(labelArea.getWidth() - 28),
-                          juce::Justification::centredLeft);
-        graphics.setColour(juce::Colour(textPrimary));
-        graphics.drawText(juce::String(scores[index], 0), labelArea,
-                          juce::Justification::centredRight);
-
-        auto track = cell.withHeight(5).toFloat();
-        graphics.setColour(juce::Colour(0xff263545));
-        graphics.fillRoundedRectangle(track, 2.5f);
-        const auto score = juce::jlimit(0.0f, 100.0f, scores[index]);
-        const auto colour = score >= 75.0f ? juce::Colour(loopGreen)
-                           : score >= 55.0f ? juce::Colour(warningAmber)
-                                            : juce::Colour(0xffe46d6d);
-        graphics.setColour(colour);
-        graphics.fillRoundedRectangle(
-            track.withWidth(track.getWidth() * score / 100.0f), 2.5f);
-    }
-}
-
-void SignalAnalysisView::setSnapshot(RenderQuality::SignalSnapshot next)
+void SignalAnalysisView::setSnapshot(SignalDiagnostics::SignalSnapshot next)
 {
     snapshot = std::move(next);
     repaint();
@@ -394,7 +339,7 @@ void SignalAnalysisView::paint(juce::Graphics& graphics)
 RenderDragButton::RenderDragButton()
     : juce::TextButton("Drag Loop to DAW")
 {
-    setTooltip("Drag the approved 24-bit WAV result to the DAW timeline");
+    setTooltip("Render a 24-bit WAV and drag it to the DAW timeline");
 }
 
 void RenderDragButton::mouseDown(const juce::MouseEvent& event)
@@ -441,7 +386,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
     addAndMakeVisible(titleLabel);
 
-    versionLabel.setText("0.9.0 PRE-RELEASE", juce::dontSendNotification);
+    versionLabel.setText("R&R TEST BUILD / TEXTURE REBUILDING",
+                         juce::dontSendNotification);
     versionLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     versionLabel.setJustificationType(juce::Justification::centredRight);
     versionLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
@@ -462,7 +408,6 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
 
     addAndMakeVisible(waveformView);
     addAndMakeVisible(signalAnalysisView);
-    addAndMakeVisible(qualityView);
     waveformView.onSourceRangeEdited = [this]
     {
         waveformView.setRotation(-1.0f);
@@ -522,110 +467,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     {
         const auto shouldPlay = !processor.isPreviewPlaying();
         processor.setPreviewPlaying(shouldPlay);
-        lastMessage = shouldPlay ? "Preview started" : "Preview stopped";
-    };
-    previewTransportButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff287b60));
-    addAndMakeVisible(previewTransportButton);
-
-    originalPreviewButton.setClickingTogglesState(true);
-    loopPreviewButton.setClickingTogglesState(true);
-    originalPreviewButton.setRadioGroupId(101);
-    loopPreviewButton.setRadioGroupId(101);
-    originalPreviewButton.onClick = [this]
-    {
-        processor.setPreviewMode(LoopEngine::PreviewMode::original);
-        processor.setPreviewPlaying(true);
-        lastMessage = "Auditioning source selection";
-    };
-    loopPreviewButton.onClick = [this]
-    {
-        processor.setPreviewMode(LoopEngine::PreviewMode::loop);
-        processor.setPreviewPlaying(true);
-        lastMessage = "Auditioning generated result";
-    };
-    loopPreviewButton.setToggleState(true, juce::dontSendNotification);
-    addAndMakeVisible(originalPreviewButton);
-    addAndMakeVisible(loopPreviewButton);
-
-    candidateBox.setTextWhenNothingSelected("Generated variations");
-    candidateBox.setTooltip("Select a generated variation");
-    candidateBox.onChange = [this]
-    {
-        if (candidateBox.getSelectedItemIndex() >= 0)
-        {
-            processor.selectCandidate(candidateBox.getSelectedItemIndex());
-            processor.setPreviewMode(LoopEngine::PreviewMode::loop);
-            processor.setPreviewPlaying(true);
-            lastMessage = "Auditioning selected variation";
-            updatePrimaryAction();
-        }
-    };
-    addAndMakeVisible(candidateBox);
-
-    regenerateButton.onClick = [this]
-    {
-        if (processor.regenerateTexture(waveformView.getSourceIn(),
-                                        waveformView.getSourceOut()))
-            lastMessage = "Generating two new variations...";
-        else
-            lastMessage = "Load a source before creating a new variation";
-    };
-    addAndMakeVisible(regenerateButton);
-
-    importButton.onClick = [this] { chooseImportFile(); };
-    importButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff246e91));
-    addAndMakeVisible(importButton);
-
-    exportButton.onClick = [this] { chooseExportFile(); };
-    exportButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff287b60));
-    addAndMakeVisible(exportButton);
-
-    dragToDawButton.prepareFile = [this] { return prepareDawDragFile(); };
-    dragToDawButton.reportStatus = [this] (const juce::String& message)
-    {
-        lastMessage = message;
-    };
-    dragToDawButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff246e91));
-    addAndMakeVisible(dragToDawButton);
-
-    captureButton.onClick = [this]
-    {
-        processor.setPreviewPlaying(false);
-        processor.beginCapture();
-        lastMessage = "DAW input capture armed";
-    };
-    addAndMakeVisible(captureButton);
-
-    clearButton.onClick = [this]
-    {
-        processor.setPreviewPlaying(false);
-        processor.clearLoop();
-        lastMessage = "Result cleared - source retained";
-        updatePrimaryAction();
-    };
-    clearButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3b4652));
-    addAndMakeVisible(clearButton);
-
-    configureSlider(crossfadeSlider, crossfadeLabel, "SEAM REPAIR");
-    configureSlider(mixSlider, mixLabel, "AUDITION MIX");
-    configureSlider(durationSlider, durationLabel, "OUTPUT LENGTH");
-    configureSlider(repairDurationSlider, repairDurationLabel, "FINAL LENGTH");
-    configureSlider(flattenSlider, flattenLabel, "STABILITY");
-    configureSlider(sourceMatchSlider, sourceMatchLabel, "REBUILD");
-    crossfadeSlider.setTooltip(
-        "Maximum overlap used to repair the source's original end-to-start seam");
-    durationSlider.setTooltip(
-        "Exact Texture Loop length in seconds; click the value to type it");
-    repairDurationSlider.setTooltip(
-        "Exact R&R output length inside Source In/Out; Selection keeps the complete range");
-    flattenSlider.setTooltip(
-        "Controls how strongly macro dynamics and one-shot movement are stabilised");
-    sourceMatchSlider.setTooltip(
-        "Transformation depth: increases reconstruction support or event re-organisation while retaining source material identity");
-    auto& parameters = processor.getParameterState();
-    crossfadeAttachment = std::make_unique<SliderAttachment>(
-        parameters, "crossfadeMs", crossfadeSlider);
-    mixAttachment = std::make_unique<SliderAttachment>(parameters, "mix", mixSlider);
+  …1114 tokens truncated…= std::make_unique<SliderAttachment>(parameters, "mix", mixSlider);
     durationAttachment = std::make_unique<SliderAttachment>(
         parameters, "textureDuration", durationSlider);
     repairDurationAttachment = std::make_unique<SliderAttachment>(
@@ -640,7 +482,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     modeLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
     addAndMakeVisible(modeLabel);
     generationModeBox.addItem("Rotate & Repair", 1);
-    generationModeBox.addItem("Texture Loop", 2);
+    generationModeBox.addItem("Texture Lab (rebuilding)", 2);
+    generationModeBox.setItemEnabled(2, false);
     generationModeBox.onChange = [this]
     {
         updatePrimaryAction();
@@ -650,6 +493,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     addAndMakeVisible(generationModeBox);
     modeAttachment = std::make_unique<ComboBoxAttachment>(
         parameters, "generationMode", generationModeBox);
+    generationModeBox.setSelectedItemIndex(0, juce::sendNotificationSync);
 
     textureStructureLabel.setText("STYLE", juce::dontSendNotification);
     textureStructureLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
@@ -814,9 +658,6 @@ void LoopSurgeonAudioProcessorEditor::resized()
     dragToDawButton.setBounds(footer.removeFromRight(184).reduced(0, 7));
     footer.removeFromRight(14);
     statusLabel.setBounds(footer.removeFromTop(25));
-    qualityView.setBounds(footer.removeFromBottom(27));
-    footer.removeFromTop(3);
-    footer.removeFromBottom(3);
     signalAnalysisView.setBounds(footer);
 }
 
@@ -944,16 +785,14 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     const auto selectedTextureMode = generationModeBox.getSelectedItemIndex() == 1;
     candidateBox.setTextWhenNothingSelected(selectedTextureMode
         ? "Texture variations" : "Repair options");
-    qualityView.setTextureMode(ready ? textureResult : selectedTextureMode);
     if (ready && !textureResult && !waveformView.isEditingRotation())
         waveformView.setRotation(processor.getRotationProportion());
     else if (!ready || textureResult)
         waveformView.setRotation(-1.0f);
-    const auto approved = ready && processor.hasPassedQualityGate();
     signalAnalysisView.setSnapshot(ready ? processor.getSignalSnapshot()
-                                         : RenderQuality::SignalSnapshot {});
-    exportButton.setEnabled(approved);
-    dragToDawButton.setEnabled(approved);
+                                         : SignalDiagnostics::SignalSnapshot {});
+    exportButton.setEnabled(ready);
+    dragToDawButton.setEnabled(ready);
     candidateBox.setEnabled(ready);
     previewTransportButton.setEnabled(ready);
     originalPreviewButton.setEnabled(ready);
@@ -1026,11 +865,8 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
                                     juce::dontSendNotification);
                 break;
             case LoopEngine::State::ready:
-                statusLabel.setText(
-                    processor.isLowConfidence()
-                        ? "Loop ready — low confidence: compare candidates carefully"
-                        : "Loop ready — press Preview, then Export when satisfied",
-                    juce::dontSendNotification);
+                statusLabel.setText("Loop ready - audition before export",
+                                    juce::dontSendNotification);
                 break;
             case LoopEngine::State::failed:
                 statusLabel.setText(
@@ -1042,29 +878,12 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
 
     if (state == LoopEngine::State::ready)
     {
-        const auto passedGate = processor.hasPassedQualityGate();
-        statusLabel.setColour(juce::Label::textColourId,
-                              juce::Colour(passedGate ? loopGreen : warningAmber));
+        statusLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
         statusLabel.setText(
-            juce::String(textureResult ? "Texture Loop ready"
-                                       : "Rotate & Repair loop ready")
-                + (passedGate
-                    ? " - QC PASS " + juce::String(processor.getRenderQualityScore(), 0)
-                    : " - QC BLOCKED: regenerate or refine"),
+            textureResult ? "Texture result ready for listening"
+                          : "Rotate & Repair loop ready - audition the join",
             juce::dontSendNotification);
     }
-    else
-    {
-        statusLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
-    }
-
-    qualityView.setScores(
-        processor.getSeamQuality(),
-        textureResult ? processor.getLevelScore() : processor.getRepairScore(),
-        processor.getSpectrumScore(), processor.getPhaseScore(),
-        processor.getStereoScore(),
-        textureResult ? processor.getRepeatSafetyScore()
-                      : processor.getPeriodicityScore());
     repaint();
 }
 
@@ -1106,3 +925,4 @@ void LoopSurgeonAudioProcessorEditor::configureSlider(
     label.setColour(juce::Label::textColourId, juce::Colour(textMuted));
     addAndMakeVisible(label);
 }
+
