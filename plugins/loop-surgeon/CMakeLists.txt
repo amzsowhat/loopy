@@ -6,7 +6,7 @@ juce_add_plugin(LoopSurgeon
     PLUGIN_CODE LpSg
     FORMATS VST3 Standalone
     PRODUCT_NAME "Loop Surgeon"
-    DESCRIPTION "Turn source audio into evolving seamless textures or repaired loops"
+    DESCRIPTION "Repair a selected source range into a seamless loop"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
@@ -22,8 +22,8 @@ target_sources(LoopSurgeon
         Source/LoopEngine.h
         Source/LoopAnalyzer.cpp
         Source/LoopAnalyzer.h
-        Source/RenderQuality.cpp
-        Source/RenderQuality.h
+        Source/SignalDiagnostics.cpp
+        Source/SignalDiagnostics.h
         Source/TextureSynthesizer.cpp
         Source/TextureSynthesizer.h
         Source/TextureMaterialModel.cpp
@@ -65,8 +65,8 @@ if(SOUND_VST_BUILD_TESTS)
             Source/LoopEngine.h
             Source/LoopAnalyzer.cpp
             Source/LoopAnalyzer.h
-            Source/RenderQuality.cpp
-            Source/RenderQuality.h
+            Source/SignalDiagnostics.cpp
+            Source/SignalDiagnostics.h
             Source/TextureSynthesizer.cpp
             Source/TextureSynthesizer.h
             Source/TextureMaterialModel.cpp
@@ -91,23 +91,22 @@ if(SOUND_VST_BUILD_TESTS)
 
     add_test(NAME LoopSurgeon.Engine COMMAND LoopSurgeonTests)
 
-    juce_add_console_app(LoopSurgeonTextureRender
-        PRODUCT_NAME "Loop Surgeon Texture Render")
+    juce_add_console_app(LoopSurgeonSpectralOrbitLab
+        PRODUCT_NAME "Loop Surgeon Spectral Orbit Lab")
 
-    target_sources(LoopSurgeonTextureRender
+    target_sources(LoopSurgeonSpectralOrbitLab
         PRIVATE
-            Source/TextureSynthesizer.cpp
-            Source/TextureSynthesizer.h
-            Source/TextureMaterialModel.cpp
-            Source/TextureMaterialModel.h
-            Source/RenderQuality.cpp
-            Source/RenderQuality.h
-            Tools/TextureRender.cpp
+            Research/SpectralOrbitPrototype.cpp
+            Research/SpectralOrbitPrototype.h
+            Research/SpectralOrbitRender.cpp
+            Source/SignalDiagnostics.cpp
+            Source/SignalDiagnostics.h
     )
 
-    target_include_directories(LoopSurgeonTextureRender PRIVATE Source)
+    target_include_directories(LoopSurgeonSpectralOrbitLab
+        PRIVATE Source Research)
 
-    target_link_libraries(LoopSurgeonTextureRender
+    target_link_libraries(LoopSurgeonSpectralOrbitLab
         PRIVATE
             juce::juce_audio_formats
             juce::juce_dsp
@@ -117,6 +116,8 @@ if(SOUND_VST_BUILD_TESTS)
     )
 
     if(MSVC)
-        target_compile_options(LoopSurgeonTextureRender PRIVATE /utf-8)
+        target_compile_options(LoopSurgeonSpectralOrbitLab PRIVATE /utf-8)
     endif()
+
 endif()
+
