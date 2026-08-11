@@ -48,21 +48,6 @@ public:
     {
         return loopEngine.getAnalysisProgress();
     }
-    [[nodiscard]] float getSeamQuality() const noexcept { return loopEngine.getSeamQuality(); }
-    [[nodiscard]] float getWaveformScore() const noexcept { return loopEngine.getWaveformScore(); }
-    [[nodiscard]] float getLevelScore() const noexcept { return loopEngine.getLevelScore(); }
-    [[nodiscard]] float getSlopeScore() const noexcept { return loopEngine.getSlopeScore(); }
-    [[nodiscard]] float getSpectrumScore() const noexcept { return loopEngine.getSpectrumScore(); }
-    [[nodiscard]] float getPhaseScore() const noexcept { return loopEngine.getPhaseScore(); }
-    [[nodiscard]] float getStereoScore() const noexcept { return loopEngine.getStereoScore(); }
-    [[nodiscard]] float getTransientScore() const noexcept { return loopEngine.getTransientScore(); }
-    [[nodiscard]] float getPeriodicityScore() const noexcept { return loopEngine.getPeriodicityScore(); }
-    [[nodiscard]] float getRepairScore() const noexcept { return loopEngine.getRepairScore(); }
-    [[nodiscard]] float getRepeatSafetyScore() const noexcept { return loopEngine.getRepeatSafetyScore(); }
-    [[nodiscard]] float getTruePeakDbtp() const noexcept { return loopEngine.getTruePeakDbtp(); }
-    [[nodiscard]] float getRenderQualityScore() const noexcept { return loopEngine.getRenderQualityScore(); }
-    [[nodiscard]] bool hasPassedQualityGate() const noexcept { return loopEngine.hasPassedQualityGate(); }
-    [[nodiscard]] bool isLowConfidence() const noexcept { return loopEngine.isLowConfidence(); }
     [[nodiscard]] juce::String getSourceName() const { return loopEngine.getSourceName(); }
     [[nodiscard]] double getSourceDurationSeconds() const { return loopEngine.getSourceDurationSeconds(); }
     [[nodiscard]] double getRenderedDurationSeconds() const noexcept
@@ -93,7 +78,7 @@ public:
     {
         return loopEngine.getAnalysisRangeEndProportion();
     }
-    [[nodiscard]] RenderQuality::SignalSnapshot getSignalSnapshot() const
+    [[nodiscard]] SignalDiagnostics::SignalSnapshot getSignalSnapshot() const
     {
         return loopEngine.getSignalSnapshot();
     }
@@ -116,3 +101,4 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LoopSurgeonAudioProcessor)
 };
+
