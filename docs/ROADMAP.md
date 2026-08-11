@@ -1,26 +1,18 @@
-# Roadmap
+# Loop Surgeon roadmap
 
-## Current baseline
+## Current local test scope
 
-- Keep Rotate & Repair usable and sample-exact.
-- Keep the rejected Texture engine disabled.
-- Do not publish or package a Texture build from the 0.9 code path.
-- Do not use self-authored audio-quality totals, PASS badges or subjective thresholds.
+- Rotate & Repair and Texture Loop are both active in VST3 and Standalone.
+- Source In/Out and exact output length apply to both modes.
+- Generated audio supports preview, WAV export, DAW drag and DAW-state recall.
+- No subjective quality score or export gate exists.
 
-## Creative-loop replacement gate
+## Required before sale
 
-1. Render offline WAV candidates from one fixed, source-agnostic algorithm.
-2. Confirm by listening that the result has an authored spectral-time character, does not become
-   industrial noise and does not expose regular source replay.
-3. Reject the hypothesis if the listening result fails; do not compensate with more UI or metrics.
-4. After the sound is accepted, expose output length, editable delay curve, feedback, diffusion,
-   Barberpole/wrap, stereo link and wet/dry in the plug-in.
-5. Then implement DAW recall, automation, cancellation, memory bounds and local host validation.
-
-## Before sale
-
-- Windows and Apple Silicon release builds; REAPER validation at 44.1/48/96 kHz.
-- VST3 validator, crash recovery, save/restore, export/reimport and drag tests.
-- Long listening sessions and blind comparisons against competent manual work and established tools.
-- Signing, notarisation, installers, licensing, support and licensed test material.
+1. Listening tests across a deliberately varied, unnamed regression corpus.
+2. Fix any repeated-event, click, burst, tonal/electronic, stereo or material-loss failures at the
+   algorithm level rather than adding per-material branches.
+3. Validate VST3 in current REAPER and other target hosts on Windows and Apple Silicon macOS.
+4. Add release signing, installer/uninstaller, licence compliance and a reproducible local release
+   process. GitHub Actions remain manual and must not be triggered while quota is unavailable.
 
