@@ -1,22 +1,19 @@
-# Product review — 2026-08-11
+# Loop Surgeon product review
 
-## Decision
+## Implemented locally
 
-Texture 0.9 is rejected and withdrawn. The audible result was industrial/noise-like, with damaged
-material identity. Prior automated ratings did not measure aesthetic usefulness and have been
-removed from code, UI, tests, documentation and export behavior.
+- Two selectable VST3 modes: Rotate & Repair and Texture Loop.
+- Source In/Out, exact output length, preview/stop, Source/Generated comparison, WAV export, DAW drag
+  and DAW-state recall.
+- Texture Loop uses circular material-flow construction from the selected waveform. The prior
+  spectral/noise resynthesis and separate spectral-delay experiment are removed.
+- Spectrum, phase plot, stereo correlation, position and true peak are diagnostics, not ratings.
 
-Rotate & Repair remains the active plug-in function. It compiles locally and its deterministic/state
-tests pass. This confirms code behavior only; it is not a sale-readiness claim.
+## Not yet verified
 
-## Replacement direction
+- Subjective usefulness and material identity across a broad listening corpus.
+- Current REAPER host behavior with the new Texture algorithm beyond local engine tests.
+- Apple Silicon build, signing, installer, licence and commercial release validation.
 
-The new creative mode must behave like an authored effect: the input drives a distinctive algorithm,
-controls have audible causal meaning, and the output can be used as a designed layer or loop. The
-Ambisonar Prism demonstration is a product-behavior reference for editable frequency-to-delay curves,
-feedback, Barberpole motion, maximum delay and wet/dry control. Freakshow Industries remains the
-reference for strong identity and user-directed outcomes, not for copying proprietary algorithms.
-
-`Research/SpectralOrbitPrototype.*` is the first isolated sound hypothesis. It stays outside the VST3
-until the user approves rendered WAVs by listening.
+The current package is a local test build, not a sale-ready binary.
 
