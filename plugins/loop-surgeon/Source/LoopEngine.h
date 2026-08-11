@@ -42,6 +42,10 @@ public:
     void setTextureVariation(float amount) noexcept;
     void setTextureFlatten(float amount) noexcept;
     void setTextureSourceMatch(float amount) noexcept;
+    void setTextureStructure(TextureStructure structure) noexcept
+    {
+        textureStructure.store(structure, std::memory_order_relaxed);
+    }
     void setGenerationMode(GenerationMode mode) noexcept { generationMode.store(mode); }
     [[nodiscard]] GenerationMode getGenerationMode() const noexcept
     {
@@ -150,6 +154,7 @@ private:
     std::atomic<float> textureVariation { 0.72f };
     std::atomic<float> textureFlatten { 0.72f };
     std::atomic<float> textureSourceMatch { 0.85f };
+    std::atomic<TextureStructure> textureStructure { TextureStructure::automatic };
     std::atomic<uint32_t> textureSeed { 0x4c535501u };
     std::atomic<int> effectiveCrossfadeSamples { 0 };
     int captureWritePosition = 0;

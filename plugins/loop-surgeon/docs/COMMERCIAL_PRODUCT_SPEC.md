@@ -24,8 +24,10 @@ must not collapse the selection into a short repeated fragment.
 
 For converting a source event into a sustained layer of the same material. It must remove ordered
 ADSR, pass-by and directional trajectories without reversing or simply time-stretching the source.
-Output length is exact. Stability controls macro movement removal; Rebuild moves from source-local
-exemplars toward a clean deterministic/stochastic material reconstruction.
+Output length is exact. Stability controls macro movement removal; Transform moves from source-local
+exemplars toward deeper source-domain reorganisation. Auto analyses signal structure and chooses
+Continuous or Particles; the user can override that choice. Neither path may substitute generic
+generated noise for source-local material identity.
 
 ## Primary flow
 
@@ -49,7 +51,10 @@ exemplars toward a clean deterministic/stochastic material reconstruction.
 - Texture Loop has no copied short cycle, repeated attack train, reverse artefact, retained pass-by
   trajectory or simple whole-file stretching.
 - Texture Loop keeps a defined material colour and texture attributes. Exact source waveform and
-  event similarity are optional at higher Rebuild settings.
+  event chronology may change at higher Transform settings, while local resonances, transient
+  detail, and stochastic character remain measurable.
+- Matching the broad spectrum alone is insufficient. A coloured-noise result must fail local-frame
+  identity and noise-collapse checks even when its long-term frequency response looks correct.
 
 ## Mandatory product guarantees
 
@@ -70,6 +75,6 @@ tonal beds and difficult stereo sources. Every class requires blind A/B against 
 result, long-loop endurance listening, 44.1/48/96 kHz coverage, recall, export/reimport and host
 automation checks.
 
-The current 0.7.0 pre-release compiles and passes deterministic tests locally. Automatic builds are
+The current 0.8.0 pre-release compiles and passes deterministic tests locally. Automatic builds are
 disabled; validator, trusted-meter, corpus, blind-listening and physical Apple Silicon evidence are
 still missing, so it does not yet satisfy this sale-ready contract.

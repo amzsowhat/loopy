@@ -90,6 +90,8 @@ void LoopSurgeonAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     loopEngine.setTextureVariation(parameters.getRawParameterValue("variation")->load());
     loopEngine.setTextureFlatten(parameters.getRawParameterValue("flatten")->load());
     loopEngine.setTextureSourceMatch(parameters.getRawParameterValue("sourceMatch")->load());
+    loopEngine.setTextureStructure(static_cast<TextureStructure>(juce::jlimit(
+        0, 2, juce::roundToInt(parameters.getRawParameterValue("textureStructure")->load()))));
     loopEngine.setGenerationMode(static_cast<LoopEngine::GenerationMode>(juce::jlimit(
         0, 1, juce::roundToInt(parameters.getRawParameterValue("generationMode")->load()))));
     loopEngine.process(buffer, parameters.getRawParameterValue("mix")->load());
@@ -114,6 +116,9 @@ void LoopSurgeonAudioProcessor::syncGenerationControlsForAnalysis() noexcept
         parameters.getRawParameterValue("flatten")->load());
     loopEngine.setTextureSourceMatch(
         parameters.getRawParameterValue("sourceMatch")->load());
+    loopEngine.setTextureStructure(static_cast<TextureStructure>(juce::jlimit(
+        0, 2, juce::roundToInt(
+                  parameters.getRawParameterValue("textureStructure")->load()))));
     loopEngine.setGenerationMode(static_cast<LoopEngine::GenerationMode>(juce::jlimit(
         0, 1, juce::roundToInt(
                   parameters.getRawParameterValue("generationMode")->load()))));
@@ -319,7 +324,7 @@ LoopSurgeonAudioProcessor::createParameterLayout()
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "sourceMatch", 1 },
-        "Texture Rebuild",
+        "Texture Transform",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
         0.85f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(
@@ -327,6 +332,12 @@ LoopSurgeonAudioProcessor::createParameterLayout()
             {
                 return juce::String(juce::roundToInt(value * 100.0f)) + "%";
             })));
+
+    layout.push_back(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "textureStructure", 1 },
+        "Texture Structure",
+        juce::StringArray { "Auto", "Continuous", "Particles" },
+        0));
 
     return { layout.begin(), layout.end() };
 }

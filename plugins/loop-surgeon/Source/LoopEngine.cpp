@@ -512,7 +512,10 @@ juce::String LoopEngine::getCandidateDescription(const int index) const
             ? capturedSampleCount.load(std::memory_order_relaxed)
             : variant.audio.getNumSamples();
         const auto seconds = static_cast<double>(samples) / sampleRate;
-        return "Texture " + juce::String(index + 1) + "  |  " + juce::String(seconds, 1)
+        const auto structure = variant.usedStructure == TextureStructure::particles
+            ? juce::String("Particles") : juce::String("Continuous");
+        return "Texture " + juce::String(index + 1) + "  |  " + structure
+               + "  |  " + juce::String(seconds, 1)
                + " s  |  QC " + (variant.passedQualityGate ? "PASS " : "CHECK ")
                + juce::String(variant.qualityScore, 0);
     }
@@ -969,6 +972,7 @@ void LoopEngine::analysisLoop()
             settings.variation = textureVariation.load(std::memory_order_relaxed);
             settings.flatten = textureFlatten.load(std::memory_order_relaxed);
             settings.sourceMatch = textureSourceMatch.load(std::memory_order_relaxed);
+            settings.structure = textureStructure.load(std::memory_order_relaxed);
             const auto baseSeed = textureSeed.load(std::memory_order_relaxed);
             generatedTextures.reserve(2);
             constexpr uint32_t maximumAttempts = 6;

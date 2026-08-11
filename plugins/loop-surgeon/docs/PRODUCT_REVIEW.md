@@ -1,4 +1,4 @@
-# Loop Surgeon 0.7.0 pre-release review
+# Loop Surgeon 0.8.0 pre-release review
 
 ## Product correction
 
@@ -20,11 +20,14 @@ There is no Auto mode. The user selects the treatment appropriate to the source.
   expensive processing starts;
 - full-selection forward-only Rotate & Repair with adaptive internal seam overlap;
 - exact R&R Final Length search inside Source In/Out, with Selection as the default;
-- Texture Loop hybrid phase-continuous resonance, stochastic residual and forward-detail paths;
-- explicit Stability and Rebuild controls while retaining stable pre-release parameter IDs;
+- Texture Loop Auto/Continuous/Particles signal-structure routing with manual override;
+- continuous source-domain mosaicing with non-periodic scheduling and a capped decorrelation bed;
+- forward-only micro-event detection and bounded reorganisation for discrete source structure;
+- explicit Stability and Transform controls while retaining stable pre-release parameter IDs;
 - material-colour correction plus bounded loudness, stereo correlation/width and position matching;
 - DC/non-finite repair and a -1 dBTP circular oversampled peak ceiling;
-- repeat-risk, closure, timbre, loudness, phase, position and stability gates that block export;
+- repeat-risk, closure, timbre, local-frame identity, coloured-noise collapse, loudness, phase,
+  position and stability gates that block export;
 - real source/output spectrum overlay, phase scope, correlation and position display;
 - two retained deterministic alternatives instead of three, reducing persistent maximum texture
   memory by about one third;
@@ -36,12 +39,12 @@ There is no Auto mode. The user selects the treatment appropriate to the source.
 
 ## Verification status
 
-Windows x64 Release compilation and the deterministic engine suite pass locally. The supplied
-underwater ice impact was also rendered through the offline Texture path. Its new source-frame
-timbre score is materially higher than the removed random-phase renderer, while its 200 ms macro
-level range remains controlled. This is automated evidence, not a substitute for listening.
+Windows Debug compilation and the deterministic engine suite pass locally. Synthetic cases cover
+sustained broadband material, sparse resonant events, one-shot envelope removal and moving
+pass-by removal. Two real SFX selections also render through Auto and pass the new automated gates.
+This is automated evidence, not a substitute for listening.
 
-VST3 Validator, Windows REAPER listening for 0.7.0, native Apple Silicon REAPER, trusted meter
+VST3 Validator, Windows REAPER listening for 0.8.0, native Apple Silicon REAPER, trusted meter
 comparison and a licensed multi-category listening corpus remain unverified.
 
 ## Remaining commercial blockers

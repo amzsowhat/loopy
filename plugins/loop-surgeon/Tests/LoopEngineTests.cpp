@@ -348,6 +348,8 @@ int main()
     textureSettings.seed += 17u;
     const auto textureB = TextureSynthesizer::synthesize(
         windOneShot, automaticSampleRate, textureSettings);
+    passed &= expect(textureA.usedStructure == TextureStructure::continuous,
+                     "Auto must route sustained broadband material to the continuous engine");
     passed &= expect(textureA.audio.getNumSamples() == 24000,
                      "texture synthesis should create the requested long output");
     passed &= expect(textureA.audio.getNumSamples() > windOneShot.getNumSamples(),
@@ -396,6 +398,73 @@ int main()
     passed &= expect(textureA.positionPreservation >= 0.0f
                          && textureA.positionPreservation <= 100.0f,
                      "texture stereo position score should be normalized");
+    if (textureA.noiseCollapseSafety < 72.0f)
+        std::cerr << "continuous material QC: sourceFlatness="
+                  << textureA.sourceSpectralFlatness
+                  << " outputFlatness=" << textureA.outputSpectralFlatness
+                  << " frameIdentity=" << textureA.localFrameIdentity
+                  << " noiseSafety=" << textureA.noiseCollapseSafety << '\n';
+    passed &= expect(textureA.noiseCollapseSafety >= 72.0f,
+                     "continuous output must not become flatter generic noise than its source");
+
+    // Cross-category regression: a sparse resonant source must retain identifiable micro-events
+    // instead of being averaged into a shaped noise bed.
+    juce::AudioBuffer<float> sparseResonantSource(2, 5000);
+    sparseResonantSource.clear();
+    const std::array<int, 3> resonantStarts { 900, 2250, 3710 };
+    const std::array<float, 3> resonantFrequencies { 170.0f, 235.0f, 145.0f };
+    for (size_t event = 0; event < resonantStarts.size(); ++event)
+    {
+        auto phase = 0.0;
+        for (int offset = 0; offset < 520; ++offset)
+        {
+            const auto progress = static_cast<float>(offset) / 519.0f;
+            const auto frequency = resonantFrequencies[event]
+                                   * (1.0f + 0.85f * progress);
+            phase += juce::MathConstants<double>::twoPi * frequency
+                     / automaticSampleRate;
+            const auto envelope = std::sin(juce::MathConstants<float>::pi * progress)
+                                  * std::exp(-3.2f * progress);
+            const auto value = envelope * static_cast<float>(
+                0.72 * std::sin(phase) + 0.20 * std::sin(2.13 * phase + 0.4));
+            const auto position = resonantStarts[event] + offset;
+            sparseResonantSource.setSample(0, position, value);
+            sparseResonantSource.setSample(1, position,
+                0.88f * value + 0.08f * envelope * static_cast<float>(std::sin(0.71 * phase)));
+        }
+    }
+    TextureSynthesisSettings sparseSettings;
+    sparseSettings.durationSeconds = 10.0f;
+    sparseSettings.variation = 0.78f;
+    sparseSettings.flatten = 0.72f;
+    sparseSettings.sourceMatch = 0.82f;
+    sparseSettings.seed = 0x0b51d5u;
+    const auto sparseTexture = TextureSynthesizer::synthesize(
+        sparseResonantSource, automaticSampleRate, sparseSettings);
+    passed &= expect(sparseTexture.usedStructure == TextureStructure::particles,
+                     "Auto must route sparse resonant micro-events to the particle engine");
+    passed &= expect(sparseTexture.outputSpectralFlatness
+                         <= sparseTexture.sourceSpectralFlatness + 0.12f,
+                     "sparse resonant material must not collapse into broadband noise");
+    passed &= expect(sparseTexture.noiseCollapseSafety >= 72.0f,
+                     "noise-collapse safety must reject flattened particle output");
+    passed &= expect(sparseTexture.materialIdentity >= 45.0f,
+                     "particle reconstruction must retain measurable material identity");
+    passed &= expect(meanNearestSourceCorrelation(
+                         sparseResonantSource, sparseTexture.audio, 72) >= 0.18f,
+                     "particle reconstruction must retain source-derived local wave structure");
+    auto forcedContinuous = sparseSettings;
+    forcedContinuous.structure = TextureStructure::continuous;
+    const auto forcedContinuousTexture = TextureSynthesizer::synthesize(
+        sparseResonantSource, automaticSampleRate, forcedContinuous);
+    passed &= expect(forcedContinuousTexture.usedStructure == TextureStructure::continuous,
+                     "manual Continuous must override Auto without source-specific rules");
+    auto forcedParticles = textureSettings;
+    forcedParticles.structure = TextureStructure::particles;
+    const auto forcedParticleTexture = TextureSynthesizer::synthesize(
+        windOneShot, automaticSampleRate, forcedParticles);
+    passed &= expect(forcedParticleTexture.usedStructure == TextureStructure::particles,
+                     "manual Particles must override Auto for creative control");
     auto unmatchedSettings = textureSettings;
     unmatchedSettings.seed = 0x31c0ffeeu;
     unmatchedSettings.sourceMatch = 0.0f;
@@ -411,11 +480,11 @@ int main()
             matchedTexture.audio.getSample(0, sample)
             - unmatchedTexture.audio.getSample(0, sample));
     passed &= expect(rebuildDifference > 1.0,
-                     "Rebuild must replace exemplar tiling with a distinct material model");
+                     "Transform must audibly change source-domain reconstruction depth");
     passed &= expect(matchedTexture.macroStability >= unmatchedTexture.macroStability - 5.0f,
-                     "full Rebuild must not reintroduce the source one-shot envelope");
+                     "full Transform must not reintroduce the source one-shot envelope");
     passed &= expect(matchedTexture.spectrumPreservation >= 20.0f,
-                     "full Rebuild must retain defined source material colour");
+                     "full Transform must retain defined source material colour");
     auto reversedWindowError = 0.0;
     for (int sample = 0; sample < 2000; ++sample)
         reversedWindowError += std::abs(

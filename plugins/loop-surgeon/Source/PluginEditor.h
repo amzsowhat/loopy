@@ -151,6 +151,7 @@ private:
     juce::Slider flattenSlider;
     juce::Slider sourceMatchSlider;
     juce::ComboBox generationModeBox;
+    juce::ComboBox textureStructureBox;
     juce::Label crossfadeLabel;
     juce::Label mixLabel;
     juce::Label durationLabel;
@@ -158,6 +159,7 @@ private:
     juce::Label flattenLabel;
     juce::Label sourceMatchLabel;
     juce::Label modeLabel;
+    juce::Label textureStructureLabel;
     std::unique_ptr<SliderAttachment> crossfadeAttachment;
     std::unique_ptr<SliderAttachment> mixAttachment;
     std::unique_ptr<SliderAttachment> durationAttachment;
@@ -165,6 +167,7 @@ private:
     std::unique_ptr<SliderAttachment> flattenAttachment;
     std::unique_ptr<SliderAttachment> sourceMatchAttachment;
     std::unique_ptr<ComboBoxAttachment> modeAttachment;
+    std::unique_ptr<ComboBoxAttachment> textureStructureAttachment;
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::String lastMessage;
     juce::String displayedSource;

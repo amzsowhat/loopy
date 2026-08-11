@@ -1089,6 +1089,290 @@ float compareFrameIdentity(
                                  (similarity - 0.45f) / 0.45f);
 }
 
+float calculateSpectralFlatness(
+    const std::vector<std::vector<float>>& logSpectra)
+{
+    if (logSpectra.empty() || logSpectra.front().size() < 8u)
+        return 0.0f;
+
+    std::vector<float> frameValues;
+    frameValues.reserve(logSpectra.size());
+    for (const auto& spectrum : logSpectra)
+    {
+        const auto first = size_t { 2 };
+        const auto last = spectrum.size() - 1u;
+        auto logTotal = 0.0;
+        auto magnitudeTotal = 0.0;
+        auto count = 0;
+        for (auto bin = first; bin < last; ++bin)
+        {
+            const auto logMagnitude = juce::jlimit(-20.0f, 8.0f, spectrum[bin]);
+            logTotal += logMagnitude;
+            magnitudeTotal += std::exp(static_cast<double>(logMagnitude));
+            ++count;
+        }
+        if (count > 0)
+        {
+            const auto geometric = std::exp(logTotal / static_cast<double>(count));
+            const auto arithmetic = magnitudeTotal / static_cast<double>(count);
+            frameValues.push_back(static_cast<float>(
+                geometric / juce::jmax(1.0e-12, arithmetic)));
+        }
+    }
+    return juce::jlimit(0.0f, 1.0f, sampledPercentile(frameValues, 0.50f));
+}
+
+struct SourceEvent
+{
+    int start = 0;
+    int length = 0;
+    float rms = 0.0f;
+};
+
+std::vector<SourceEvent> detectSourceEvents(const juce::AudioBuffer<float>& source,
+                                            const double sampleRate)
+{
+    const auto block = juce::jlimit(
+        16, juce::jmax(16, source.getNumSamples() / 4),
+        juce::roundToInt(sampleRate * 0.010));
+    const auto blocks = juce::jmax(1, (source.getNumSamples() + block - 1) / block);
+    std::vector<float> envelope(static_cast<size_t>(blocks), 0.0f);
+    for (int index = 0; index < blocks; ++index)
+    {
+        const auto start = index * block;
+        const auto count = juce::jmin(block, source.getNumSamples() - start);
+        if (count > 0)
+            envelope[static_cast<size_t>(index)] = frameRms(source, start, count);
+    }
+    auto smoothed = envelope;
+    for (int index = 0; index < blocks; ++index)
+    {
+        auto total = 0.0f;
+        auto count = 0;
+        for (int neighbour = juce::jmax(0, index - 1);
+             neighbour <= juce::jmin(blocks - 1, index + 1); ++neighbour)
+        {
+            total += envelope[static_cast<size_t>(neighbour)];
+            ++count;
+        }
+        smoothed[static_cast<size_t>(index)] = total / static_cast<float>(count);
+    }
+
+    const auto peak = *std::max_element(smoothed.begin(), smoothed.end());
+    if (peak < 1.0e-7f)
+        return {};
+    const auto peakThreshold = juce::jmax(
+        peak * 0.18f, sampledPercentile(smoothed, 0.72f));
+    const auto minimumPeakDistance = juce::jmax(
+        2, juce::roundToInt(sampleRate * 0.045) / block);
+    std::vector<int> peaks;
+    for (int index = 1; index + 1 < blocks; ++index)
+    {
+        const auto value = smoothed[static_cast<size_t>(index)];
+        if (value < peakThreshold
+            || value < smoothed[static_cast<size_t>(index - 1)]
+            || value <= smoothed[static_cast<size_t>(index + 1)])
+            continue;
+        if (!peaks.empty() && index - peaks.back() < minimumPeakDistance)
+        {
+            if (value > smoothed[static_cast<size_t>(peaks.back())])
+                peaks.back() = index;
+            continue;
+        }
+        peaks.push_back(index);
+    }
+    if (peaks.empty())
+        peaks.push_back(static_cast<int>(std::distance(
+            smoothed.begin(), std::max_element(smoothed.begin(), smoothed.end()))));
+
+    std::vector<SourceEvent> events;
+    events.reserve(peaks.size());
+    const auto maximumBefore = juce::jmax(2, juce::roundToInt(sampleRate * 0.08) / block);
+    const auto maximumAfter = juce::jmax(4, juce::roundToInt(sampleRate * 0.42) / block);
+    for (const auto peakIndex : peaks)
+    {
+        const auto localPeak = smoothed[static_cast<size_t>(peakIndex)];
+        auto first = peakIndex;
+        auto last = peakIndex;
+        while (first > juce::jmax(0, peakIndex - maximumBefore)
+               && smoothed[static_cast<size_t>(first)] > localPeak * 0.12f)
+            --first;
+        while (last + 1 < blocks && last < peakIndex + maximumAfter
+               && smoothed[static_cast<size_t>(last)] > localPeak * 0.10f)
+            ++last;
+        const auto start = juce::jmax(0, first * block);
+        const auto end = juce::jmin(source.getNumSamples(), (last + 1) * block);
+        const auto minimumLength = juce::jmax(32, juce::roundToInt(sampleRate * 0.035));
+        if (end - start < minimumLength)
+            continue;
+        events.push_back({ start, end - start, frameRms(source, start, end - start) });
+    }
+    return events;
+}
+
+struct StructureDecision
+{
+    TextureStructure structure = TextureStructure::continuous;
+    float confidence = 0.0f;
+};
+
+StructureDecision classifyStructure(const juce::AudioBuffer<float>& source,
+                                    const double sampleRate,
+                                    const float spectralFlatness,
+                                    const std::vector<SourceEvent>& events)
+{
+    const auto block = juce::jlimit(
+        16, juce::jmax(16, source.getNumSamples() / 4),
+        juce::roundToInt(sampleRate * 0.020));
+    std::vector<float> levels;
+    for (int start = 0; start < source.getNumSamples(); start += block)
+    {
+        const auto count = juce::jmin(block, source.getNumSamples() - start);
+        if (count > 0)
+            levels.push_back(frameRms(source, start, count));
+    }
+    const auto peak = juce::jmax(1.0e-8f, sampledPercentile(levels, 0.98f));
+    auto active = 0;
+    auto mean = 0.0;
+    for (const auto level : levels)
+    {
+        if (level >= peak * 0.14f)
+            ++active;
+        mean += level;
+    }
+    mean /= static_cast<double>(juce::jmax<size_t>(1u, levels.size()));
+    auto variance = 0.0;
+    for (const auto level : levels)
+    {
+        const auto difference = static_cast<double>(level) - mean;
+        variance += difference * difference;
+    }
+    const auto coefficient = static_cast<float>(std::sqrt(
+        variance / static_cast<double>(juce::jmax<size_t>(1u, levels.size())))
+        / juce::jmax(1.0e-8, mean));
+    const auto occupancy = static_cast<float>(active)
+                           / static_cast<float>(juce::jmax<size_t>(1u, levels.size()));
+    const auto eventDensity = juce::jlimit(
+        0.0f, 1.0f, static_cast<float>(events.size())
+                    / juce::jmax(1.0f, static_cast<float>(source.getNumSamples()
+                        / sampleRate) * 5.0f));
+    auto particleEvidence = 0.48f * (1.0f - occupancy)
+                            + 0.30f * juce::jlimit(
+                                0.0f, 1.0f, (coefficient - 0.35f) / 1.0f)
+                            + 0.22f * eventDensity;
+    // Broadband sustained sources are continuous even when their macro envelope rises and falls.
+    particleEvidence -= 0.34f * juce::jlimit(
+        0.0f, 1.0f, (spectralFlatness - 0.12f) / 0.38f);
+    particleEvidence = juce::jlimit(0.0f, 1.0f, particleEvidence);
+    const auto isParticle = particleEvidence >= 0.48f;
+    return {
+        isParticle ? TextureStructure::particles : TextureStructure::continuous,
+        100.0f * juce::jlimit(0.0f, 1.0f,
+            std::abs(particleEvidence - 0.48f) / 0.48f)
+    };
+}
+
+juce::AudioBuffer<float> synthesizeParticleEvents(
+    const juce::AudioBuffer<float>& source,
+    const std::vector<SourceEvent>& events,
+    const int targetSamples,
+    const double sampleRate,
+    const TextureSynthesisSettings& settings,
+    DeterministicRandom& random)
+{
+    juce::AudioBuffer<float> output(source.getNumChannels(), targetSamples);
+    output.clear();
+    if (events.empty() || targetSamples == 0)
+        return output;
+
+    std::vector<float> eventLevels;
+    std::vector<int> eventLengths;
+    for (const auto& event : events)
+    {
+        eventLevels.push_back(event.rms);
+        eventLengths.push_back(event.length);
+    }
+    const auto targetLevel = juce::jmax(
+        1.0e-8f, sampledPercentile(eventLevels, 0.50f));
+    auto lengths = eventLengths;
+    const auto middle = lengths.begin() + static_cast<ptrdiff_t>(lengths.size() / 2u);
+    std::nth_element(lengths.begin(), middle, lengths.end());
+    const auto medianLength = *middle;
+    const auto nominalSpacing = juce::jlimit(
+        juce::roundToInt(sampleRate * 0.055),
+        juce::roundToInt(sampleRate * 0.85),
+        juce::roundToInt(static_cast<float>(medianLength)
+            * (1.12f - 0.52f * settings.sourceMatch)));
+    auto outputStart = -nominalSpacing / 2;
+    auto previousEvent = -1;
+    while (outputStart < targetSamples)
+    {
+        auto eventIndex = static_cast<int>(
+            random.next() % static_cast<uint32_t>(events.size()));
+        if (events.size() > 1u && eventIndex == previousEvent)
+            eventIndex = (eventIndex + 1 + static_cast<int>(random.next()
+                         % static_cast<uint32_t>(events.size() - 1u)))
+                         % static_cast<int>(events.size());
+        const auto& event = events[static_cast<size_t>(eventIndex)];
+        const auto pitchRange = 0.035f + 0.115f * settings.variation;
+        const auto ratio = juce::jlimit(
+            0.78f, 1.24f, 1.0f + (random.unit() - 0.5f) * 2.0f * pitchRange);
+        const auto renderedLength = juce::jmax(
+            16, juce::roundToInt(static_cast<float>(event.length) / ratio));
+        const auto levelVariationDb = (random.unit() - 0.5f)
+                                      * (2.0f + 4.0f * settings.variation)
+                                      * (1.0f - 0.72f * settings.flatten);
+        const auto gain = juce::Decibels::decibelsToGain(levelVariationDb)
+                          * std::pow(targetLevel / juce::jmax(1.0e-8f, event.rms),
+                                     0.75f * settings.flatten);
+        const auto edge = juce::jlimit(
+            8, renderedLength / 4, juce::roundToInt(sampleRate * 0.008));
+        const auto pan = source.getNumChannels() > 1
+            ? (random.unit() - 0.5f) * 0.24f * settings.variation : 0.0f;
+        const auto leftGain = std::sqrt(juce::jlimit(0.0f, 1.0f, 0.5f - pan))
+                              * 1.41421356f;
+        const auto rightGain = std::sqrt(juce::jlimit(0.0f, 1.0f, 0.5f + pan))
+                               * 1.41421356f;
+        for (int rendered = 0; rendered < renderedLength; ++rendered)
+        {
+            const auto destination = outputStart + rendered;
+            if (destination < 0 || destination >= targetSamples)
+                continue;
+            const auto sourcePosition = static_cast<float>(event.start)
+                                        + static_cast<float>(rendered) * ratio;
+            const auto first = juce::jlimit(
+                event.start, event.start + event.length - 1,
+                static_cast<int>(sourcePosition));
+            const auto second = juce::jmin(event.start + event.length - 1, first + 1);
+            const auto fraction = sourcePosition - static_cast<float>(first);
+            auto window = 1.0f;
+            if (rendered < edge)
+                window = std::sin(juce::MathConstants<float>::halfPi
+                                  * static_cast<float>(rendered) / static_cast<float>(edge));
+            else if (rendered + edge >= renderedLength)
+                window = std::sin(juce::MathConstants<float>::halfPi
+                                  * static_cast<float>(renderedLength - rendered - 1)
+                                  / static_cast<float>(edge));
+            window *= window;
+            for (int channel = 0; channel < output.getNumChannels(); ++channel)
+            {
+                const auto value = source.getSample(channel, first)
+                    + fraction * (source.getSample(channel, second)
+                                  - source.getSample(channel, first));
+                const auto channelGain = channel == 0 ? leftGain : rightGain;
+                output.addSample(channel, destination, value * gain * window * channelGain);
+            }
+        }
+        previousEvent = eventIndex;
+        const auto jitter = 1.0f + (random.unit() - 0.5f)
+                           * settings.variation * (1.05f - 0.48f * settings.flatten);
+        outputStart += juce::jmax(
+            juce::roundToInt(sampleRate * 0.035),
+            juce::roundToInt(static_cast<float>(nominalSpacing) * jitter));
+    }
+    return output;
+}
+
 float calculateRepeatRisk(const juce::AudioBuffer<float>& audio,
                           const double sampleRate)
 {
@@ -1265,6 +1549,14 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
         models[static_cast<size_t>(component)] = buildStationaryModel(spectra);
         colourModels[static_cast<size_t>(component)] = buildMaterialColourModel(spectra);
     }
+    result.sourceSpectralFlatness = calculateSpectralFlatness(analysisSpectra[0]);
+    const auto detectedEvents = detectSourceEvents(source, sampleRate);
+    const auto automaticDecision = classifyStructure(
+        source, sampleRate, result.sourceSpectralFlatness, detectedEvents);
+    result.usedStructure = settings.structure == TextureStructure::automatic
+        ? automaticDecision.structure : settings.structure;
+    result.structureConfidence = settings.structure == TextureStructure::automatic
+        ? automaticDecision.confidence : 100.0f;
     result.analysisFrameStarts.reserve(selectedFrames.size());
     for (const auto frame : selectedFrames)
         result.analysisFrameStarts.push_back(
@@ -1360,10 +1652,9 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     {
         const auto circular = static_cast<float>(grain)
                               / static_cast<float>(outputGrainCount);
-        const auto jitter = positionJitter
-            * (0.68f * std::sin(juce::MathConstants<float>::twoPi * circular)
-               + 0.32f * std::sin(
-                   3.0f * juce::MathConstants<float>::twoPi * circular));
+        // A sinusoidal placement pattern creates a hidden modulation period. Independent,
+        // bounded offsets preserve overlap coverage without imprinting a new cycle.
+        const auto jitter = positionJitter * (2.0f * random.unit() - 1.0f);
         outputPositions[static_cast<size_t>(grain)] = juce::jlimit(
             0, constructionSamples - 1,
             juce::roundToInt(circular * static_cast<float>(constructionSamples)
@@ -1484,32 +1775,43 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
                                 assembled.getSample(channel, sample) * scale);
     }
 
-    auto reconstructed = synthesizeMaterialModel(
-        analysisSpectra, models, source.getNumChannels(), fftOrder,
-        constructionSamples, settings.variation, random);
-    const auto exemplarRms = RenderQuality::calculateRms(assembled);
-    const auto reconstructedRms = RenderQuality::calculateRms(reconstructed);
-    if (reconstructedRms > 1.0e-9f && exemplarRms > 1.0e-9f)
-        reconstructed.applyGain(exemplarRms / reconstructedRms);
+    if (result.usedStructure == TextureStructure::particles)
+    {
+        result.audio = synthesizeParticleEvents(
+            source, detectedEvents, constructionSamples, sampleRate, settings, random);
+        // Particle mode retains the local attack/resonance of real source events. Global
+        // normalisation would smear their gaps into a continuous noise bed.
+        flattenCircularEnvelope(result.audio, sampleRate, 0.12f * settings.flatten);
+    }
+    else
+    {
+        auto reconstructed = synthesizeMaterialModel(
+            analysisSpectra, models, source.getNumChannels(), fftOrder,
+            constructionSamples, settings.variation, random);
+        const auto exemplarRms = RenderQuality::calculateRms(assembled);
+        const auto reconstructedRms = RenderQuality::calculateRms(reconstructed);
+        if (reconstructedRms > 1.0e-9f && exemplarRms > 1.0e-9f)
+            reconstructed.applyGain(exemplarRms / reconstructedRms);
 
-    result.audio.setSize(source.getNumChannels(), constructionSamples);
-    const auto rebuild = settings.sourceMatch;
-    const auto exemplarGain = std::cos(
-        rebuild * juce::MathConstants<float>::halfPi);
-    const auto reconstructionGain = std::sin(
-        rebuild * juce::MathConstants<float>::halfPi);
-    for (int channel = 0; channel < result.audio.getNumChannels(); ++channel)
-        for (int sample = 0; sample < constructionSamples; ++sample)
-            result.audio.setSample(
-                channel, sample,
-                exemplarGain * assembled.getSample(channel, sample)
-                    + reconstructionGain * reconstructed.getSample(channel, sample));
-    flattenCircularEnvelope(result.audio, sampleRate, settings.flatten);
+        result.audio.setSize(source.getNumChannels(), constructionSamples);
+        // Independent random phase is useful only as a quiet decorrelating bed. Letting it
+        // dominate was the source of the generic pink/brown-noise failure in 0.7.
+        const auto reconstructionGain = 0.015f + 0.085f * settings.sourceMatch;
+        const auto exemplarGain = 1.0f - reconstructionGain;
+        for (int channel = 0; channel < result.audio.getNumChannels(); ++channel)
+            for (int sample = 0; sample < constructionSamples; ++sample)
+                result.audio.setSample(
+                    channel, sample,
+                    exemplarGain * assembled.getSample(channel, sample)
+                        + reconstructionGain * reconstructed.getSample(channel, sample));
+        flattenCircularEnvelope(result.audio, sampleRate, settings.flatten);
+    }
 
     matchMaterialColour(result.audio, colourModels[0], fftOrder, sampleRate,
                         0.72f + 0.20f * settings.sourceMatch);
 
-    applyCircularMacroMovement(result.audio, activeRangeDb, settings.flatten, random);
+    if (result.usedStructure == TextureStructure::continuous)
+        applyCircularMacroMovement(result.audio, activeRangeDb, settings.flatten, random);
     result.audio = closeConstructedLoop(result.audio, sampleRate, closureOverlap);
     result.containsOnlyFiniteSamples = RenderQuality::repairNonFiniteAndRemoveDc(
         result.audio);
@@ -1581,11 +1883,25 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
         colourModels[0], buildMaterialColourModel(outputSpectra), fftSize, sampleRate);
     const auto sourceFrameIdentity = compareFrameIdentity(
         analysisSpectra[0], outputSpectra);
+    result.localFrameIdentity = sourceFrameIdentity;
     // Rebuilt textures may intentionally abandon the source event timeline and exact frames.
     // Coarse material colour remains mandatory so a tonal or granular source cannot collapse to
     // generic white/pink noise.
     result.spectrumPreservation = 0.72f * coarseSpectrum
                                   + 0.28f * sourceFrameIdentity;
+    result.outputSpectralFlatness = calculateSpectralFlatness(outputSpectra);
+    const auto unexpectedFlatness = juce::jmax(
+        0.0f, result.outputSpectralFlatness
+              - result.sourceSpectralFlatness - 0.07f);
+    const auto flatnessSafety = 100.0f * std::exp(-8.0f * unexpectedFlatness);
+    // Matching only the broad spectrum can turn a source into coloured noise. Require local
+    // source-frame fingerprints whenever the source contains defined resonant structure.
+    const auto requiredFrameIdentity = 42.0f * juce::jlimit(
+        0.0f, 1.0f, (0.50f - result.sourceSpectralFlatness) / 0.45f);
+    const auto frameIdentitySafety = requiredFrameIdentity < 5.0f ? 100.0f
+        : 100.0f * juce::jlimit(
+            0.0f, 1.0f, sourceFrameIdentity / requiredFrameIdentity);
+    result.noiseCollapseSafety = juce::jmin(flatnessSafety, frameIdentitySafety);
     const auto outputLoudness = RenderQuality::estimateIntegratedLoudnessDb(
         result.audio, sampleRate);
     const auto outputCorrelation = RenderQuality::calculateStereoCorrelation(result.audio);
@@ -1606,19 +1922,26 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
         -0.72f * std::abs(std::log(
             juce::jmax(1.0e-4f, outputTextureRate)
             / juce::jmax(1.0e-4f, sourceTextureRate))));
+    result.materialIdentity = 0.38f * result.spectrumPreservation
+                              + 0.24f * result.transientPreservation
+                              + 0.20f * result.localFrameIdentity
+                              + 0.18f * result.noiseCollapseSafety;
     result.macroStability = calculateMacroStability(result.audio, sampleRate);
     const auto repeatRisk = calculateRepeatRisk(result.audio, sampleRate);
     result.repeatSafety = 100.0f * (1.0f - repeatRisk);
     result.diversity = result.repeatSafety;
-    result.qualityScore = 0.16f * result.closureQuality
+    result.qualityScore = 0.14f * result.closureQuality
                           + 0.06f * result.transitionQuality
-                          + 0.26f * result.spectrumPreservation
+                          + 0.18f * result.spectrumPreservation
                           + 0.12f * result.loudnessPreservation
-                          + 0.10f * result.phasePreservation
+                          + 0.08f * result.phasePreservation
                           + 0.08f * result.positionPreservation
-                          + 0.12f * result.macroStability
-                          + 0.10f * result.repeatSafety;
-    const auto requiredStability = 45.0f + 22.0f * settings.flatten;
+                          + 0.08f * result.macroStability
+                          + 0.08f * result.repeatSafety
+                          + 0.16f * result.materialIdentity
+                          + 0.10f * result.noiseCollapseSafety;
+    const auto requiredStability = result.usedStructure == TextureStructure::continuous
+        ? 45.0f + 22.0f * settings.flatten : 22.0f;
     result.passedQualityGate = result.containsOnlyFiniteSamples
                                && result.truePeakDbtp <= -0.85f
                                && result.closureQuality >= 60.0f
@@ -1627,6 +1950,8 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
                                && result.phasePreservation >= 62.0f
                                && result.positionPreservation >= 62.0f
                                && result.macroStability >= requiredStability
-                               && result.repeatSafety >= 58.0f;
+                               && result.repeatSafety >= 58.0f
+                               && result.materialIdentity >= 58.0f
+                               && result.noiseCollapseSafety >= 72.0f;
     return result;
 }

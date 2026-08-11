@@ -441,7 +441,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
     addAndMakeVisible(titleLabel);
 
-    versionLabel.setText("0.7.0 PRE-RELEASE", juce::dontSendNotification);
+    versionLabel.setText("0.8.0 PRE-RELEASE", juce::dontSendNotification);
     versionLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     versionLabel.setJustificationType(juce::Justification::centredRight);
     versionLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
@@ -621,7 +621,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     flattenSlider.setTooltip(
         "Controls how strongly macro dynamics and one-shot movement are stabilised");
     sourceMatchSlider.setTooltip(
-        "0% favours source exemplars; 100% uses the clean reconstructed material model");
+        "Transformation depth: increases reconstruction support or event re-organisation while retaining source material identity");
     auto& parameters = processor.getParameterState();
     crossfadeAttachment = std::make_unique<SliderAttachment>(
         parameters, "crossfadeMs", crossfadeSlider);
@@ -650,6 +650,24 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     addAndMakeVisible(generationModeBox);
     modeAttachment = std::make_unique<ComboBoxAttachment>(
         parameters, "generationMode", generationModeBox);
+
+    textureStructureLabel.setText("MATERIAL", juce::dontSendNotification);
+    textureStructureLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
+    textureStructureLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
+    addAndMakeVisible(textureStructureLabel);
+    textureStructureBox.addItem("Auto", 1);
+    textureStructureBox.addItem("Continuous", 2);
+    textureStructureBox.addItem("Particles", 3);
+    textureStructureBox.setTooltip(
+        "Auto detects sustained material or discrete micro-events; override it when the source needs a specific reconstruction path");
+    textureStructureBox.onChange = [this]
+    {
+        if (processor.getSourceName().isNotEmpty())
+            lastMessage = "Material path changed - press Generate to apply";
+    };
+    addAndMakeVisible(textureStructureBox);
+    textureStructureAttachment = std::make_unique<ComboBoxAttachment>(
+        parameters, "textureStructure", textureStructureBox);
 
     setResizable(true, true);
     setResizeLimits(920, 760, 1320, 940);
@@ -715,7 +733,7 @@ void LoopSurgeonAudioProcessorEditor::resized()
     waveformCard = area.removeFromTop(244);
     area.removeFromTop(10);
 
-    auto bottom = area.removeFromTop(196);
+    auto bottom = area.removeFromTop(237);
     const auto leftWidth = (bottom.getWidth() - 10) / 2;
     auditionCard = bottom.removeFromLeft(leftWidth);
     bottom.removeFromLeft(10);
@@ -769,6 +787,10 @@ void LoopSurgeonAudioProcessorEditor::resized()
     modeLabel.setBounds(modeRow.removeFromLeft(112));
     generationModeBox.setBounds(modeRow);
     finish.removeFromTop(7);
+    auto structureRow = finish.removeFromTop(34);
+    textureStructureLabel.setBounds(structureRow.removeFromLeft(112));
+    textureStructureBox.setBounds(structureRow);
+    finish.removeFromTop(5);
     auto durationRow = finish.removeFromTop(36);
     durationLabel.setBounds(durationRow.removeFromLeft(112));
     durationSlider.setBounds(durationRow);
@@ -953,6 +975,8 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     flattenSlider.setVisible(!directModeSelected);
     sourceMatchLabel.setVisible(!directModeSelected);
     sourceMatchSlider.setVisible(!directModeSelected);
+    textureStructureLabel.setVisible(!directModeSelected);
+    textureStructureBox.setVisible(!directModeSelected);
     crossfadeLabel.setVisible(directModeSelected);
     crossfadeSlider.setVisible(directModeSelected);
 

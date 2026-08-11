@@ -9,7 +9,8 @@ int main(const int argumentCount, char** arguments)
     if (argumentCount < 3)
     {
         std::cerr << "Usage: LoopSurgeonTextureRender <input> <output> "
-                     "[selection-seconds] [duration-seconds] [flatten] [source-match]\n";
+                     "[selection-seconds] [duration-seconds] [flatten] [source-match] "
+                     "[auto|continuous|particles]\n";
         return 2;
     }
 
@@ -56,6 +57,13 @@ int main(const int argumentCount, char** arguments)
         ? juce::String::fromUTF8(arguments[5]).getFloatValue() : 0.72f;
     settings.sourceMatch = argumentCount > 6
         ? juce::String::fromUTF8(arguments[6]).getFloatValue() : 0.85f;
+    if (argumentCount > 7)
+    {
+        const auto structure = juce::String::fromUTF8(arguments[7]).toLowerCase();
+        settings.structure = structure == "continuous" ? TextureStructure::continuous
+            : structure == "particles" ? TextureStructure::particles
+                                        : TextureStructure::automatic;
+    }
     settings.seed = 0x5a17b33fu;
     const auto result = TextureSynthesizer::synthesize(
         resampled, outputSampleRate, settings);
@@ -88,6 +96,14 @@ int main(const int argumentCount, char** arguments)
               << " position=" << result.positionPreservation
               << " stability=" << result.macroStability
               << " repeatSafety=" << result.repeatSafety
+              << " structure=" << (result.usedStructure == TextureStructure::particles
+                    ? "particles" : "continuous")
+              << " structureConfidence=" << result.structureConfidence
+              << " sourceFlatness=" << result.sourceSpectralFlatness
+              << " outputFlatness=" << result.outputSpectralFlatness
+              << " materialIdentity=" << result.materialIdentity
+              << " localFrameIdentity=" << result.localFrameIdentity
+              << " noiseCollapseSafety=" << result.noiseCollapseSafety
               << " truePeakDbtp=" << result.truePeakDbtp
               << " quality=" << result.qualityScore
               << " gate=" << (result.passedQualityGate ? "PASS" : "FAIL") << '\n';
