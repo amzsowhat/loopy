@@ -4,8 +4,6 @@
 
 #include "PluginProcessor.h"
 
-#include <array>
-
 class LoopSurgeonLookAndFeel final : public juce::LookAndFeel_V4
 {
 public:
@@ -54,27 +52,14 @@ private:
     DragTarget dragTarget = DragTarget::none;
 };
 
-class LoopQualityView final : public juce::Component
-{
-public:
-    void setScores(float quality, float repair, float spectrum,
-                   float phase, float stereo, float transient);
-    void setTextureMode(bool shouldUseTextureLabels);
-    void paint(juce::Graphics&) override;
-
-private:
-    std::array<float, 6> scores {};
-    bool textureMode = true;
-};
-
 class SignalAnalysisView final : public juce::Component
 {
 public:
-    void setSnapshot(RenderQuality::SignalSnapshot next);
+    void setSnapshot(SignalDiagnostics::SignalSnapshot next);
     void paint(juce::Graphics&) override;
 
 private:
-    RenderQuality::SignalSnapshot snapshot;
+    SignalDiagnostics::SignalSnapshot snapshot;
 };
 
 class RenderDragButton final : public juce::TextButton
@@ -130,7 +115,6 @@ private:
     juce::Label statusLabel;
     LoopWaveformView waveformView;
     SignalAnalysisView signalAnalysisView;
-    LoopQualityView qualityView;
     juce::ComboBox candidateBox;
     juce::Label rangeLabel;
     juce::TextButton analyzeRangeButton { "Generate" };
@@ -183,3 +167,4 @@ private:
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LoopSurgeonAudioProcessorEditor)
 };
+
