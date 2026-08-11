@@ -4,7 +4,7 @@
 #include <juce_core/juce_core.h>
 
 #include "LoopAnalyzer.h"
-#include "RenderQuality.h"
+#include "SignalDiagnostics.h"
 #include "TextureSynthesizer.h"
 
 #include <atomic>
@@ -74,21 +74,6 @@ public:
     {
         return analysisProgress.load(std::memory_order_relaxed);
     }
-    [[nodiscard]] float getSeamQuality() const noexcept;
-    [[nodiscard]] float getWaveformScore() const noexcept;
-    [[nodiscard]] float getLevelScore() const noexcept;
-    [[nodiscard]] float getSlopeScore() const noexcept;
-    [[nodiscard]] float getSpectrumScore() const noexcept;
-    [[nodiscard]] float getPhaseScore() const noexcept;
-    [[nodiscard]] float getStereoScore() const noexcept;
-    [[nodiscard]] float getTransientScore() const noexcept;
-    [[nodiscard]] float getPeriodicityScore() const noexcept;
-    [[nodiscard]] float getRepairScore() const noexcept;
-    [[nodiscard]] float getRepeatSafetyScore() const noexcept;
-    [[nodiscard]] float getTruePeakDbtp() const noexcept;
-    [[nodiscard]] float getRenderQualityScore() const noexcept;
-    [[nodiscard]] bool hasPassedQualityGate() const noexcept;
-    [[nodiscard]] bool isLowConfidence() const noexcept;
     [[nodiscard]] int getCapturedSampleCount() const noexcept;
     [[nodiscard]] juce::String getSourceName() const;
     [[nodiscard]] double getSourceDurationSeconds() const;
@@ -106,7 +91,7 @@ public:
     [[nodiscard]] float getAnalysisRangeStartProportion() const noexcept;
     [[nodiscard]] float getAnalysisRangeEndProportion() const noexcept;
     [[nodiscard]] juce::AudioBuffer<float> createRenderedLoop() const;
-    [[nodiscard]] RenderQuality::SignalSnapshot getSignalSnapshot() const;
+    [[nodiscard]] SignalDiagnostics::SignalSnapshot getSignalSnapshot() const;
 
     [[nodiscard]] juce::MemoryBlock createLoopState() const;
     bool restoreLoopState(const void* data, size_t size);
@@ -121,13 +106,13 @@ private:
     void startAnalysisThread();
     void stopAnalysisThread();
     void analysisLoop();
-    void resetScores() noexcept;
+    void resetDiagnostics() noexcept;
 
     static constexpr float maximumLoopSeconds = 16.0f;
     static constexpr float maximumTextureSeconds = 60.0f;
     static constexpr float searchRadiusSeconds = 0.15f;
     static constexpr int stateMagic = 0x4c535032;
-    static constexpr int stateVersion = 5;
+    static constexpr int stateVersion = 6;
 
     juce::AudioBuffer<float> captureBuffer;
     juce::AudioBuffer<float> loopBuffer;
@@ -144,7 +129,7 @@ private:
     bool pendingReplacesCurrentSource = true;
     mutable std::mutex loopDataMutex;
     mutable std::mutex signalSnapshotMutex;
-    RenderQuality::SignalSnapshot signalSnapshot;
+    SignalDiagnostics::SignalSnapshot signalSnapshot;
     double sampleRate = 44100.0;
     float loopLengthSeconds = 4.0f;
     std::atomic<float> crossfadeMilliseconds { 25.0f };
@@ -180,21 +165,8 @@ private:
     std::atomic<State> state { State::empty };
     std::atomic<float> captureProgress { 0.0f };
     std::atomic<float> analysisProgress { 0.0f };
-    std::atomic<float> seamQuality { 0.0f };
-    std::atomic<float> waveformScore { 0.0f };
-    std::atomic<float> levelScore { 0.0f };
-    std::atomic<float> slopeScore { 0.0f };
-    std::atomic<float> spectrumScore { 0.0f };
-    std::atomic<float> phaseScore { 0.0f };
-    std::atomic<float> stereoScore { 0.0f };
-    std::atomic<float> transientScore { 0.0f };
-    std::atomic<float> periodicityScore { 0.0f };
-    std::atomic<float> repairScore { 0.0f };
-    std::atomic<float> repeatSafetyScore { 0.0f };
     std::atomic<float> truePeakDbtp { -100.0f };
-    std::atomic<float> renderQualityScore { 0.0f };
-    std::atomic<bool> qualityGatePassed { false };
-    std::atomic<bool> lowConfidence { false };
+    std::atomic<bool> preferLinearRepairFade { false };
     std::atomic<int> selectedStartSample { 0 };
     std::atomic<int> selectedEndSample { 0 };
     std::atomic<int> selectedRotationSample { -1 };
@@ -210,3 +182,4 @@ private:
     std::atomic<uint64_t> sourceRevision { 0 };
     std::atomic<int> activeTextureVariant { -1 };
 };
+
