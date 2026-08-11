@@ -386,7 +386,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     titleLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
     addAndMakeVisible(titleLabel);
 
-    versionLabel.setText("R&R TEST BUILD / TEXTURE REBUILDING",
+    versionLabel.setText("LOCAL TEST BUILD",
                          juce::dontSendNotification);
     versionLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     versionLabel.setJustificationType(juce::Justification::centredRight);
@@ -467,7 +467,10 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     {
         const auto shouldPlay = !processor.isPreviewPlaying();
         processor.setPreviewPlaying(shouldPlay);
-  …1114 tokens truncated…= std::make_unique<SliderAttachment>(parameters, "mix", mixSlider);
+        lastMessage =…1072 tokens truncated…ameterState();
+    crossfadeAttachment = std::make_unique<SliderAttachment>(
+        parameters, "crossfadeMs", crossfadeSlider);
+    mixAttachment = std::make_unique<SliderAttachment>(parameters, "mix", mixSlider);
     durationAttachment = std::make_unique<SliderAttachment>(
         parameters, "textureDuration", durationSlider);
     repairDurationAttachment = std::make_unique<SliderAttachment>(
@@ -482,8 +485,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     modeLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
     addAndMakeVisible(modeLabel);
     generationModeBox.addItem("Rotate & Repair", 1);
-    generationModeBox.addItem("Texture Lab (rebuilding)", 2);
-    generationModeBox.setItemEnabled(2, false);
+    generationModeBox.addItem("Texture Loop", 2);
     generationModeBox.onChange = [this]
     {
         updatePrimaryAction();
@@ -493,17 +495,16 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     addAndMakeVisible(generationModeBox);
     modeAttachment = std::make_unique<ComboBoxAttachment>(
         parameters, "generationMode", generationModeBox);
-    generationModeBox.setSelectedItemIndex(0, juce::sendNotificationSync);
 
     textureStructureLabel.setText("STYLE", juce::dontSendNotification);
     textureStructureLabel.setFont(juce::FontOptions(10.5f, juce::Font::bold));
     textureStructureLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
     addAndMakeVisible(textureStructureLabel);
-    textureStructureBox.addItem("Organism", 1);
-    textureStructureBox.addItem("Spectral Drift", 2);
+    textureStructureBox.addItem("Flow", 1);
+    textureStructureBox.addItem("Drift", 2);
     textureStructureBox.addItem("Fracture", 3);
     textureStructureBox.setTooltip(
-        "Three resynthesis geometries; all generate new audio from the analysed material model and never schedule source clips");
+        "Three source-traversal scales; none adds oscillators, spectral delay, pitch shifting or reverse playback");
     textureStructureBox.onChange = [this]
     {
         if (processor.getSourceName().isNotEmpty())
@@ -577,7 +578,7 @@ void LoopSurgeonAudioProcessorEditor::resized()
     waveformCard = area.removeFromTop(244);
     area.removeFromTop(10);
 
-    auto bottom = area.removeFromTop(237);
+    auto bottom = area.removeFromTop(257);
     const auto leftWidth = (bottom.getWidth() - 10) / 2;
     auditionCard = bottom.removeFromLeft(leftWidth);
     bottom.removeFromLeft(10);
@@ -634,12 +635,12 @@ void LoopSurgeonAudioProcessorEditor::resized()
     auto structureRow = finish.removeFromTop(34);
     textureStructureLabel.setBounds(structureRow.removeFromLeft(112));
     textureStructureBox.setBounds(structureRow);
+    repairDurationLabel.setBounds(textureStructureLabel.getBounds());
+    repairDurationSlider.setBounds(textureStructureBox.getBounds());
     finish.removeFromTop(5);
     auto durationRow = finish.removeFromTop(36);
     durationLabel.setBounds(durationRow.removeFromLeft(112));
     durationSlider.setBounds(durationRow);
-    repairDurationLabel.setBounds(durationLabel.getBounds());
-    repairDurationSlider.setBounds(durationSlider.getBounds());
     auto seamRow = durationLabel.getBounds().getUnion(durationSlider.getBounds());
     crossfadeLabel.setBounds(seamRow.removeFromLeft(112));
     crossfadeSlider.setBounds(seamRow);
