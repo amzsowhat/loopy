@@ -1,5 +1,6 @@
 #include "LoopAnalyzer.h"
 #include "LoopEngine.h"
+#include "TextureSynthesizer.h"
 
 #include <chrono>
 #include <cmath>
@@ -80,6 +81,47 @@ int main()
                      "saved DAW state should restore source and output");
     passed &= expect(restored.getSignalSnapshot().valid,
                      "restored output should include signal diagnostics");
+
+    TextureSynthesisSettings textureSettings;
+    textureSettings.durationSeconds = 4.0f;
+    textureSettings.variation = 0.61f;
+    textureSettings.flatten = 0.74f;
+    textureSettings.sourceMatch = 0.82f;
+    textureSettings.structure = TextureStructure::automatic;
+    textureSettings.seed = 0x12345678u;
+    const auto textureA = TextureSynthesizer::synthesize(
+        repeated, sampleRate, textureSettings);
+    const auto textureB = TextureSynthesizer::synthesize(
+        repeated, sampleRate, textureSettings);
+    passed &= expect(textureA.audio.getNumSamples() == 16000,
+                     "Texture output length must be sample-exact");
+    passed &= expect(textureA.containsOnlyFiniteSamples,
+                     "Texture output must contain finite samples");
+    passed &= expect(textureA.analysisFrameStarts.size() > 2u,
+                     "Texture construction should traverse multiple source regions");
+    auto deterministic = textureA.audio.getNumChannels() == textureB.audio.getNumChannels()
+                         && textureA.audio.getNumSamples() == textureB.audio.getNumSamples();
+    for (int channel = 0; deterministic && channel < textureA.audio.getNumChannels(); ++channel)
+        for (int sample = 0; deterministic && sample < textureA.audio.getNumSamples(); ++sample)
+            deterministic = textureA.audio.getSample(channel, sample)
+                            == textureB.audio.getSample(channel, sample);
+    passed &= expect(deterministic,
+                     "Texture construction must be deterministic for a stored seed");
+
+    LoopEngine textureEngine;
+    textureEngine.prepare(sampleRate, 64, 2);
+    textureEngine.setGenerationMode(LoopEngine::GenerationMode::textureLoop);
+    textureEngine.setTextureDurationSeconds(4.0f);
+    textureEngine.submitSource(repeated, "source-probe.wav");
+    passed &= expect(textureEngine.reanalyzeSourceRange(0.1f, 0.9f),
+                     "Texture mode should accept Source In/Out");
+    passed &= expect(waitForReady(textureEngine),
+                     "Texture generation should complete inside LoopEngine");
+    passed &= expect(textureEngine.getLastUsedGenerationMode()
+                         == LoopEngine::GenerationMode::textureLoop,
+                     "Texture mode should remain active after generation");
+    passed &= expect(textureEngine.createRenderedLoop().getNumSamples() == 16000,
+                     "Texture mode should expose the requested loop to the DAW");
 
     if (!passed)
         return 1;
