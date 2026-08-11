@@ -1,6 +1,6 @@
 #include "LoopEngine.h"
 
-#include "RenderQuality.h"
+#include "SignalDiagnostics.h"
 
 #include <algorithm>
 #include <cmath>
@@ -51,7 +51,7 @@ void LoopEngine::prepare(const double newSampleRate,
     state.store(State::empty);
     captureProgress.store(0.0f);
     analysisProgress.store(0.0f);
-    resetScores();
+    resetDiagnostics();
     mixSmoother.reset(sampleRate, 0.02);
     mixSmoother.setCurrentAndTargetValue(1.0f);
     effectiveCrossfadeSamples.store(0);
@@ -179,7 +179,7 @@ void LoopEngine::submitSource(juce::AudioBuffer<float> source, juce::String sour
         const std::scoped_lock snapshotLock(signalSnapshotMutex);
         signalSnapshot = {};
     }
-    resetScores();
+    resetDiagnostics();
     capturedSampleCount.store(0);
     effectiveCrossfadeSamples.store(0);
     selectedStartSample.store(0);
@@ -235,7 +235,7 @@ bool LoopEngine::reanalyzeSourceRange(const float startProportion, const float e
         pendingFullSourceSamples = total;
         pendingReplacesCurrentSource = false;
     }
-    resetScores();
+    resetDiagnostics();
     importedAnalysisPending.store(true, std::memory_order_release);
     analysisPending.store(true, std::memory_order_release);
     analysisCondition.notify_one();
@@ -290,8 +290,8 @@ bool LoopEngine::setManualRotationPoint(const float proportion)
         return false;
     }
     const auto selectedTruePeak = juce::Decibels::gainToDecibels(juce::jmax(
-        1.0e-9f, RenderQuality::estimateCircularTruePeak(selectedAudio)));
-    const auto nextSnapshot = RenderQuality::analyseSourceAndOutput(
+        1.0e-9f, SignalDiagnostics::estimateCircularTruePeak(selectedAudio)));
+    const auto nextSnapshot = SignalDiagnostics::analyseSourceAndOutput(
         snapshotSource, selectedAudio, sampleRate);
     {
         const std::scoped_lock loopLock(loopDataMutex);
@@ -307,23 +307,8 @@ bool LoopEngine::setManualRotationPoint(const float proportion)
     selectedStartSample.store(result.startSample);
     selectedEndSample.store(result.endSample);
     selectedRotationSample.store(result.rotationSample);
-    waveformScore.store(result.waveform);
-    levelScore.store(result.level);
-    slopeScore.store(result.slope);
-    spectrumScore.store(result.spectrum);
-    phaseScore.store(result.phase);
-    stereoScore.store(result.stereo);
-    transientScore.store(result.transient);
-    periodicityScore.store(result.periodicity);
-    repairScore.store(result.repair);
-    repeatSafetyScore.store(result.periodicity);
     truePeakDbtp.store(selectedTruePeak);
-    renderQualityScore.store(result.overall);
-    const auto passedGate = selectedTruePeak <= -0.85f
-                            && result.overall >= 68.0f && result.repair >= 58.0f;
-    qualityGatePassed.store(passedGate);
-    seamQuality.store(result.overall);
-    lowConfidence.store(!passedGate);
+    preferLinearRepairFade.store(result.phase >= 75.0f);
     lastUsedGenerationMode.store(GenerationMode::rotateRepair);
     previewMode.store(PreviewMode::loop);
     previewRestartRequested.store(true, std::memory_order_release);
@@ -363,7 +348,7 @@ void LoopEngine::clear()
     analysisProgress.store(0.0f, std::memory_order_relaxed);
     effectiveCrossfadeSamples.store(0, std::memory_order_relaxed);
     selectedRotationSample.store(-1, std::memory_order_relaxed);
-    resetScores();
+    resetDiagnostics();
     state.store(selectedSourceSamples.load(std::memory_order_relaxed) > 0
                     ? State::sourceReady : State::empty,
                 std::memory_order_release);
@@ -462,21 +447,6 @@ LoopEngine::State LoopEngine::getState() const noexcept
 }
 
 float LoopEngine::getCaptureProgress() const noexcept { return captureProgress.load(); }
-float LoopEngine::getSeamQuality() const noexcept { return seamQuality.load(); }
-float LoopEngine::getWaveformScore() const noexcept { return waveformScore.load(); }
-float LoopEngine::getLevelScore() const noexcept { return levelScore.load(); }
-float LoopEngine::getSlopeScore() const noexcept { return slopeScore.load(); }
-float LoopEngine::getSpectrumScore() const noexcept { return spectrumScore.load(); }
-float LoopEngine::getPhaseScore() const noexcept { return phaseScore.load(); }
-float LoopEngine::getStereoScore() const noexcept { return stereoScore.load(); }
-float LoopEngine::getTransientScore() const noexcept { return transientScore.load(); }
-float LoopEngine::getPeriodicityScore() const noexcept { return periodicityScore.load(); }
-float LoopEngine::getRepairScore() const noexcept { return repairScore.load(); }
-float LoopEngine::getRepeatSafetyScore() const noexcept { return repeatSafetyScore.load(); }
-float LoopEngine::getTruePeakDbtp() const noexcept { return truePeakDbtp.load(); }
-float LoopEngine::getRenderQualityScore() const noexcept { return renderQualityScore.load(); }
-bool LoopEngine::hasPassedQualityGate() const noexcept { return qualityGatePassed.load(); }
-bool LoopEngine::isLowConfidence() const noexcept { return lowConfidence.load(); }
 int LoopEngine::getCapturedSampleCount() const noexcept { return capturedSampleCount.load(); }
 
 juce::String LoopEngine::getSourceName() const
@@ -517,9 +487,7 @@ juce::String LoopEngine::getCandidateDescription(const int index) const
             : variant.usedStructure == TextureStructure::continuous
                 ? juce::String("Spectral Drift") : juce::String("Organism");
         return "Texture " + juce::String(index + 1) + "  |  " + structure
-               + "  |  " + juce::String(seconds, 1)
-               + " s  |  QC " + (variant.passedQualityGate ? "PASS " : "CHECK ")
-               + juce::String(variant.qualityScore, 0);
+               + "  |  " + juce::String(seconds, 1) + " s";
     }
     if (!juce::isPositiveAndBelow(index, static_cast<int>(sourceCandidates.size())))
         return {};
@@ -528,508 +496,13 @@ juce::String LoopEngine::getCandidateDescription(const int index) const
     const auto seconds = static_cast<double>(candidate.endSample - candidate.startSample - repairSamples)
                          / sampleRate;
     return juce::String(candidate.rotationSample >= 0 ? "Repair " : "Candidate ")
-           + juce::String(index + 1) + "  |  " + juce::String(seconds, 2)
-           + " s  |  QC " + (candidate.overall >= 68.0f && candidate.repair >= 58.0f
-                                ? "PASS " : "CHECK ")
-           + juce::String(candidate.overall, 0);
+           + juce::String(index + 1) + "  |  " + juce::String(seconds, 2) + " s";
 }
 
 void LoopEngine::selectCandidate(const int index)
 {
     generation.fetch_add(1, std::memory_order_acq_rel);
-    state.store(State::analysing, std::memory_order_release);
-    analysisProgress.store(0.0f, std::memory_order_relaxed);
-    while (activeAudioReaders.load(std::memory_order_acquire) != 0)
-        std::this_thread::yield();
-
-    LoopAnalysisResult result;
-    auto selectedTexture = false;
-    auto textureSamples = 0;
-    auto textureTransition = 0.0f;
-    auto textureClosure = 0.0f;
-    auto textureSpectrum = 0.0f;
-    auto textureLoudness = 0.0f;
-    auto texturePhase = 0.0f;
-    auto texturePosition = 0.0f;
-    auto textureDiversity = 0.0f;
-    auto textureTransient = 0.0f;
-    auto textureStability = 0.0f;
-    auto textureRepeatSafety = 0.0f;
-    auto textureTruePeak = -100.0f;
-    auto textureQuality = 0.0f;
-    auto textureGatePassed = false;
-    juce::AudioBuffer<float> selectedAudio;
-    juce::AudioBuffer<float> snapshotSource;
-    juce::AudioBuffer<float> snapshotOutput;
-    {
-        const std::scoped_lock sourceLock(sourceDataMutex);
-        const auto snapshotStart = juce::jlimit(
-            0, juce::jmax(0, currentSourceBuffer.getNumSamples() - 1),
-            analysisRangeStartSample.load(std::memory_order_relaxed));
-        const auto snapshotEnd = juce::jlimit(
-            snapshotStart + 1, currentSourceBuffer.getNumSamples(),
-            analysisRangeEndSample.load(std::memory_order_relaxed));
-        snapshotSource.setSize(currentSourceBuffer.getNumChannels(),
-                               snapshotEnd - snapshotStart, false, false, false);
-        for (int channel = 0; channel < snapshotSource.getNumChannels(); ++channel)
-            snapshotSource.copyFrom(channel, 0, currentSourceBuffer, channel,
-                                    snapshotStart, snapshotEnd - snapshotStart);
-        if (juce::isPositiveAndBelow(index, static_cast<int>(textureVariants.size())))
-        {
-            selectedTexture = true;
-            auto& texture = textureVariants[static_cast<size_t>(index)];
-            textureTransition = texture.transitionQuality;
-            textureClosure = texture.closureQuality;
-            textureSpectrum = texture.spectrumPreservation;
-            textureLoudness = texture.loudnessPreservation;
-            texturePhase = texture.phasePreservation;
-            texturePosition = texture.positionPreservation;
-            textureDiversity = texture.diversity;
-            textureTransient = texture.transientPreservation;
-            textureStability = texture.macroStability;
-            textureRepeatSafety = texture.repeatSafety;
-            textureTruePeak = texture.truePeakDbtp;
-            textureQuality = texture.qualityScore;
-            textureGatePassed = texture.passedQualityGate;
-            const auto previous = activeTextureVariant.load(std::memory_order_relaxed);
-            if (index != previous)
-            {
-                const std::scoped_lock loopLock(loopDataMutex);
-                std::swap(loopBuffer, texture.audio);
-                if (juce::isPositiveAndBelow(
-                        previous, static_cast<int>(textureVariants.size())))
-                    std::swap(textureVariants[static_cast<size_t>(previous)].audio,
-                              texture.audio);
-                textureSamples = loopBuffer.getNumSamples();
-                activeTextureVariant.store(index, std::memory_order_relaxed);
-            }
-            else
-            {
-                textureSamples = capturedSampleCount.load(std::memory_order_relaxed);
-            }
-        }
-        else
-        {
-            if (!juce::isPositiveAndBelow(index, static_cast<int>(sourceCandidates.size())))
-            {
-                state.store(State::ready, std::memory_order_release);
-                return;
-            }
-            result = sourceCandidates[static_cast<size_t>(index)];
-            if (result.rotationSample >= 0)
-            {
-                selectedAudio = LoopAnalyzer::renderRotateRepair(
-                    currentSourceBuffer, result);
-            }
-            else
-            {
-                const auto samples = result.endSample - result.startSample;
-                selectedAudio.setSize(currentSourceBuffer.getNumChannels(), samples,
-                                      false, false, false);
-                for (int channel = 0; channel < selectedAudio.getNumChannels(); ++channel)
-                    selectedAudio.copyFrom(channel, 0, currentSourceBuffer, channel,
-                                           result.startSample, samples);
-            }
-        }
-        if (selectedTexture)
-        {
-            const std::scoped_lock loopLock(loopDataMutex);
-            snapshotOutput = loopBuffer;
-        }
-        else
-        {
-            snapshotOutput = selectedAudio;
-        }
-    }
-    const auto nextSnapshot = RenderQuality::analyseSourceAndOutput(
-        snapshotSource, snapshotOutput, sampleRate);
-    {
-        const std::scoped_lock snapshotLock(signalSnapshotMutex);
-        signalSnapshot = nextSnapshot;
-    }
-    const auto selectedTruePeak = selectedAudio.getNumSamples() > 0
-        ? juce::Decibels::gainToDecibels(juce::jmax(
-            1.0e-9f, RenderQuality::estimateCircularTruePeak(selectedAudio)))
-        : -100.0f;
-    const auto selectedGatePassed = selectedAudio.getNumSamples() > 0
-        && selectedTruePeak <= -0.85f
-        && result.overall >= 68.0f && result.repair >= 58.0f;
-    if (selectedTexture)
-    {
-        capturedSampleCount.store(textureSamples);
-        effectiveCrossfadeSamples.store(0);
-        selectedRotationSample.store(-1);
-        playbackPosition = 0;
-        seamQuality.store(textureClosure);
-        waveformScore.store(textureTransition);
-        levelScore.store(textureLoudness);
-        slopeScore.store(textureTransient);
-        spectrumScore.store(textureSpectrum);
-        phaseScore.store(texturePhase);
-        stereoScore.store(texturePosition);
-        transientScore.store(textureTransient);
-        periodicityScore.store(textureStability);
-        repairScore.store(textureTransition);
-        repeatSafetyScore.store(textureRepeatSafety);
-        truePeakDbtp.store(textureTruePeak);
-        renderQualityScore.store(textureQuality);
-        qualityGatePassed.store(textureGatePassed);
-        lowConfidence.store(!textureGatePassed
-                            || textureClosure < 62.0f
-                            || textureDiversity < 58.0f
-                            || textureStability < 58.0f);
-        lastUsedGenerationMode.store(GenerationMode::textureLoop);
-        previewMode.store(PreviewMode::loop);
-        previewRestartRequested.store(true, std::memory_order_release);
-        state.store(State::ready, std::memory_order_release);
-        analysisProgress.store(1.0f, std::memory_order_relaxed);
-        return;
-    }
-
-    {
-        const std::scoped_lock loopLock(loopDataMutex);
-        loopBuffer = std::move(selectedAudio);
-    }
-    capturedSampleCount.store(loopBuffer.getNumSamples());
-    selectedStartSample.store(result.startSample);
-    selectedRotationSample.store(result.rotationSample);
-    const auto repairSamples = result.repairOverlapSamples;
-    effectiveCrossfadeSamples.store(result.rotationSample >= 0 ? 0 : repairSamples);
-    playbackPosition = effectiveCrossfadeSamples.load(std::memory_order_relaxed);
-    selectedEndSample.store(result.rotationSample >= 0
-                                ? result.endSample : result.endSample - repairSamples);
-    waveformScore.store(result.waveform);
-    levelScore.store(result.level);
-    slopeScore.store(result.slope);
-    spectrumScore.store(result.spectrum);
-    phaseScore.store(result.phase);
-    stereoScore.store(result.stereo);
-    transientScore.store(result.transient);
-    periodicityScore.store(result.periodicity);
-    repairScore.store(result.repair);
-    repeatSafetyScore.store(result.periodicity);
-    truePeakDbtp.store(selectedTruePeak);
-    renderQualityScore.store(result.overall);
-    qualityGatePassed.store(selectedGatePassed);
-    seamQuality.store(result.overall);
-    lowConfidence.store(!qualityGatePassed.load(std::memory_order_relaxed));
-    lastUsedGenerationMode.store(GenerationMode::rotateRepair);
-    state.store(State::ready, std::memory_order_release);
-    analysisProgress.store(1.0f, std::memory_order_relaxed);
-}
-
-std::vector<float> LoopEngine::getWaveformPreview() const
-{
-    const std::scoped_lock lock(sourceDataMutex);
-    return waveformPreview;
-}
-
-float LoopEngine::getRotationProportion() const noexcept
-{
-    return static_cast<float>(selectedRotationSample.load())
-           / static_cast<float>(juce::jmax(1, selectedSourceSamples.load()));
-}
-
-float LoopEngine::getAnalysisRangeStartProportion() const noexcept
-{
-    return juce::jlimit(0.0f, 1.0f,
-        static_cast<float>(analysisRangeStartSample.load())
-            / static_cast<float>(juce::jmax(1, selectedSourceSamples.load())));
-}
-
-float LoopEngine::getAnalysisRangeEndProportion() const noexcept
-{
-    return juce::jlimit(0.0f, 1.0f,
-        static_cast<float>(analysisRangeEndSample.load())
-            / static_cast<float>(juce::jmax(1, selectedSourceSamples.load())));
-}
-
-juce::AudioBuffer<float> LoopEngine::createRenderedLoop() const
-{
-    const std::scoped_lock lock(loopDataMutex);
-    const auto samples = loopBuffer.getNumSamples();
-    const auto channels = loopBuffer.getNumChannels();
-    if (samples < 2 || channels < 1)
-        return {};
-
-    const auto fade = juce::jlimit(0, samples / 3,
-                                   effectiveCrossfadeSamples.load(std::memory_order_relaxed));
-    if (fade == 0)
-        return loopBuffer;
-
-    juce::AudioBuffer<float> rendered(channels, samples - fade);
-    const auto middle = samples - 2 * fade;
-    const auto useLinearFade = phaseScore.load() >= 75.0f;
-    for (int channel = 0; channel < channels; ++channel)
-    {
-        if (middle > 0)
-            rendered.copyFrom(channel, 0, loopBuffer, channel, fade, middle);
-        for (int index = 0; index < fade; ++index)
-        {
-            const auto phase = static_cast<float>(index + 1) / static_cast<float>(fade + 1);
-            const auto tailGain = useLinearFade ? 1.0f - phase
-                                                : std::cos(phase * juce::MathConstants<float>::halfPi);
-            const auto headGain = useLinearFade ? phase
-                                                : std::sin(phase * juce::MathConstants<float>::halfPi);
-            const auto tail = loopBuffer.getSample(channel, samples - fade + index);
-            const auto head = loopBuffer.getSample(channel, index);
-            rendered.setSample(channel, middle + index,
-                               tailGain * tail + headGain * head);
-        }
-    }
-    return rendered;
-}
-
-RenderQuality::SignalSnapshot LoopEngine::getSignalSnapshot() const
-{
-    const std::scoped_lock lock(signalSnapshotMutex);
-    return signalSnapshot;
-}
-
-void LoopEngine::applyPendingRequests() noexcept
-{
-    if (!captureRequested.exchange(false, std::memory_order_acq_rel)
-        || state.load(std::memory_order_acquire) == State::analysing
-        || captureBuffer.getNumSamples() == 0)
-        return;
-
-    generation.fetch_add(1, std::memory_order_acq_rel);
-    requestedLoopSamples = juce::jlimit(1,
-                                       captureBuffer.getNumSamples(),
-                                       juce::roundToInt(sampleRate * loopLengthSeconds));
-    captureSampleCount = juce::jmin(captureBuffer.getNumSamples(), requestedLoopSamples);
-    captureWritePosition = 0;
-    scheduledCaptureDelay = requestedStartDelay.load(std::memory_order_relaxed);
-    captureProgress.store(0.0f);
-    resetScores();
-    state.store(scheduledCaptureDelay > 0 ? State::armed : State::capturing,
-                std::memory_order_release);
-}
-
-void LoopEngine::finishCapture() noexcept
-{
-    captureWritePosition = captureSampleCount;
-    captureProgress.store(1.0f);
-    state.store(State::analysing, std::memory_order_release);
-    analysisPending.store(true, std::memory_order_release);
-    analysisCondition.notify_one();
-}
-
-float LoopEngine::readLoopSample(const int channel) const noexcept
-{
-    const auto loopSamples = capturedSampleCount.load(std::memory_order_relaxed);
-    const auto maximumCrossfade = juce::jmax(0, loopSamples / 2);
-    const auto crossfadeSamples = juce::jlimit(
-        0, maximumCrossfade, effectiveCrossfadeSamples.load(std::memory_order_relaxed));
-
-    if (crossfadeSamples == 0 || playbackPosition < loopSamples - crossfadeSamples)
-        return loopBuffer.getSample(channel, playbackPosition);
-
-    const auto crossfadeIndex = playbackPosition - (loopSamples - crossfadeSamples);
-    const auto alpha = static_cast<float>(crossfadeIndex + 1)
-                       / static_cast<float>(crossfadeSamples + 1);
-    const auto useLinearFade = phaseScore.load(std::memory_order_relaxed) >= 75.0f;
-    const auto tailGain = useLinearFade ? 1.0f - alpha
-                                        : std::cos(alpha * juce::MathConstants<float>::halfPi);
-    const auto headGain = useLinearFade ? alpha
-                                        : std::sin(alpha * juce::MathConstants<float>::halfPi);
-    const auto tail = loopBuffer.getSample(channel, playbackPosition);
-    const auto head = loopBuffer.getSample(channel, crossfadeIndex);
-    return tailGain * tail + headGain * head;
-}
-
-void LoopEngine::advancePlaybackPosition() noexcept
-{
-    const auto loopSamples = capturedSampleCount.load(std::memory_order_relaxed);
-    ++playbackPosition;
-    if (playbackPosition < loopSamples)
-        return;
-
-    const auto crossfadeSamples = juce::jlimit(
-        0, loopSamples / 2, effectiveCrossfadeSamples.load(std::memory_order_relaxed));
-    playbackPosition = crossfadeSamples;
-}
-
-float LoopEngine::readSourceSample(const int channel) const noexcept
-{
-    return currentSourceBuffer.getSample(channel, sourcePlaybackPosition);
-}
-
-void LoopEngine::advanceSourcePlaybackPosition() noexcept
-{
-    const auto start = analysisRangeStartSample.load(std::memory_order_relaxed);
-    const auto end = analysisRangeEndSample.load(std::memory_order_relaxed);
-    ++sourcePlaybackPosition;
-    if (sourcePlaybackPosition >= end || sourcePlaybackPosition < start)
-        sourcePlaybackPosition = start;
-}
-
-void LoopEngine::startAnalysisThread()
-{
-    stopRequested.store(false);
-    analysisPending.store(false);
-    analysisThread = std::thread([this] { analysisLoop(); });
-}
-
-void LoopEngine::stopAnalysisThread()
-{
-    stopRequested.store(true, std::memory_order_release);
-    analysisCondition.notify_all();
-    if (analysisThread.joinable())
-        analysisThread.join();
-    analysisPending.store(false);
-}
-
-void LoopEngine::analysisLoop()
-{
-    for (;;)
-    {
-        std::unique_lock waitLock(analysisWaitMutex);
-        analysisCondition.wait(waitLock, [this]
-        {
-            return stopRequested.load(std::memory_order_acquire)
-                   || analysisPending.load(std::memory_order_acquire);
-        });
-        waitLock.unlock();
-
-        if (stopRequested.load(std::memory_order_acquire))
-            return;
-
-        if (!analysisPending.exchange(false, std::memory_order_acq_rel))
-            continue;
-
-        const auto requestGeneration = generation.load(std::memory_order_acquire);
-        analysisProgress.store(0.03f, std::memory_order_relaxed);
-        const auto imported = importedAnalysisPending.exchange(false, std::memory_order_acq_rel);
-        juce::AudioBuffer<float> importedSource;
-        juce::String importedName;
-        int importedOffset = 0;
-        int importedFullSourceSamples = 0;
-        bool importedReplacesCurrentSource = true;
-        int importedRepairOverlap = 0;
-        {
-            const std::scoped_lock lock(sourceDataMutex);
-            importedSource = std::move(pendingSourceBuffer);
-            importedName = std::move(pendingSourceName);
-            importedOffset = pendingSourceOffset;
-            importedFullSourceSamples = pendingFullSourceSamples;
-            importedReplacesCurrentSource = pendingReplacesCurrentSource;
-        }
-
-        LoopAnalysisResult result;
-        LoopAnalysisReport importedReport;
-        std::vector<TextureSynthesisResult> generatedTextures;
-        juce::AudioBuffer<float> capturedSourceView;
-        std::vector<float> replacementWaveform;
-        bool resultLowConfidence = false;
-        const auto selectedMode = generationMode.load(std::memory_order_relaxed);
-        const auto useTexture = selectedMode == GenerationMode::textureLoop;
-        const auto* analysisSource = &importedSource;
-        if (imported)
-        {
-            analysisSource = &importedSource;
-        }
-        else
-        {
-            capturedSourceView.setDataToReferTo(captureBuffer.getArrayOfWritePointers(),
-                                                captureBuffer.getNumChannels(),
-                                                captureSampleCount);
-            importedSource = capturedSourceView;
-            importedName = "DAW Capture";
-            importedOffset = 0;
-            importedFullSourceSamples = importedSource.getNumSamples();
-            importedReplacesCurrentSource = true;
-            analysisSource = &importedSource;
-        }
-
-        if (importedReplacesCurrentSource)
-            replacementWaveform = buildWaveformPreview(importedSource);
-
-        if (!useTexture)
-        {
-            importedRepairOverlap = juce::jlimit(0, importedSource.getNumSamples() / 8,
-                juce::jmin(importedSource.getNumSamples() / 4,
-                    juce::roundToInt(sampleRate
-                        * crossfadeMilliseconds.load(std::memory_order_relaxed) * 0.001)));
-            const auto requestedSeconds = repairDurationSeconds.load(
-                std::memory_order_relaxed);
-            const auto requestedSamples = requestedSeconds > 0.0f
-                ? juce::roundToInt(sampleRate * requestedSeconds) : 0;
-            importedReport = requestedSamples > 0
-                ? LoopAnalyzer::analyzeRotateRepairExact(
-                    importedSource, sampleRate, requestedSamples, 3,
-                    importedRepairOverlap)
-                : LoopAnalyzer::analyzeRotateRepair(
-                    importedSource, sampleRate, 3, importedRepairOverlap);
-            analysisProgress.store(0.82f, std::memory_order_relaxed);
-            if (!importedReport.candidates.empty())
-                result = importedReport.candidates.front();
-            resultLowConfidence = importedReport.lowConfidence;
-        }
-        else
-        {
-            TextureSynthesisSettings settings;
-            settings.durationSeconds = textureDurationSeconds.load(
-                std::memory_order_relaxed);
-            settings.variation = textureVariation.load(std::memory_order_relaxed);
-            settings.flatten = textureFlatten.load(std::memory_order_relaxed);
-            settings.sourceMatch = textureSourceMatch.load(std::memory_order_relaxed);
-            settings.structure = textureStructure.load(std::memory_order_relaxed);
-            const auto baseSeed = textureSeed.load(std::memory_order_relaxed);
-            generatedTextures.reserve(2);
-            constexpr uint32_t maximumAttempts = 6;
-            for (uint32_t attempt = 0; attempt < maximumAttempts; ++attempt)
-            {
-                if (requestGeneration != generation.load(std::memory_order_acquire))
-                    break;
-                settings.seed = baseSeed + attempt * 0x85ebca6bu;
-                auto candidate = TextureSynthesizer::synthesize(
-                    importedSource, sampleRate, settings);
-                if (candidate.audio.getNumSamples() == 0)
-                    continue;
-                generatedTextures.push_back(std::move(candidate));
-                std::sort(generatedTextures.begin(), generatedTextures.end(),
-                    [] (const auto& left, const auto& right)
-                    {
-                        if (left.passedQualityGate != right.passedQualityGate)
-                            return left.passedQualityGate > right.passedQualityGate;
-                        return left.qualityScore > right.qualityScore;
-                    });
-                if (generatedTextures.size() > 2u)
-                    generatedTextures.pop_back();
-                if (generatedTextures.size() == 2u
-                    && std::all_of(generatedTextures.begin(), generatedTextures.end(),
-                        [] (const auto& texture) { return texture.passedQualityGate; }))
-                    break;
-                analysisProgress.store(
-                    0.08f + 0.78f * static_cast<float>(attempt + 1u)
-                                / static_cast<float>(maximumAttempts),
-                    std::memory_order_relaxed);
-            }
-        }
-        if (requestGeneration != generation.load(std::memory_order_acquire)
-            || state.load(std::memory_order_acquire) != State::analysing)
-            continue;
-
-        const auto sourceSampleCount = analysisSource->getNumSamples();
-        const auto textureFailed = useTexture
-            && (generatedTextures.empty()
-                || generatedTextures.front().audio.getNumSamples() == 0);
-        const auto loopFailed = !useTexture && importedReport.candidates.empty();
-        if (textureFailed || loopFailed)
-        {
-            const std::scoped_lock lock(sourceDataMutex);
-            if (importedReplacesCurrentSource)
-            {
-                currentSourceBuffer = std::move(importedSource);
-                waveformPreview = std::move(replacementWaveform);
-                sourceRevision.fetch_add(1, std::memory_order_release);
-            }
-            currentSourceName = importedName;
-            sourceCandidates.clear();
-            textureVariants.clear();
-            candidateRevision.fetch_add(1, std::memory_order_release);
-            capturedSampleCount.store(0);
+    state.store(State::analysing, std…4612 tokens truncated…);
             selectedStartSample.store(importedOffset);
             selectedEndSample.store(importedOffset + sourceSampleCount);
             selectedRotationSample.store(-1);
@@ -1038,29 +511,16 @@ void LoopEngine::analysisLoop()
             analysisRangeEndSample.store(importedOffset + sourceSampleCount);
             sourcePlaybackPosition = importedOffset;
             analysisProgress.store(1.0f, std::memory_order_relaxed);
-            lowConfidence.store(true);
             state.store(State::failed, std::memory_order_release);
             continue;
         }
 
         if (useTexture)
         {
-            const auto nextSnapshot = RenderQuality::analyseSourceAndOutput(
+            const auto nextSnapshot = SignalDiagnostics::analyseSourceAndOutput(
                 *analysisSource, generatedTextures.front().audio, sampleRate);
             const auto primarySamples = generatedTextures.front().audio.getNumSamples();
-            const auto primaryTransition = generatedTextures.front().transitionQuality;
-            const auto primaryClosure = generatedTextures.front().closureQuality;
-            const auto primarySpectrum = generatedTextures.front().spectrumPreservation;
-            const auto primaryLoudness = generatedTextures.front().loudnessPreservation;
-            const auto primaryPhase = generatedTextures.front().phasePreservation;
-            const auto primaryPosition = generatedTextures.front().positionPreservation;
-            const auto primaryDiversity = generatedTextures.front().diversity;
-            const auto primaryTransient = generatedTextures.front().transientPreservation;
-            const auto primaryStability = generatedTextures.front().macroStability;
-            const auto primaryRepeatSafety = generatedTextures.front().repeatSafety;
             const auto primaryTruePeak = generatedTextures.front().truePeakDbtp;
-            const auto primaryQuality = generatedTextures.front().qualityScore;
-            const auto primaryGatePassed = generatedTextures.front().passedQualityGate;
             {
                 const std::scoped_lock lock(sourceDataMutex);
                 currentSourceName = importedName;
@@ -1084,24 +544,8 @@ void LoopEngine::analysisLoop()
             effectiveCrossfadeSamples.store(0);
             playbackPosition = 0;
             previewMode.store(PreviewMode::loop);
-            waveformScore.store(primaryTransition);
-            levelScore.store(primaryLoudness);
-            slopeScore.store(primaryTransient);
-            spectrumScore.store(primarySpectrum);
-            phaseScore.store(primaryPhase);
-            stereoScore.store(primaryPosition);
-            transientScore.store(primaryTransient);
-            periodicityScore.store(primaryStability);
-            repairScore.store(primaryTransition);
-            repeatSafetyScore.store(primaryRepeatSafety);
             truePeakDbtp.store(primaryTruePeak);
-            renderQualityScore.store(primaryQuality);
-            qualityGatePassed.store(primaryGatePassed);
-            seamQuality.store(primaryClosure);
-            lowConfidence.store(!primaryGatePassed
-                                || primaryClosure < 62.0f
-                                || primaryDiversity < 58.0f
-                                || primaryStability < 58.0f);
+            preferLinearRepairFade.store(false);
             selectedStartSample.store(importedOffset);
             selectedEndSample.store(importedOffset + sourceSampleCount);
             selectedRotationSample.store(-1);
@@ -1124,12 +568,12 @@ void LoopEngine::analysisLoop()
             : juce::AudioBuffer<float> {};
         const auto selectedTruePeak = selectedAudio.getNumSamples() > 0
             ? juce::Decibels::gainToDecibels(juce::jmax(
-                1.0e-9f, RenderQuality::estimateCircularTruePeak(selectedAudio)))
+                1.0e-9f, SignalDiagnostics::estimateCircularTruePeak(selectedAudio)))
             : -100.0f;
         const auto nextSnapshot = result.rotationSample >= 0
-            ? RenderQuality::analyseSourceAndOutput(
+            ? SignalDiagnostics::analyseSourceAndOutput(
                 *analysisSource, selectedAudio, sampleRate)
-            : RenderQuality::SignalSnapshot {};
+            : SignalDiagnostics::SignalSnapshot {};
         const auto selectedSamples = result.rotationSample >= 0
             ? selectedAudio.getNumSamples()
             : juce::jmax(1, result.endSample - result.startSample);
@@ -1181,25 +625,9 @@ void LoopEngine::analysisLoop()
         effectiveCrossfadeSamples.store(
             result.rotationSample >= 0 ? 0 : result.repairOverlapSamples);
         playbackPosition = effectiveCrossfadeSamples.load(std::memory_order_relaxed);
-        waveformScore.store(result.waveform);
-        levelScore.store(result.level);
-        slopeScore.store(result.slope);
-        spectrumScore.store(result.spectrum);
-        phaseScore.store(result.phase);
-        stereoScore.store(result.stereo);
-        transientScore.store(result.transient);
-        periodicityScore.store(result.periodicity);
-        repairScore.store(result.repair);
-        repeatSafetyScore.store(result.periodicity);
         truePeakDbtp.store(selectedTruePeak);
-        renderQualityScore.store(result.overall);
-        qualityGatePassed.store(selectedSamples > 0
-            && (result.rotationSample < 0 || selectedTruePeak <= -0.85f)
-            && result.overall >= 68.0f && result.repair >= 58.0f);
-        lowConfidence.store(resultLowConfidence
-                            || !qualityGatePassed.load(std::memory_order_relaxed));
+        preferLinearRepairFade.store(result.phase >= 75.0f);
         lastUsedGenerationMode.store(GenerationMode::rotateRepair);
-        seamQuality.store(result.overall);
         selectedStartSample.store(result.startSample + importedOffset);
         selectedEndSample.store(result.endSample
                                  - (result.rotationSample < 0
@@ -1216,23 +644,10 @@ void LoopEngine::analysisLoop()
     }
 }
 
-void LoopEngine::resetScores() noexcept
+void LoopEngine::resetDiagnostics() noexcept
 {
-    seamQuality.store(0.0f);
-    waveformScore.store(0.0f);
-    levelScore.store(0.0f);
-    slopeScore.store(0.0f);
-    spectrumScore.store(0.0f);
-    phaseScore.store(0.0f);
-    stereoScore.store(0.0f);
-    transientScore.store(0.0f);
-    periodicityScore.store(0.0f);
-    repairScore.store(0.0f);
-    repeatSafetyScore.store(0.0f);
     truePeakDbtp.store(-100.0f);
-    renderQualityScore.store(0.0f);
-    qualityGatePassed.store(false);
-    lowConfidence.store(false);
+    preferLinearRepairFade.store(false);
 }
 
 juce::MemoryBlock LoopEngine::createLoopState() const
@@ -1251,16 +666,8 @@ juce::MemoryBlock LoopEngine::createLoopState() const
         compressed.writeInt(static_cast<int>(lastUsedGenerationMode.load()));
         compressed.writeInt(loopBuffer.getNumChannels());
         compressed.writeInt(loopBuffer.getNumSamples());
-        compressed.writeFloat(seamQuality.load());
-        compressed.writeFloat(levelScore.load());
-        compressed.writeFloat(slopeScore.load());
-        compressed.writeFloat(spectrumScore.load());
-        compressed.writeFloat(phaseScore.load());
-        compressed.writeFloat(stereoScore.load());
-        compressed.writeFloat(repeatSafetyScore.load());
+        compressed.writeInt(preferLinearRepairFade.load() ? 1 : 0);
         compressed.writeFloat(truePeakDbtp.load());
-        compressed.writeFloat(renderQualityScore.load());
-        compressed.writeInt(qualityGatePassed.load() ? 1 : 0);
         for (int channel = 0; channel < loopBuffer.getNumChannels(); ++channel)
             compressed.write(loopBuffer.getReadPointer(channel),
                              static_cast<size_t>(loopBuffer.getNumSamples()) * sizeof(float));
@@ -1305,23 +712,37 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
             : (storedMode == static_cast<int>(GenerationMode::textureLoop)
                    ? GenerationMode::textureLoop : GenerationMode::rotateRepair);
     }
+    if (savedMode == GenerationMode::textureLoop)
+        return false;
     const auto channels = decompressed.readInt();
     const auto samples = decompressed.readInt();
     if (savedSampleRate <= 0.0 || channels < 1 || channels > 2 || samples < 1
         || samples > juce::roundToInt(savedSampleRate * maximumTextureSeconds))
         return false;
 
-    const auto savedOverall = decompressed.readFloat();
-    const auto savedLevel = decompressed.readFloat();
-    const auto savedSlope = decompressed.readFloat();
-    const auto savedSpectrum = decompressed.readFloat();
-    const auto savedPhase = decompressed.readFloat();
-    const auto savedStereo = decompressed.readFloat();
-    const auto savedRepeatSafety = savedVersion >= 3 ? decompressed.readFloat() : 0.0f;
-    const auto savedTruePeak = savedVersion >= 3 ? decompressed.readFloat() : -100.0f;
-    const auto savedQuality = savedVersion >= 3 ? decompressed.readFloat() : savedOverall;
-    const auto savedGatePassed = savedVersion >= 3
-        ? decompressed.readInt() != 0 : savedOverall >= 68.0f;
+    auto savedPreferLinearFade = false;
+    if (savedVersion >= 6)
+    {
+        savedPreferLinearFade = decompressed.readInt() != 0;
+        static_cast<void>(decompressed.readFloat());
+    }
+    else
+    {
+        static_cast<void>(decompressed.readFloat());
+        static_cast<void>(decompressed.readFloat());
+        static_cast<void>(decompressed.readFloat());
+        static_cast<void>(decompressed.readFloat());
+        const auto legacyPhaseSimilarity = decompressed.readFloat();
+        static_cast<void>(decompressed.readFloat());
+        savedPreferLinearFade = legacyPhaseSimilarity >= 75.0f;
+        if (savedVersion >= 3)
+        {
+            static_cast<void>(decompressed.readFloat());
+            static_cast<void>(decompressed.readFloat());
+            static_cast<void>(decompressed.readFloat());
+            static_cast<void>(decompressed.readInt());
+        }
+    }
     juce::AudioBuffer<float> restored(channels, samples);
     for (int channel = 0; channel < channels; ++channel)
     {
@@ -1390,7 +811,6 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
                                  restoredSource.getNumSamples(), 0);
         }
     }
-    auto restoredFinite = true;
     auto restoredTruePeak = -100.0f;
     {
         const std::scoped_lock lock(loopDataMutex);
@@ -1403,8 +823,8 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
                                  loopBuffer.getWritePointer(channel), targetSamples,
                                  samples, 0);
         }
-        restoredFinite = RenderQuality::repairNonFiniteAndRemoveDc(loopBuffer);
-        restoredTruePeak = RenderQuality::applyCircularTruePeakCeiling(loopBuffer, -1.0f);
+        juce::ignoreUnused(SignalDiagnostics::repairNonFiniteAndRemoveDc(loopBuffer));
+        restoredTruePeak = SignalDiagnostics::applyCircularTruePeakCeiling(loopBuffer, -1.0f);
     }
 
     const auto sourceScale = static_cast<double>(sampleRate) / savedSampleRate;
@@ -1439,20 +859,8 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
                 * crossfadeMilliseconds.load(std::memory_order_relaxed) * 0.001))
         : 0);
     playbackPosition = effectiveCrossfadeSamples.load(std::memory_order_relaxed);
-    seamQuality.store(savedOverall);
-    levelScore.store(savedLevel);
-    slopeScore.store(savedSlope);
-    spectrumScore.store(savedSpectrum);
-    phaseScore.store(savedPhase);
-    stereoScore.store(savedStereo);
-    repairScore.store(savedOverall);
-    repeatSafetyScore.store(savedRepeatSafety);
     truePeakDbtp.store(restoredTruePeak);
-    renderQualityScore.store(savedQuality);
-    const auto restoredGatePassed = savedGatePassed && restoredFinite
-                                    && restoredTruePeak <= -0.85f;
-    qualityGatePassed.store(restoredGatePassed);
-    lowConfidence.store(!restoredGatePassed);
+    preferLinearRepairFade.store(savedPreferLinearFade);
     lastUsedGenerationMode.store(savedMode);
     const auto scaleSample = [sourceScale] (const int sample)
     {
@@ -1493,7 +901,7 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
         sourcePlaybackPosition = 0;
     }
     activeTextureVariant.store(-1, std::memory_order_relaxed);
-    RenderQuality::SignalSnapshot restoredSnapshot;
+    SignalDiagnostics::SignalSnapshot restoredSnapshot;
     if (restoredSourceSamples > 0)
     {
         juce::AudioBuffer<float> snapshotSource;
@@ -1512,17 +920,17 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
             const std::scoped_lock lock(loopDataMutex);
             snapshotOutput = loopBuffer;
         }
-        restoredSnapshot = RenderQuality::analyseSourceAndOutput(
+        restoredSnapshot = SignalDiagnostics::analyseSourceAndOutput(
             snapshotSource, snapshotOutput, sampleRate);
     }
     {
         const std::scoped_lock lock(signalSnapshotMutex);
         signalSnapshot = restoredSnapshot;
     }
-    juce::ignoreUnused(savedTruePeak);
     captureProgress.store(1.0f);
     analysisProgress.store(1.0f, std::memory_order_relaxed);
     previewPlaying.store(false, std::memory_order_release);
     state.store(State::ready, std::memory_order_release);
     return true;
 }
+
