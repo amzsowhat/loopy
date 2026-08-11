@@ -31,28 +31,9 @@ struct TextureSynthesisResult
 {
     juce::AudioBuffer<float> audio;
     std::vector<int> analysisFrameStarts;
-    float transitionQuality = 0.0f;
-    float closureQuality = 0.0f;
-    float spectrumPreservation = 0.0f;
-    float stereoPreservation = 0.0f;
-    float loudnessPreservation = 0.0f;
-    float phasePreservation = 0.0f;
-    float positionPreservation = 0.0f;
-    float diversity = 0.0f;
-    float transientPreservation = 0.0f;
-    float macroStability = 0.0f;
-    float repeatSafety = 0.0f;
-    float materialIdentity = 0.0f;
-    float localFrameIdentity = 0.0f;
-    float noiseCollapseSafety = 0.0f;
-    float sourceSpectralFlatness = 0.0f;
-    float outputSpectralFlatness = 0.0f;
-    float structureConfidence = 0.0f;
     float truePeakDbtp = -100.0f;
-    float qualityScore = 0.0f;
     TextureStructure usedStructure = TextureStructure::continuous;
     bool containsOnlyFiniteSamples = false;
-    bool passedQualityGate = false;
 };
 
 class TextureSynthesizer
@@ -63,3 +44,4 @@ public:
                                              double sampleRate,
                                              TextureSynthesisSettings settings);
 };
+
