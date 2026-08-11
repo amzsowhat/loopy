@@ -1,43 +1,34 @@
 # Loop Surgeon algorithms
 
-The user explicitly chooses between two equally important jobs. Source In/Out is a hard boundary.
+## Rotate & Repair — active
 
-## Rotate & Repair
+Source In/Out is a hard boundary. With Final Length set to Selection, the complete range is examined
+at several short overlap lengths. The engine selects an internal adjacent cut, rotates the range so
+that cut becomes the exported boundary, then repairs the moved original head/tail join.
 
-With Final Length set to Selection, the complete source range is evaluated at several overlap
-lengths. The engine chooses a safe internal rotation point, moves the original bad end/start join
-inside the result and crossfades it. The exported boundary is an originally adjacent source cut.
+With an explicit Final Length, the engine scans contiguous spans inside Source In/Out. Each span
+contains the requested output plus repair overlap, so the rendered sample count is exact. The search
+uses waveform, slope, phase, spectral and stereo differences as an internal objective function. That
+number only orders candidates; it is not shown to the user and is not an audio-quality verdict.
 
-With an explicit Final Length, the engine scans contiguous windows inside Source In/Out. Each
-candidate span includes the requested output plus repair overlap, so rendering returns the exact
-sample count. Impossible lengths are rejected.
+## Texture 0.9 — rejected
 
-## Texture Loop 0.9 material resynthesis
+The rejected engine shuffled normalized STFT states, moved frequency regions on independent closed
+trajectories and reconstructed bins with synthetic phase evolution. It suppressed direct source
+repetition but destroyed too much cross-frequency phase and temporal microstructure. Listening
+results were industrial/noise-like and materially unrecognisable. It is withdrawn rather than tuned.
 
-1. Analyse overlapping Mid/Side STFT frames inside Source In/Out.
-2. Remove macro level from the analysed states so the original ordered envelope does not become an
-   output event train.
-3. Learn normalized spectral states, persistent spectral shape, phase deviation, Mid/Side energy
-   and channel balance. No named-material classifier is present.
-4. Shuffle the state atlas once per deterministic seed. Smooth, random, circular splines traverse
-   the atlas over the complete requested output length; they have no integer-rate sub-cycle.
-5. Rebuild every frame with continuously accumulated phase. Style changes frequency-region
-   coupling, trajectory density, resonance emphasis and phase memory. It never selects a source
-   playback path.
-6. Generate continuation audio past the requested boundary and fold it into the beginning with an
-   equal-power circular overlap. Add only full-length closed macro movement.
-7. Restore measured spatial energy, match bounded loudness, remove DC/non-finite values and enforce
-   a -1 dBTP circular true-peak ceiling.
-8. Score anomalous boundary discontinuity, source-window copying, lag-specific recurrence above the
-   stationary baseline, material spectrum, local spectral identity, coloured-noise collapse,
-   loudness and stereo position.
+## Spectral Orbit lab — listening hypothesis
 
-## Explicit non-goals
+1. Analyse the input into overlapping complex STFT frames without randomizing bin phase.
+2. Map frequency to delay using one explicit user-shapeable curve.
+3. Move each complex coefficient around a closed output-time ring and apply the phase rotation of
+   the actual delay.
+4. Recirculate the transported spectrum for a bounded number of feedback laps; the ring wraps by
+   construction and creates sweep, fold or Barberpole trajectories.
+5. Reconstruct with circular overlap-add, remove DC/non-finite samples, match bounded RMS and enforce
+   a -1 dBTP ceiling.
 
-- reproducing a source event at irregular intervals;
-- copying, reversing, stretching or mosaicing source windows;
-- choosing an engine from a named material category;
-- claiming subjective success from metrics alone.
+The current lab is not yet accepted. Human listening decides whether the mechanism is useful and has
+a coherent character. Automated checks are limited to file validity and numeric safety.
 
-The current engine is deterministic offline DSP. It is not a trained neural generator and does not
-claim to reproduce proprietary Freakshow Industries or zynaptiq algorithms.
