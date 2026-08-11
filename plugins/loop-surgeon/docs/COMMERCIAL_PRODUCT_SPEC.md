@@ -1,27 +1,22 @@
-# Loop Surgeon product contract
-
-Loop Surgeon will contain two equally important user-selected modes.
+# Loop Surgeon commercial product contract
 
 ## Rotate & Repair
 
-Automate the standard long-loop edit while preserving the selected timeline and an originally
-adjacent exported boundary. The user controls Source In/Out, final length, repair overlap and manual
-Loop Start.
+Automate the conventional rotate-and-repair workflow for an already suitable ambience or long-form
+source. Respect Source In/Out and exact requested length; never hide the chosen range.
 
-## Creative Loop — rebuilding
+## Texture Loop
 
-Turn input into a designed, exact-length loop with a recognisable algorithmic character. The user
-must be able to shape the result through an editable frequency-to-delay curve, feedback, diffusion,
-wrap/Barberpole behavior, stereo link, output length and wet/dry. Regular source replay, generic
-noise fallback and uncommanded clipping are unacceptable.
+Construct an exact-length, non-rhythmic SFX loop from the selected material while allowing the user
+to reduce macro ADSR/pass-by movement. Preserve waveform material and stereo coherence; do not rely
+on synthetic noise, oscillators, tempo locking, spectral-delay sweeps, pitch shifts, stretching or
+reverse playback. Flow, Drift and Fracture are traversal scales, not material classifiers.
 
-The previous Texture 0.9 implementation is excluded from this contract. The replacement must first
-pass a human listening gate as an offline WAV renderer before it is integrated into the VST3.
+## Product requirements
 
-## Evidence policy
-
-- Numeric checks may report finite samples, DC, true peak, file duration, channel count and boundary
-  values.
-- Internal R&R seam math may rank candidates but is not shown as an audio-quality grade.
-- No automated total or threshold may claim that a sound is useful, commercial or approved.
+- Both modes must remain directly selectable in the plug-in.
+- The generated result must preview, stop, save with the DAW, export to WAV and drag into the DAW.
+- No subjective score, PASS label or export gate may claim that an output is good.
+- A sale build requires broad human listening, host validation, signing, installation, licensing and
+  regression testing. A successful compile or numeric test is not commercial-quality evidence.
 
