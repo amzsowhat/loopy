@@ -7,8 +7,8 @@
 
 enum class TextureStructure
 {
-    // Stable stored values. The names pre-date the style redesign; they now select three
-    // source-agnostic resynthesis geometries and never select a sample-playback path.
+    // Stable stored values. They select source-agnostic traversal scales; no value selects
+    // a named material, oscillator, spectral-delay or reversed-playback path.
     automatic = 0,
     continuous = 1,
     particles = 2
@@ -18,10 +18,9 @@ struct TextureSynthesisSettings
 {
     float durationSeconds = 24.0f;
     float variation = 0.72f;
-    // 0 keeps the source's measured amount of movement, 1 removes macro envelope movement.
-    // The source timeline itself is never replayed or stretched.
+    // 0 keeps the source's macro movement, 1 removes more of its long envelope.
     float flatten = 0.72f;
-    // Style depth. The legacy field name remains stable for DAW state compatibility.
+    // Transformation depth. The legacy field name remains stable for DAW state compatibility.
     float sourceMatch = 0.85f;
     TextureStructure structure = TextureStructure::automatic;
     uint32_t seed = 0x4c535501u;
@@ -39,7 +38,9 @@ struct TextureSynthesisResult
 class TextureSynthesizer
 {
 public:
-    // Offline-only synthesis. This function allocates and must never run on the audio thread.
+    // Offline-only, phase-coherent time-domain texture construction. It uses the selected
+    // source's own waveform, never synthetic noise, oscillator banks, pitch shifting or reverse.
+    // This function allocates and must never run on the audio thread.
     static TextureSynthesisResult synthesize(const juce::AudioBuffer<float>& source,
                                              double sampleRate,
                                              TextureSynthesisSettings settings);
