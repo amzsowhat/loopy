@@ -4,18 +4,19 @@ Monorepo for independent audio plug-ins. Each product stays under `plugins/<prod
 
 ## Current product
 
-| Product | Directory | Current state |
+| Product | Directory | Current local state |
 | --- | --- | --- |
-| P2 Loop Surgeon | `plugins/loop-surgeon` | R&R works locally; creative Texture mode is withdrawn and rebuilding |
+| P2 Loop Surgeon | `plugins/loop-surgeon` | Rotate & Repair and Texture Loop are both available in the VST3 |
 
-Loop Surgeon currently builds as a Windows VST3 and Standalone application. Rotate & Repair accepts
-an audio file or DAW capture, respects Source In/Out, creates an exact-length repaired loop, stores
-the result in DAW state and exports a 24-bit WAV.
+Loop Surgeon builds as a Windows VST3 and Standalone application. Both modes use the waveform range
+between Source In and Source Out and create an exact user-defined output length.
 
-The rejected Texture 0.9 package is not a test candidate. Its random spectral-state resynthesis
-produced unacceptable industrial/noise-like output. The UI option is disabled and the processor
-forces R&R while a replacement is evaluated in `plugins/loop-surgeon/Research/` as an offline WAV
-renderer. Research output is not part of the VST3 until it passes a human listening gate.
+- **Rotate & Repair** automates the conventional rotate, overlap and seam-repair workflow.
+- **Texture Loop** removes macro one-shot movement and constructs a circular long-form SFX texture
+  from phase-coherent regions of the selected waveform. It does not add oscillators, synthetic
+  noise, pitch shifting, spectral delay, tempo-locked movement or reverse playback.
+
+Generated audio is stored in DAW state and can be saved as 24-bit WAV or dragged to the DAW.
 
 ## Local Windows build
 
@@ -26,15 +27,6 @@ ctest --preset test-debug -C Debug --output-on-failure
 ```
 
 GitHub Actions are not used while the account quota is exhausted. Builds and tests are local only.
-
-## Repository layout
-
-```text
-plugins/                 Independent product directories
-shared/                  Code used by at least two products
-docs/                    Cross-product architecture and roadmap
-.github/workflows/       Manual workflows only; do not run while quota is exhausted
-```
 
 ## Licensing
 
