@@ -484,7 +484,7 @@ juce::String LoopEngine::getCandidateDescription(const int index) const
         const auto structure = variant.usedStructure == TextureStructure::particles
             ? juce::String("Fracture")
             : variant.usedStructure == TextureStructure::continuous
-                ? juce::String("Spectral Drift") : juce::String("Organism");
+                ? juce::String("Drift") : juce::String("Flow");
         return "Texture " + juce::String(index + 1) + "  |  " + structure
                + "  |  " + juce::String(seconds, 1) + " s";
     }
@@ -502,7 +502,9 @@ void LoopEngine::selectCandidate(const int index)
 {
     generation.fetch_add(1, std::memory_order_acq_rel);
     state.store(State::analysing, std::memory_order_release);
-    …4609 tokens truncated…       selectedStartSample.store(importedOffset);
+    analysisProgr…4587 tokens truncated…::memory_order_release);
+            capturedSampleCount.store(0);
+            selectedStartSample.store(importedOffset);
             selectedEndSample.store(importedOffset + sourceSampleCount);
             selectedRotationSample.store(-1);
             selectedSourceSamples.store(importedFullSourceSamples);
@@ -711,8 +713,6 @@ bool LoopEngine::restoreLoopState(const void* data, const size_t size)
             : (storedMode == static_cast<int>(GenerationMode::textureLoop)
                    ? GenerationMode::textureLoop : GenerationMode::rotateRepair);
     }
-    if (savedMode == GenerationMode::textureLoop)
-        return false;
     const auto channels = decompressed.readInt();
     const auto samples = decompressed.readInt();
     if (savedSampleRate <= 0.0 || channels < 1 || channels > 2 || samples < 1
