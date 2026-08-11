@@ -10,7 +10,7 @@ int main(const int argumentCount, char** arguments)
     {
         std::cerr << "Usage: LoopSurgeonTextureRender <input> <output> "
                      "[selection-seconds] [duration-seconds] [flatten] [source-match] "
-                     "[auto|continuous|particles]\n";
+                     "[organism|drift|fracture]\n";
         return 2;
     }
 
@@ -60,8 +60,8 @@ int main(const int argumentCount, char** arguments)
     if (argumentCount > 7)
     {
         const auto structure = juce::String::fromUTF8(arguments[7]).toLowerCase();
-        settings.structure = structure == "continuous" ? TextureStructure::continuous
-            : structure == "particles" ? TextureStructure::particles
+        settings.structure = structure == "drift" ? TextureStructure::continuous
+            : structure == "fracture" ? TextureStructure::particles
                                         : TextureStructure::automatic;
     }
     settings.seed = 0x5a17b33fu;
@@ -97,7 +97,8 @@ int main(const int argumentCount, char** arguments)
               << " stability=" << result.macroStability
               << " repeatSafety=" << result.repeatSafety
               << " structure=" << (result.usedStructure == TextureStructure::particles
-                    ? "particles" : "continuous")
+                    ? "fracture" : result.usedStructure == TextureStructure::continuous
+                        ? "drift" : "organism")
               << " structureConfidence=" << result.structureConfidence
               << " sourceFlatness=" << result.sourceSpectralFlatness
               << " outputFlatness=" << result.outputSpectralFlatness
