@@ -1,38 +1,26 @@
 # Roadmap
 
-## P2 Loop Surgeon
+## Current baseline
 
-### 0.7.0 pre-release
+- Keep Rotate & Repair usable and sample-exact.
+- Keep the rejected Texture engine disabled.
+- Do not publish or package a Texture build from the 0.9 code path.
+- Do not use self-authored audio-quality totals, PASS badges or subjective thresholds.
 
-- one VST3/Standalone product with two equal modes: Rotate & Repair and Texture Loop;
-- fixed Source In/Out selection in both modes;
-- sample-exact R&R Final Length search plus full-selection circular repair;
-- hybrid resonant/stochastic/detail Texture reconstruction for removing one-shot ADSR/pass-by;
-- user Stability and Rebuild depth;
-- source/generated audition with explicit Preview/Stop;
-- circular true-peak ceiling, closure, spectrum, loudness, phase, position, stability and repeat-risk
-  quality gates;
-- real spectrum, phase, correlation and position views;
-- 24-bit WAV export, DAW file drag and embedded project recall;
-- automatic GitHub Actions triggers disabled while the account quota is exhausted.
+## Creative-loop replacement gate
 
-Windows Release compilation and deterministic tests pass locally. Packaging, subjective REAPER
-listening, trusted-meter comparison and host validation remain outstanding.
+1. Render offline WAV candidates from one fixed, source-agnostic algorithm.
+2. Confirm by listening that the result has an authored spectral-time character, does not become
+   industrial noise and does not expose regular source replay.
+3. Reject the hypothesis if the listening result fails; do not compensate with more UI or metrics.
+4. After the sound is accepted, expose output length, editable delay curve, feedback, diffusion,
+   Barberpole/wrap, stereo link and wet/dry in the plug-in.
+5. Then implement DAW recall, automation, cancellation, memory bounds and local host validation.
 
-### Required before a sale candidate
+## Before sale
 
-- compile and run deterministic tests on Apple Silicon;
-- fix all compiler, test, validator and REAPER failures;
-- compare K-weighted loudness and circular true-peak estimates with trusted meters;
-- test a licensed multi-category source corpus at 44.1, 48 and 96 kHz;
-- run blind A/B against competent manual loops and long-duration repeat listening;
-- measure memory, project size, save/restore latency and offline generation latency;
-- validate DAW recall, automation, export/reimport and drag delivery;
-- complete signing, notarisation, installer, licensing and support documentation.
+- Windows and Apple Silicon release builds; REAPER validation at 44.1/48/96 kHz.
+- VST3 validator, crash recovery, save/restore, export/reimport and drag tests.
+- Long listening sessions and blind comparisons against competent manual work and established tools.
+- Signing, notarisation, installers, licensing, support and licensed test material.
 
-### Later product work
-
-- frequency-dependent cross-channel coherence/covariance matching;
-- cancellable long synthesis and background import/export/state serialization;
-- waveform zoom, typed sample/time positions, snapping, keyboard nudge and undo/redo;
-- WAV `cue`/`smpl` metadata and batch/library workflows.
