@@ -1,16 +1,14 @@
 # Loop Surgeon Windows / REAPER test
 
-The current VST3 test build exposes Rotate & Repair only. Texture 0.9 is withdrawn; do not install or
-test its old package.
-
-1. Copy the locally built `Loop Surgeon.vst3` folder to
+1. Copy the complete `Loop Surgeon.vst3` folder to
    `C:\Program Files\Common Files\VST3\`.
-2. In REAPER, run **Options > Preferences > Plug-ins > VST > Clear cache/re-scan**.
-3. Load a source file, set Source In/Out and choose Selection or an exact Final Length.
-4. Generate, compare Source and Generated, drag Loop Start if required, then test Save WAV and Drag
-   Loop to DAW.
-5. Save and reopen the REAPER project. Confirm source, range, result and Loop Start return.
+2. In REAPER run **Options > Preferences > Plug-ins > VST > Clear cache/re-scan**.
+3. Insert Loop Surgeon, load audio and set Source In/Out.
+4. Test **Rotate & Repair** with Selection and an explicit Final Length.
+5. Test **Texture Loop** with Flow first, choose Output Length, then adjust Stability and Transform.
+6. Use Preview/Stop, Source/Generated, New Variation, Save WAV and Drag Loop to DAW.
+7. Save and reopen the REAPER project. Confirm source, range, selected mode and generated loop return.
 
-The separate files under `build/listening-gate/spectral-orbit/` are offline research WAVs. They are
-not produced by the installed VST3 and must be judged by listening before integration.
+Texture Loop should be judged as SFX material construction. Report obvious source-event repetition,
+clicks, bursts, tonal/electronic artifacts, stereo collapse or failure to preserve material identity.
 
