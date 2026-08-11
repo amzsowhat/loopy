@@ -92,9 +92,11 @@ void LoopSurgeonAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     loopEngine.setTextureSourceMatch(parameters.getRawParameterValue("sourceMatch")->load());
     loopEngine.setTextureStructure(static_cast<TextureStructure>(juce::jlimit(
         0, 2, juce::roundToInt(parameters.getRawParameterValue("textureStructure")->load()))));
-    // The rejected Texture 0.9 engine is withdrawn from the plug-in while the replacement
-    // is evaluated as an offline sound prototype.
-    loopEngine.setGenerationMode(LoopEngine::GenerationMode::rotateRepair);
+    const auto selectedMode = juce::roundToInt(
+        parameters.getRawParameterValue("generationMode")->load());
+    loopEngine.setGenerationMode(selectedMode == 1
+        ? LoopEngine::GenerationMode::textureLoop
+        : LoopEngine::GenerationMode::rotateRepair);
     loopEngine.process(buffer, parameters.getRawParameterValue("mix")->load());
 }
 
@@ -120,7 +122,11 @@ void LoopSurgeonAudioProcessor::syncGenerationControlsForAnalysis() noexcept
     loopEngine.setTextureStructure(static_cast<TextureStructure>(juce::jlimit(
         0, 2, juce::roundToInt(
                   parameters.getRawParameterValue("textureStructure")->load()))));
-    loopEngine.setGenerationMode(LoopEngine::GenerationMode::rotateRepair);
+    const auto selectedMode = juce::roundToInt(
+        parameters.getRawParameterValue("generationMode")->load());
+    loopEngine.setGenerationMode(selectedMode == 1
+        ? LoopEngine::GenerationMode::textureLoop
+        : LoopEngine::GenerationMode::rotateRepair);
 }
 
 bool LoopSurgeonAudioProcessor::analyzeSourceRange(const float start, const float end)
@@ -287,7 +293,7 @@ LoopSurgeonAudioProcessor::createParameterLayout()
     layout.push_back(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID { "generationMode", 1 },
         "Generation Mode",
-        juce::StringArray { "Rotate & Repair", "Texture Lab (withdrawn)" },
+        juce::StringArray { "Rotate & Repair", "Texture Loop" },
         0));
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
