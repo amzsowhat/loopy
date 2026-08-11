@@ -1,54 +1,27 @@
-# Loop Surgeon commercial product contract
+# Loop Surgeon product contract
 
-No build is called sale-ready until every mandatory guarantee has automated evidence and hands-on
-DAW listening evidence.
+Loop Surgeon will contain two equally important user-selected modes.
 
-## Product form
+## Rotate & Repair
 
-Loop Surgeon is a VST3 audio effect and offline loop renderer. A standard VST3 cannot inspect or
-replace an arbitrary DAW item, so file import/drop is the primary source path and drag/save WAV is
-the primary delivery path.
+Automate the standard long-loop edit while preserving the selected timeline and an originally
+adjacent exported boundary. The user controls Source In/Out, final length, repair overlap and manual
+Loop Start.
 
-## Equal modes
+## Creative Loop — rebuilding
 
-### Rotate & Repair
+Turn input into a designed, exact-length loop with a recognisable algorithmic character. The user
+must be able to shape the result through an editable frequency-to-delay curve, feedback, diffusion,
+wrap/Barberpole behavior, stereo link, output length and wet/dry. Regular source replay, generic
+noise fallback and uncommanded clipping are unacceptable.
 
-Preserve a selected long-form sound, move an originally adjacent internal cut to the loop boundary,
-and repair the relocated original head/tail seam. It may rotate and overlap; it may not collapse the
-selection into a short repeated period.
+The previous Texture 0.9 implementation is excluded from this contract. The replacement must first
+pass a human listening gate as an offline WAV renderer before it is integrated into the VST3.
 
-### Texture Loop
+## Evidence policy
 
-Create a new styled, exact-length loop from an analysed source range. The selected audio supplies a
-material model, not output clips. The result may depart strongly from the original event chronology
-while retaining measurable spectral, modulation and spatial attributes.
+- Numeric checks may report finite samples, DC, true peak, file duration, channel count and boundary
+  values.
+- Internal R&R seam math may rank candidates but is not shown as an audio-quality grade.
+- No automated total or threshold may claim that a sound is useful, commercial or approved.
 
-The three user-selected styles are generative algorithms, not source classifiers. Every style must
-work through the same source-agnostic analysis contract and must never contain a raw-sample playback
-path.
-
-## Mandatory Texture guarantees
-
-- No copied source window, whole-event recurrence, attack train, reverse artifact or hidden
-  source-duration period.
-- The full-length state trajectory closes at the requested boundary. Shorter internal modulation
-  components may not combine into an audible repeated event.
-- No NaN/Inf, uncontrolled DC, clipping, intersample overload or anomalous boundary discontinuity.
-- Transform may change identity, but generic coloured noise is not an acceptable fallback.
-- Mid/Side energy, stereo correlation and channel balance remain bounded unless a future explicit
-  spatial style control says otherwise.
-- Stability changes macro movement without selecting another algorithm.
-- Same source, parameters and seed reproduce sample-exact audio for DAW recall.
-
-## Release evidence
-
-- Property-orthogonal synthetic probes test invariants without teaching the engine named material
-  categories.
-- A licensed listening corpus must be balanced across spectral coherence, transient density,
-  stationarity, dynamic range, bandwidth, spatial width and trajectory strength. No single source
-  may determine an algorithm branch or acceptance threshold.
-- Each style requires blind listening, ten-loop endurance, export/reimport and 44.1/48/96 kHz host
-  coverage.
-- Windows x64 and Apple Silicon packages require validator and physical REAPER checks.
-
-Version 0.9.0-pre has local engineering validation only. It is not yet sale-ready.
