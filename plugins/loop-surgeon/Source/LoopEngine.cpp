@@ -273,7 +273,6 @@ bool LoopEngine::setManualRotationPoint(const float proportion)
         result = LoopAnalyzer::evaluateFixedRange(
             currentSourceBuffer, sampleRate, rangeStart, rangeEnd, repair);
         result.rotationSample = rotation;
-        result.periodicity = 100.0f;
         selectedAudio = LoopAnalyzer::renderRotateRepair(currentSourceBuffer, result);
         snapshotSource.setSize(currentSourceBuffer.getNumChannels(),
                                rangeEnd - rangeStart, false, false, false);
@@ -308,7 +307,7 @@ bool LoopEngine::setManualRotationPoint(const float proportion)
     selectedEndSample.store(result.endSample);
     selectedRotationSample.store(result.rotationSample);
     truePeakDbtp.store(selectedTruePeak);
-    preferLinearRepairFade.store(result.phase >= 75.0f);
+    preferLinearRepairFade.store(result.preferLinearRepairFade);
     lastUsedGenerationMode.store(GenerationMode::rotateRepair);
     previewMode.store(PreviewMode::loop);
     previewRestartRequested.store(true, std::memory_order_release);
@@ -502,8 +501,8 @@ juce::String LoopEngine::getCandidateDescription(const int index) const
 void LoopEngine::selectCandidate(const int index)
 {
     generation.fetch_add(1, std::memory_order_acq_rel);
-    state.store(State::analysing, std…4612 tokens truncated…);
-            selectedStartSample.store(importedOffset);
+    state.store(State::analysing, std::memory_order_release);
+    …4609 tokens truncated…       selectedStartSample.store(importedOffset);
             selectedEndSample.store(importedOffset + sourceSampleCount);
             selectedRotationSample.store(-1);
             selectedSourceSamples.store(importedFullSourceSamples);
@@ -626,7 +625,7 @@ void LoopEngine::selectCandidate(const int index)
             result.rotationSample >= 0 ? 0 : result.repairOverlapSamples);
         playbackPosition = effectiveCrossfadeSamples.load(std::memory_order_relaxed);
         truePeakDbtp.store(selectedTruePeak);
-        preferLinearRepairFade.store(result.phase >= 75.0f);
+        preferLinearRepairFade.store(result.preferLinearRepairFade);
         lastUsedGenerationMode.store(GenerationMode::rotateRepair);
         selectedStartSample.store(result.startSample + importedOffset);
         selectedEndSample.store(result.endSample
