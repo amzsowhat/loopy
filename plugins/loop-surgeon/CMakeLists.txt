@@ -1,12 +1,12 @@
 juce_add_plugin(LoopSurgeon
-    VERSION 0.9.0
+    VERSION 0.10.0
     COMPANY_NAME "Sound VST Project"
     BUNDLE_ID com.amzsowhat.loopsurgeon
     PLUGIN_MANUFACTURER_CODE SVst
     PLUGIN_CODE LpSg
     FORMATS VST3 Standalone
     PRODUCT_NAME "Loop Surgeon"
-    DESCRIPTION "Repair a selected source range into a seamless loop"
+    DESCRIPTION "Repair loops or construct long-form SFX texture loops from selected audio"
     IS_SYNTH FALSE
     NEEDS_MIDI_INPUT FALSE
     NEEDS_MIDI_OUTPUT FALSE
@@ -26,8 +26,6 @@ target_sources(LoopSurgeon
         Source/SignalDiagnostics.h
         Source/TextureSynthesizer.cpp
         Source/TextureSynthesizer.h
-        Source/TextureMaterialModel.cpp
-        Source/TextureMaterialModel.h
         Source/PluginEditor.cpp
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
@@ -69,8 +67,6 @@ if(SOUND_VST_BUILD_TESTS)
             Source/SignalDiagnostics.h
             Source/TextureSynthesizer.cpp
             Source/TextureSynthesizer.h
-            Source/TextureMaterialModel.cpp
-            Source/TextureMaterialModel.h
             Tests/LoopEngineTests.cpp
     )
 
@@ -90,34 +86,6 @@ if(SOUND_VST_BUILD_TESTS)
     endif()
 
     add_test(NAME LoopSurgeon.Engine COMMAND LoopSurgeonTests)
-
-    juce_add_console_app(LoopSurgeonSpectralOrbitLab
-        PRODUCT_NAME "Loop Surgeon Spectral Orbit Lab")
-
-    target_sources(LoopSurgeonSpectralOrbitLab
-        PRIVATE
-            Research/SpectralOrbitPrototype.cpp
-            Research/SpectralOrbitPrototype.h
-            Research/SpectralOrbitRender.cpp
-            Source/SignalDiagnostics.cpp
-            Source/SignalDiagnostics.h
-    )
-
-    target_include_directories(LoopSurgeonSpectralOrbitLab
-        PRIVATE Source Research)
-
-    target_link_libraries(LoopSurgeonSpectralOrbitLab
-        PRIVATE
-            juce::juce_audio_formats
-            juce::juce_dsp
-        PUBLIC
-            juce::juce_recommended_config_flags
-            juce::juce_recommended_warning_flags
-    )
-
-    if(MSVC)
-        target_compile_options(LoopSurgeonSpectralOrbitLab PRIVATE /utf-8)
-    endif()
 
 endif()
 
