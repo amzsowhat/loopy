@@ -1,5 +1,5 @@
 param(
-    [string] $Version = "0.9.0-pre"
+    [string] $Version = "0.10.0-local-test"
 )
 
 $ErrorActionPreference = "Stop"
@@ -53,3 +53,4 @@ if (-not (Test-Path -LiteralPath $pluginBinary -PathType Leaf)) {
 $zip = Get-Item -LiteralPath $zipPath
 Write-Output "Package: $($zip.FullName)"
 Write-Output "Bytes:   $($zip.Length)"
+
