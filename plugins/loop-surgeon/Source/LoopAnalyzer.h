@@ -8,16 +8,10 @@ struct LoopAnalysisResult
 {
     int startSample = 0;
     int endSample = 0;
-    float overall = 0.0f;
-    float waveform = 0.0f;
-    float level = 0.0f;
-    float slope = 0.0f;
-    float spectrum = 0.0f;
-    float phase = 0.0f;
-    float stereo = 0.0f;
-    float transient = 0.0f;
-    float periodicity = 0.0f;
-    float repair = 0.0f;
+    // Internal search value only. It orders candidate joins and is never presented as
+    // a product-quality rating or used to block export.
+    float candidateFitness = 0.0f;
+    bool preferLinearRepairFade = false;
     int repairOverlapSamples = 0;
     // >= 0 marks full-selection Rotate & Repair. start/end remain the source range.
     int rotationSample = -1;
@@ -26,7 +20,6 @@ struct LoopAnalysisResult
 struct LoopAnalysisReport
 {
     std::vector<LoopAnalysisResult> candidates;
-    bool lowConfidence = false;
 };
 
 class LoopAnalyzer
@@ -77,3 +70,4 @@ public:
         int endSample,
         int repairOverlapSamples = 0);
 };
+
