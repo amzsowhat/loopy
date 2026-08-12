@@ -5,6 +5,7 @@ out/
 .vscode/
 .idea/
 CMakeUserPresets.json
+plugins/*/tmp/
 
 # Audio plug-in artifacts
 *.vst3/
@@ -18,4 +19,3 @@ CMakeUserPresets.json
 # OS files
 .DS_Store
 Thumbs.db
-

@@ -4,16 +4,13 @@
 
 namespace
 {
-constexpr auto background = 0xff0b0d10;
-constexpr auto panel = 0xff15191e;
-constexpr auto panelRaised = 0xff1d232a;
-constexpr auto border = 0xff343b45;
-constexpr auto textPrimary = 0xfff1eee7;
-constexpr auto textMuted = 0xffa6adb7;
-constexpr auto searchBlue = 0xff7f9fc9;
-constexpr auto loopGreen = 0xff82b5a5;
-constexpr auto warningAmber = 0xffd79a52;
-constexpr auto primaryAmber = 0xffd98c3f;
+constexpr auto ink = 0xff191416;
+constexpr auto softInk = 0xff544b47;
+constexpr auto paper = 0xffe7ddbf;
+constexpr auto acidYellow = 0xffe4c72b;
+constexpr auto fadedCoral = 0xffd96d5e;
+constexpr auto dustyViolet = 0xff76608f;
+constexpr auto mint = 0xff8ba98f;
 }
 
 LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
@@ -23,29 +20,30 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     setLookAndFeel(&lookAndFeel);
 
     titleLabel.setText("LOOP SURGEON", juce::dontSendNotification);
-    titleLabel.setFont(juce::FontOptions(28.0f, juce::Font::bold));
-    titleLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
+    titleLabel.setComponentID("displayTitle");
+    titleLabel.setFont(lookAndFeel.getDisplayFont(37.0f));
+    titleLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
     addAndMakeVisible(titleLabel);
 
-    versionLabel.setText("LOCAL TEST BUILD",
+    versionLabel.setText("0.13  /  LOCAL TEST",
                          juce::dontSendNotification);
-    versionLabel.setFont(juce::FontOptions(12.0f, juce::Font::bold));
+    versionLabel.setFont(lookAndFeel.getHandFont(13.0f));
     versionLabel.setJustificationType(juce::Justification::centredRight);
-    versionLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
+    versionLabel.setColour(juce::Label::textColourId, juce::Colour(softInk));
     addAndMakeVisible(versionLabel);
 
     dropLabel.setText({}, juce::dontSendNotification);
-    dropLabel.setFont(juce::FontOptions(14.0f, juce::Font::bold));
-    dropLabel.setColour(juce::Label::textColourId, juce::Colour(textPrimary));
+    dropLabel.setFont(lookAndFeel.getHandFont(14.0f));
+    dropLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
     addAndMakeVisible(dropLabel);
 
-    sourceLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
-    sourceLabel.setFont(juce::FontOptions(14.0f));
+    sourceLabel.setColour(juce::Label::textColourId, juce::Colour(softInk));
+    sourceLabel.setFont(lookAndFeel.getHandFont(13.5f));
     sourceLabel.setMinimumHorizontalScale(0.7f);
     addAndMakeVisible(sourceLabel);
 
-    statusLabel.setColour(juce::Label::textColourId, juce::Colour(loopGreen));
-    statusLabel.setFont(juce::FontOptions(14.5f, juce::Font::bold));
+    statusLabel.setColour(juce::Label::textColourId, juce::Colour(softInk));
+    statusLabel.setFont(lookAndFeel.getHandFont(13.5f));
     addAndMakeVisible(statusLabel);
 
     addAndMakeVisible(waveformView);
@@ -65,8 +63,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         else
             lastMessage = "Loop start must remain inside the blue source range";
     };
-    rangeLabel.setColour(juce::Label::textColourId, juce::Colour(0xffb8c3cf));
-    rangeLabel.setFont(juce::FontOptions(13.0f));
+    rangeLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
+    rangeLabel.setFont(lookAndFeel.getHandFont(12.5f));
     addAndMakeVisible(rangeLabel);
 
     analyzeRangeButton.onClick = [this]
@@ -99,10 +97,10 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         updatePrimaryAction();
     };
     analyzeRangeButton.setComponentID("primaryAction");
-    analyzeRangeButton.setColour(juce::TextButton::buttonColourId, juce::Colour(primaryAmber));
-    analyzeRangeButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(primaryAmber));
-    analyzeRangeButton.setColour(juce::TextButton::textColourOffId, juce::Colour(0xff17120d));
-    analyzeRangeButton.setColour(juce::TextButton::textColourOnId, juce::Colour(0xff17120d));
+    analyzeRangeButton.setColour(juce::TextButton::buttonColourId, juce::Colour(acidYellow));
+    analyzeRangeButton.setColour(juce::TextButton::buttonOnColourId, juce::Colour(acidYellow));
+    analyzeRangeButton.setColour(juce::TextButton::textColourOffId, juce::Colour(ink));
+    analyzeRangeButton.setColour(juce::TextButton::textColourOnId, juce::Colour(ink));
     analyzeRangeButton.setTooltip("Generate from the selected source range");
     addAndMakeVisible(analyzeRangeButton);
 
@@ -119,7 +117,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         processor.setPreviewPlaying(shouldPlay);
         lastMessage = shouldPlay ? "Preview started" : "Preview stopped";
     };
-    previewTransportButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff426f63));
+    previewTransportButton.setColour(juce::TextButton::buttonColourId,
+                                     juce::Colour(fadedCoral));
     addAndMakeVisible(previewTransportButton);
 
     originalPreviewButton.setClickingTogglesState(true);
@@ -168,11 +167,11 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     addAndMakeVisible(regenerateButton);
 
     importButton.onClick = [this] { chooseImportFile(); };
-    importButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff435d78));
+    importButton.setColour(juce::TextButton::buttonColourId, juce::Colour(acidYellow));
     addAndMakeVisible(importButton);
 
     exportButton.onClick = [this] { chooseExportFile(); };
-    exportButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff426f63));
+    exportButton.setColour(juce::TextButton::buttonColourId, juce::Colour(mint));
     addAndMakeVisible(exportButton);
 
     dragToDawButton.prepareFile = [this] { return prepareDawDragFile(); };
@@ -180,7 +179,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     {
         lastMessage = message;
     };
-    dragToDawButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff435d78));
+    dragToDawButton.setColour(juce::TextButton::buttonColourId, juce::Colour(dustyViolet));
     addAndMakeVisible(dragToDawButton);
 
     captureButton.onClick = [this]
@@ -198,13 +197,13 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         lastMessage = "Result cleared - source retained";
         updatePrimaryAction();
     };
-    clearButton.setColour(juce::TextButton::buttonColourId, juce::Colour(0xff3b4652));
+    clearButton.setColour(juce::TextButton::buttonColourId, juce::Colour(paper));
     addAndMakeVisible(clearButton);
 
-    configureSlider(crossfadeSlider, crossfadeLabel, "SEAM REPAIR");
-    configureSlider(mixSlider, mixLabel, "AUDITION MIX");
-    configureSlider(durationSlider, durationLabel, "OUTPUT LENGTH");
-    configureSlider(repairDurationSlider, repairDurationLabel, "FINAL LENGTH");
+    configureSlider(crossfadeSlider, crossfadeLabel, "SEAM");
+    configureSlider(mixSlider, mixLabel, "AUDITION");
+    configureSlider(durationSlider, durationLabel, "LENGTH");
+    configureSlider(repairDurationSlider, repairDurationLabel, "LENGTH");
     configureSlider(flattenSlider, flattenLabel, "STABILITY");
     configureSlider(dynamicsCrushSlider, dynamicsCrushLabel, "CRUSH");
     configureSlider(sourceMatchSlider, sourceMatchLabel, "TRANSFORM");
@@ -241,14 +240,15 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "textureCharacterAmount", characterAmountSlider);
 
     modeLabel.setText("MODE", juce::dontSendNotification);
-    modeLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
-    modeLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
+    modeLabel.setFont(lookAndFeel.getHandFont(13.0f));
+    modeLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
     addAndMakeVisible(modeLabel);
     generationModeBox.addItem("Rotate & Repair", 1);
     generationModeBox.addItem("Texture Loop", 2);
     generationModeBox.onChange = [this]
     {
         updatePrimaryAction();
+        applyModeLayout();
         if (processor.getSourceName().isNotEmpty())
             lastMessage = "Mode changed - press Generate to apply";
     };
@@ -257,8 +257,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "generationMode", generationModeBox);
 
     textureStructureLabel.setText("MOTION", juce::dontSendNotification);
-    textureStructureLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
-    textureStructureLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
+    textureStructureLabel.setFont(lookAndFeel.getHandFont(12.0f));
+    textureStructureLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
     addAndMakeVisible(textureStructureLabel);
     textureStructureBox.addItem("Flow", 1);
     textureStructureBox.addItem("Drift", 2);
@@ -275,8 +275,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "textureStructure", textureStructureBox);
 
     characterLabel.setText("EXTRA", juce::dontSendNotification);
-    characterLabel.setFont(juce::FontOptions(13.0f, juce::Font::bold));
-    characterLabel.setColour(juce::Label::textColourId, juce::Colour(textMuted));
+    characterLabel.setFont(lookAndFeel.getHandFont(12.0f));
+    characterLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
     addAndMakeVisible(characterLabel);
     characterBox.addItem("Off", 1);
     characterBox.addItem("Patina", 2);
@@ -295,8 +295,10 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "textureCharacter", characterBox);
 
     setResizable(true, true);
-    setResizeLimits(1040, 900, 1440, 1120);
-    setSize(1120, 960);
+    setResizeLimits(1050, 700, 1536, 1024);
+    if (auto* editorConstrainer = getConstrainer())
+        editorConstrainer->setFixedAspectRatio(1.5);
+    setSize(1200, 800);
     updatePrimaryAction();
     startTimerHz(12);
 }
@@ -307,152 +309,115 @@ LoopSurgeonAudioProcessorEditor::~LoopSurgeonAudioProcessorEditor()
     setLookAndFeel(nullptr);
 }
 
-void LoopSurgeonAudioProcessorEditor::drawCard(
-    juce::Graphics& graphics, const juce::Rectangle<int> card,
-    const juce::String& title, const juce::Colour accent) const
-{
-    graphics.setColour(juce::Colour(panel));
-    graphics.fillRoundedRectangle(card.toFloat(), 10.0f);
-    graphics.setColour(juce::Colour(border));
-    graphics.drawRoundedRectangle(card.toFloat().reduced(0.5f), 10.0f, 1.0f);
-
-    auto heading = card.reduced(14).removeFromTop(23);
-    graphics.setColour(juce::Colour(textPrimary));
-    graphics.setFont(juce::FontOptions(13.5f, juce::Font::bold));
-    graphics.drawText(title, heading, juce::Justification::centredLeft);
-    graphics.setColour(accent);
-    graphics.fillRoundedRectangle(
-        juce::Rectangle<float>(static_cast<float>(card.getX() + 14),
-                               static_cast<float>(card.getY() + 34), 44.0f, 2.0f),
-        1.0f);
-}
-
 void LoopSurgeonAudioProcessorEditor::paint(juce::Graphics& graphics)
 {
-    juce::ColourGradient gradient(juce::Colour(0xff171a1f), 0.0f, 0.0f,
-                                  juce::Colour(background), 0.0f,
-                                  static_cast<float>(getHeight()), false);
-    graphics.setGradientFill(gradient);
-    graphics.fillAll();
+    graphics.fillAll(juce::Colour(ink));
+    const auto& skin = lookAndFeel.getMachineSkin();
+    if (skin.isValid())
+        graphics.drawImage(skin, getLocalBounds().toFloat(),
+                           juce::RectanglePlacement::stretchToFit);
+    else
+        graphics.fillAll(juce::Colour(paper));
 
-    drawCard(graphics, sourceCard, "SOURCE", juce::Colour(searchBlue));
-    drawCard(graphics, waveformCard, "SELECT RANGE", juce::Colour(searchBlue));
-    drawCard(graphics, finishCard, "SHAPE", juce::Colour(warningAmber));
-    drawCard(graphics, auditionCard, "RESULT", juce::Colour(loopGreen));
-
-    graphics.setColour(juce::Colour(border));
-    graphics.drawHorizontalLine(footerArea.getY(), static_cast<float>(footerArea.getX()),
-                                static_cast<float>(footerArea.getRight()));
+    const auto scale = static_cast<float>(getWidth()) / 1200.0f;
+    const auto box = [scale] (const float x, const float y,
+                              const float width, const float height)
+    {
+        return juce::Rectangle<float>(x * scale, y * scale,
+                                      width * scale, height * scale);
+    };
+    graphics.setColour(juce::Colour(ink).withAlpha(0.82f));
+    graphics.setFont(lookAndFeel.getHandFont(13.0f * scale));
+    graphics.drawText("SOURCE RANGE", box(105.0f, 124.0f, 240.0f, 22.0f),
+                      juce::Justification::centredLeft);
+    graphics.drawText("SHAPE", box(814.0f, 124.0f, 150.0f, 22.0f),
+                      juce::Justification::centredLeft);
+    graphics.drawText("RESULT MONITOR", box(102.0f, 571.0f, 260.0f, 20.0f),
+                      juce::Justification::centredLeft);
 }
 
 void LoopSurgeonAudioProcessorEditor::resized()
 {
-    auto area = getLocalBounds().reduced(24);
-    auto header = area.removeFromTop(48);
-    titleLabel.setBounds(header.removeFromLeft(420));
-    versionLabel.setBounds(header.removeFromRight(210));
-
-    area.removeFromTop(8);
-    sourceCard = area.removeFromTop(92);
-    area.removeFromTop(10);
-    auto designRow = area.removeFromTop(350);
-    const auto waveformWidth = juce::roundToInt(
-        static_cast<float>(designRow.getWidth() - 10) * 0.60f);
-    waveformCard = designRow.removeFromLeft(waveformWidth);
-    designRow.removeFromLeft(10);
-    finishCard = designRow;
-    area.removeFromTop(10);
-    primaryActionArea = area.removeFromTop(62);
-    analyzeRangeButton.setBounds(primaryActionArea.reduced(0, 3));
-    area.removeFromTop(10);
-    auditionCard = area.removeFromTop(220);
-    area.removeFromTop(8);
-    footerArea = area;
-
-    auto sourceContent = sourceCard.reduced(14);
-    sourceContent.removeFromTop(30);
-    auto sourceText = sourceContent.removeFromLeft(
-        juce::jmin(470, sourceContent.getWidth() / 2));
-    dropLabel.setBounds({});
-    sourceLabel.setBounds(sourceText);
-    auto sourceActions = sourceContent;
-    clearButton.setBounds(sourceActions.removeFromRight(132));
-    sourceActions.removeFromRight(8);
-    captureButton.setBounds(sourceActions.removeFromRight(164));
-    sourceActions.removeFromRight(8);
-    importButton.setBounds(sourceActions.removeFromRight(160));
-
-    auto waveContent = waveformCard.reduced(14);
-    waveContent.removeFromTop(30);
-    auto rangeRow = waveContent.removeFromBottom(40);
-    waveContent.removeFromTop(8);
-    waveformView.setBounds(waveContent);
-    resetRangeButton.setBounds(rangeRow.removeFromRight(132));
-    rangeRow.removeFromRight(12);
-    rangeLabel.setBounds(rangeRow);
-
-    auto finish = finishCard.reduced(14);
-    finish.removeFromTop(30);
-    const auto takeControlRow = [&finish]
+    const auto sx = static_cast<float>(getWidth()) / 1200.0f;
+    const auto sy = static_cast<float>(getHeight()) / 800.0f;
+    const auto box = [sx, sy] (const float x, const float y,
+                              const float width, const float height)
     {
-        auto row = finish.removeFromTop(33);
-        finish.removeFromTop(3);
-        return row;
+        return juce::Rectangle<int>(juce::roundToInt(x * sx), juce::roundToInt(y * sy),
+                                    juce::roundToInt(width * sx),
+                                    juce::roundToInt(height * sy));
     };
-    auto modeRow = takeControlRow();
-    modeLabel.setBounds(modeRow.removeFromLeft(126));
-    generationModeBox.setBounds(modeRow);
-    auto structureRow = takeControlRow();
-    textureStructureLabel.setBounds(structureRow.removeFromLeft(126));
-    textureStructureBox.setBounds(structureRow);
-    repairDurationLabel.setBounds(textureStructureLabel.getBounds());
-    repairDurationSlider.setBounds(textureStructureBox.getBounds());
-    auto durationRow = takeControlRow();
-    durationLabel.setBounds(durationRow.removeFromLeft(126));
-    durationSlider.setBounds(durationRow);
-    auto seamRow = durationLabel.getBounds().getUnion(durationSlider.getBounds());
-    crossfadeLabel.setBounds(seamRow.removeFromLeft(126));
-    crossfadeSlider.setBounds(seamRow);
-    auto flattenRow = takeControlRow();
-    flattenLabel.setBounds(flattenRow.removeFromLeft(126));
-    flattenSlider.setBounds(flattenRow);
-    auto crushRow = takeControlRow();
-    dynamicsCrushLabel.setBounds(crushRow.removeFromLeft(126));
-    dynamicsCrushSlider.setBounds(crushRow);
-    auto matchRow = takeControlRow();
-    sourceMatchLabel.setBounds(matchRow.removeFromLeft(126));
-    sourceMatchSlider.setBounds(matchRow);
-    auto characterRow = takeControlRow();
-    characterLabel.setBounds(characterRow.removeFromLeft(126));
-    characterBox.setBounds(characterRow);
-    auto characterAmountRow = takeControlRow();
-    characterAmountLabel.setBounds(characterAmountRow.removeFromLeft(126));
-    characterAmountSlider.setBounds(characterAmountRow);
 
-    auto audition = auditionCard.reduced(14);
-    audition.removeFromTop(30);
-    statusLabel.setBounds(audition.removeFromTop(26));
-    audition.removeFromTop(4);
-    candidateBox.setBounds(audition.removeFromTop(34));
-    audition.removeFromTop(6);
-    auto transport = audition.removeFromTop(38);
-    previewTransportButton.setBounds(transport.removeFromLeft(126));
-    transport.removeFromLeft(8);
-    originalPreviewButton.setBounds(transport.removeFromLeft(96));
-    transport.removeFromLeft(6);
-    loopPreviewButton.setBounds(transport.removeFromLeft(116));
-    transport.removeFromLeft(18);
-    mixLabel.setBounds(transport.removeFromLeft(118));
-    mixSlider.setBounds(transport);
-    audition.removeFromTop(7);
-    auto outputActions = audition.removeFromTop(38);
-    regenerateButton.setBounds(outputActions.removeFromLeft(164));
-    outputActions.removeFromLeft(8);
-    dragToDawButton.setBounds(outputActions.removeFromLeft(196));
-    outputActions.removeFromLeft(8);
-    exportButton.setBounds(outputActions.removeFromLeft(150));
+    titleLabel.setBounds(box(100.0f, 25.0f, 350.0f, 48.0f));
+    versionLabel.setBounds(box(102.0f, 74.0f, 220.0f, 18.0f));
+    sourceLabel.setBounds(box(445.0f, 35.0f, 280.0f, 44.0f));
+    importButton.setBounds(box(740.0f, 35.0f, 110.0f, 43.0f));
+    captureButton.setBounds(box(860.0f, 35.0f, 140.0f, 43.0f));
+    clearButton.setBounds(box(1010.0f, 35.0f, 105.0f, 43.0f));
+    dropLabel.setBounds({});
 
-    signalAnalysisView.setBounds(footerArea);
+    waveformView.setBounds(box(104.0f, 150.0f, 644.0f, 306.0f));
+    rangeLabel.setBounds(box(112.0f, 420.0f, 478.0f, 27.0f));
+    resetRangeButton.setBounds(box(603.0f, 414.0f, 130.0f, 32.0f));
+
+    modeLabel.setBounds(box(820.0f, 140.0f, 280.0f, 20.0f));
+    generationModeBox.setBounds(box(820.0f, 163.0f, 280.0f, 48.0f));
+    textureStructureLabel.setBounds(box(820.0f, 214.0f, 130.0f, 15.0f));
+    textureStructureBox.setBounds(box(820.0f, 230.0f, 130.0f, 31.0f));
+    characterLabel.setBounds(box(970.0f, 214.0f, 130.0f, 15.0f));
+    characterBox.setBounds(box(970.0f, 230.0f, 130.0f, 31.0f));
+    applyModeLayout();
+
+    statusLabel.setBounds(box(100.0f, 500.0f, 510.0f, 25.0f));
+    candidateBox.setBounds(box(100.0f, 535.0f, 235.0f, 35.0f));
+    originalPreviewButton.setBounds(box(345.0f, 535.0f, 92.0f, 35.0f));
+    loopPreviewButton.setBounds(box(446.0f, 535.0f, 108.0f, 35.0f));
+    regenerateButton.setBounds(box(563.0f, 535.0f, 132.0f, 35.0f));
+    signalAnalysisView.setBounds(box(104.0f, 595.0f, 535.0f, 111.0f));
+
+    primaryActionArea = box(790.0f, 505.0f, 194.0f, 184.0f);
+    analyzeRangeButton.setBounds(primaryActionArea);
+    previewTransportButton.setBounds(box(703.0f, 693.0f, 105.0f, 66.0f));
+    dragToDawButton.setBounds(box(820.0f, 693.0f, 132.0f, 66.0f));
+    exportButton.setBounds(box(966.0f, 693.0f, 128.0f, 66.0f));
+}
+
+void LoopSurgeonAudioProcessorEditor::applyModeLayout()
+{
+    const auto sx = static_cast<float>(getWidth()) / 1200.0f;
+    const auto sy = static_cast<float>(getHeight()) / 800.0f;
+    const auto box = [sx, sy] (const float x, const float y,
+                              const float width, const float height)
+    {
+        return juce::Rectangle<int>(juce::roundToInt(x * sx), juce::roundToInt(y * sy),
+                                    juce::roundToInt(width * sx),
+                                    juce::roundToInt(height * sy));
+    };
+    const auto setCell = [&] (juce::Label& label, juce::Slider& slider,
+                              const int column, const int row)
+    {
+        const auto x = 805.0f + static_cast<float>(column) * 99.0f;
+        const auto y = 266.0f + static_cast<float>(row) * 103.0f;
+        label.setBounds(box(x, y, 94.0f, 17.0f));
+        label.setJustificationType(juce::Justification::centred);
+        slider.setBounds(box(x, y + 15.0f, 94.0f, 88.0f));
+    };
+
+    if (generationModeBox.getSelectedItemIndex() == 0)
+    {
+        setCell(repairDurationLabel, repairDurationSlider, 0, 0);
+        setCell(crossfadeLabel, crossfadeSlider, 1, 0);
+        setCell(mixLabel, mixSlider, 2, 0);
+    }
+    else
+    {
+        setCell(durationLabel, durationSlider, 0, 0);
+        setCell(flattenLabel, flattenSlider, 1, 0);
+        setCell(dynamicsCrushLabel, dynamicsCrushSlider, 2, 0);
+        setCell(sourceMatchLabel, sourceMatchSlider, 0, 1);
+        setCell(characterAmountLabel, characterAmountSlider, 1, 1);
+        setCell(mixLabel, mixSlider, 2, 1);
+    }
 }
 
 bool LoopSurgeonAudioProcessorEditor::isInterestedInFileDrag(
@@ -628,10 +593,10 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     loopPreviewButton.setToggleState(previewMode == LoopEngine::PreviewMode::loop,
                                      juce::dontSendNotification);
     const auto previewing = processor.isPreviewPlaying();
-    previewTransportButton.setButtonText(previewing ? "Stop" : "Preview");
+    previewTransportButton.setButtonText(previewing ? "STOP" : "PREVIEW");
     previewTransportButton.setColour(
         juce::TextButton::buttonColourId,
-        juce::Colour(previewing ? 0xffa95f5b : 0xff426f63));
+        juce::Colour(previewing ? fadedCoral : acidYellow));
 
     const auto nowMs = juce::Time::getMillisecondCounterHiRes();
     if (lastMessage.isNotEmpty())
@@ -687,7 +652,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
         }
     }
     statusLabel.setColour(juce::Label::textColourId,
-        juce::Colour(state == LoopEngine::State::failed ? warningAmber : loopGreen));
+        juce::Colour(state == LoopEngine::State::failed ? fadedCoral : softInk));
     statusLabel.setText(statusText, juce::dontSendNotification);
     repaint();
 }
@@ -715,7 +680,7 @@ void LoopSurgeonAudioProcessorEditor::updatePrimaryAction()
     if (state == LoopEngine::State::analysing)
     {
         analyzeRangeButton.setButtonText(
-            "GENERATING  " + juce::String(juce::roundToInt(
+            juce::String(juce::roundToInt(
                 processor.getAnalysisProgress() * 100.0f)) + "%");
         return;
     }
@@ -724,22 +689,24 @@ void LoopSurgeonAudioProcessorEditor::updatePrimaryAction()
         analyzeRangeButton.setButtonText("LOAD AUDIO");
         return;
     }
-    const auto selectedMode = generationModeBox.getSelectedItemIndex();
-    analyzeRangeButton.setButtonText(
-        selectedMode == 0 ? "GENERATE ROTATE & REPAIR"
-                          : "GENERATE TEXTURE LOOP");
+    analyzeRangeButton.setButtonText("GENERATE");
 }
 
 void LoopSurgeonAudioProcessorEditor::configureSlider(
     juce::Slider& slider, juce::Label& label, const juce::String& text)
 {
-    slider.setSliderStyle(juce::Slider::LinearHorizontal);
-    slider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 76, 25);
-    slider.setColour(juce::Slider::trackColourId, juce::Colour(0xff3b414a));
-    slider.setColour(juce::Slider::thumbColourId, juce::Colour(loopGreen));
+    slider.setSliderStyle(juce::Slider::RotaryHorizontalVerticalDrag);
+    slider.setRotaryParameters(juce::MathConstants<float>::pi * 1.20f,
+                               juce::MathConstants<float>::pi * 2.80f, true);
+    slider.setTextBoxStyle(juce::Slider::TextBoxBelow, false, 70, 19);
+    slider.setColour(juce::Slider::textBoxTextColourId, juce::Colour(ink));
+    slider.setColour(juce::Slider::textBoxBackgroundColourId,
+                     juce::Colours::transparentBlack);
+    slider.setColour(juce::Slider::textBoxOutlineColourId,
+                     juce::Colours::transparentBlack);
     addAndMakeVisible(slider);
     label.setText(text, juce::dontSendNotification);
-    label.setFont(juce::FontOptions(13.0f, juce::Font::bold));
-    label.setColour(juce::Label::textColourId, juce::Colour(textMuted));
+    label.setFont(lookAndFeel.getHandFont(11.3f));
+    label.setColour(juce::Label::textColourId, juce::Colour(ink));
     addAndMakeVisible(label);
 }

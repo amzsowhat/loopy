@@ -1,5 +1,5 @@
 juce_add_plugin(LoopSurgeon
-    VERSION 0.12.0
+    VERSION 0.13.0
     COMPANY_NAME "Sound VST Project"
     BUNDLE_ID com.amzsowhat.loopsurgeon
     PLUGIN_MANUFACTURER_CODE SVst
@@ -14,6 +14,16 @@ juce_add_plugin(LoopSurgeon
     EDITOR_WANTS_KEYBOARD_FOCUS FALSE
     COPY_PLUGIN_AFTER_BUILD FALSE
     VST3_CATEGORIES Fx
+)
+
+juce_add_binary_data(LoopSurgeonAssets
+    NAMESPACE LoopSurgeonAssets
+    SOURCES
+        Assets/loop-machine-skin.png
+        Assets/loop-knob.png
+        Assets/generate-button.png
+        Assets/BowlbyOneSC-Regular.ttf
+        Assets/SpecialElite-Regular.ttf
 )
 
 target_sources(LoopSurgeon
@@ -47,6 +57,7 @@ target_compile_definitions(LoopSurgeon
 
 target_link_libraries(LoopSurgeon
     PRIVATE
+        LoopSurgeonAssets
         juce::juce_audio_utils
         juce::juce_audio_formats
         juce::juce_dsp

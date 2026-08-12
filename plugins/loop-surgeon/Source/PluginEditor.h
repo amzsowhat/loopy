@@ -11,8 +11,38 @@ public:
 
     void drawButtonBackground(juce::Graphics&, juce::Button&, const juce::Colour&,
                               bool highlighted, bool down) override;
+    void drawButtonText(juce::Graphics&, juce::TextButton&, bool highlighted,
+                        bool down) override;
+    void drawComboBox(juce::Graphics&, int width, int height, bool down,
+                      int buttonX, int buttonY, int buttonW, int buttonH,
+                      juce::ComboBox&) override;
+    void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height,
+                          float sliderPosition, float rotaryStartAngle,
+                          float rotaryEndAngle, juce::Slider&) override;
+    void drawPopupMenuBackground(juce::Graphics&, int width, int height) override;
+    void drawPopupMenuItem(juce::Graphics&, const juce::Rectangle<int>& area,
+                           bool separator, bool active, bool highlighted,
+                           bool ticked, bool hasSubMenu, const juce::String& text,
+                           const juce::String& shortcutText,
+                           const juce::Drawable* icon,
+                           const juce::Colour* textColour) override;
+    juce::Label* createSliderTextBox(juce::Slider&) override;
+    void drawLabel(juce::Graphics&, juce::Label&) override;
     juce::Font getTextButtonFont(juce::TextButton&, int buttonHeight) override;
     juce::Font getComboBoxFont(juce::ComboBox&) override;
+    juce::Font getLabelFont(juce::Label&) override;
+    juce::Font getPopupMenuFont() override;
+
+    [[nodiscard]] juce::Font getDisplayFont(float height) const;
+    [[nodiscard]] juce::Font getHandFont(float height) const;
+    [[nodiscard]] const juce::Image& getMachineSkin() const noexcept { return machineSkin; }
+
+private:
+    juce::Image machineSkin;
+    juce::Image knobImage;
+    juce::Image generateButtonImage;
+    juce::Typeface::Ptr displayTypeface;
+    juce::Typeface::Ptr handTypeface;
 };
 
 class LoopWaveformView final : public juce::Component
@@ -103,8 +133,7 @@ private:
     void configureSlider(juce::Slider&, juce::Label&, const juce::String&);
     void updateRangeLabel();
     void updatePrimaryAction();
-    void drawCard(juce::Graphics&, juce::Rectangle<int>, const juce::String&,
-                  juce::Colour) const;
+    void applyModeLayout();
 
     LoopSurgeonAudioProcessor& processor;
     LoopSurgeonLookAndFeel lookAndFeel;
@@ -118,16 +147,16 @@ private:
     juce::ComboBox candidateBox;
     juce::Label rangeLabel;
     juce::TextButton analyzeRangeButton { "Generate" };
-    juce::TextButton resetRangeButton { "Full Source" };
-    juce::TextButton regenerateButton { "New Variation" };
-    juce::TextButton previewTransportButton { "Preview" };
-    juce::TextButton originalPreviewButton { "Source" };
-    juce::TextButton loopPreviewButton { "Generated" };
-    juce::TextButton importButton { "Load Audio..." };
+    juce::TextButton resetRangeButton { "FULL SOURCE" };
+    juce::TextButton regenerateButton { "NEW VARIATION" };
+    juce::TextButton previewTransportButton { "PREVIEW" };
+    juce::TextButton originalPreviewButton { "SOURCE" };
+    juce::TextButton loopPreviewButton { "RESULT" };
+    juce::TextButton importButton { "LOAD AUDIO" };
     RenderDragButton dragToDawButton;
-    juce::TextButton exportButton { "Save WAV..." };
-    juce::TextButton captureButton { "Record DAW Input" };
-    juce::TextButton clearButton { "Clear Result" };
+    juce::TextButton exportButton { "SAVE WAV" };
+    juce::TextButton captureButton { "RECORD INPUT" };
+    juce::TextButton clearButton { "CLEAR" };
     juce::Slider crossfadeSlider;
     juce::Slider mixSlider;
     juce::Slider durationSlider;
@@ -170,12 +199,7 @@ private:
     uint64_t displayedCandidateRevision = 0;
     uint64_t displayedSourceRevision = 0;
 
-    juce::Rectangle<int> sourceCard;
-    juce::Rectangle<int> waveformCard;
-    juce::Rectangle<int> auditionCard;
-    juce::Rectangle<int> finishCard;
     juce::Rectangle<int> primaryActionArea;
-    juce::Rectangle<int> footerArea;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LoopSurgeonAudioProcessorEditor)
 };
