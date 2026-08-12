@@ -8,6 +8,11 @@ if ($Version -notmatch '^[0-9A-Za-z.-]+$') {
     throw "Version contains unsupported characters: $Version"
 }
 
+$expectedPluginVersion = ($Version -split '-', 2)[0]
+if ($expectedPluginVersion -notmatch '^\d+\.\d+\.\d+$') {
+    throw "Version must begin with a semantic plug-in version: $Version"
+}
+
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\..\.."))
 $buildRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot "build"))
 $pluginPath = Join-Path $buildRoot "vs2022\plugins\loop-surgeon\LoopSurgeon_artefacts\Release\VST3\Loop Surgeon.vst3"
@@ -48,6 +53,14 @@ Compress-Archive -Path (Join-Path $stagePath "*") -DestinationPath $zipPath -Com
 $pluginBinary = Join-Path $stagePath "Loop Surgeon.vst3\Contents\x86_64-win\Loop Surgeon.vst3"
 if (-not (Test-Path -LiteralPath $pluginBinary -PathType Leaf)) {
     throw "Packaged VST3 binary is missing: $pluginBinary"
+}
+
+$moduleInfoPath = Join-Path $stagePath "Loop Surgeon.vst3\Contents\Resources\moduleinfo.json"
+$moduleInfo = Get-Content -LiteralPath $moduleInfoPath -Raw
+$manifestVersion = [regex]::Match($moduleInfo, '"Version"\s*:\s*"([^\"]+)"').Groups[1].Value
+$binaryVersion = (Get-Item -LiteralPath $pluginBinary).VersionInfo.ProductVersion
+if ($manifestVersion -ne $expectedPluginVersion -or $binaryVersion -ne $expectedPluginVersion) {
+    throw "Packaged version mismatch: expected $expectedPluginVersion; manifest $manifestVersion; binary $binaryVersion"
 }
 
 $zip = Get-Item -LiteralPath $zipPath
