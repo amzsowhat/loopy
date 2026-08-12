@@ -349,4 +349,3 @@ SignalSnapshot analyseSourceAndOutput(const juce::AudioBuffer<float>& source,
     return result;
 }
 }
-

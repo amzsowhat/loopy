@@ -31,4 +31,3 @@ GitHub Actions are not used while the account quota is exhausted. Builds and tes
 ## Licensing
 
 JUCE is dual-licensed. Verify the current JUCE terms before selling proprietary binaries.
-

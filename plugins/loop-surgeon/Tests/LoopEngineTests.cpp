@@ -128,4 +128,3 @@ int main()
     std::cout << "Loop Surgeon tests passed\n";
     return 0;
 }
-

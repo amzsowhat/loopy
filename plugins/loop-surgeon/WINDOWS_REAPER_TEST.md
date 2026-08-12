@@ -11,4 +11,3 @@
 
 Texture Loop should be judged as SFX material construction. Report obvious source-event repetition,
 clicks, bursts, tonal/electronic artifacts, stereo collapse or failure to preserve material identity.
-

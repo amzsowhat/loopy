@@ -15,4 +15,3 @@
 3. Validate VST3 in current REAPER and other target hosts on Windows and Apple Silicon macOS.
 4. Add release signing, installer/uninstaller, licence compliance and a reproducible local release
    process. GitHub Actions remain manual and must not be triggered while quota is unavailable.
-

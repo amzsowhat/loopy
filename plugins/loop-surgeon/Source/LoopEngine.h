@@ -182,4 +182,3 @@ private:
     std::atomic<uint64_t> sourceRevision { 0 };
     std::atomic<int> activeTextureVariant { -1 };
 };
-

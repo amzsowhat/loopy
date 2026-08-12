@@ -37,4 +37,3 @@ struct SignalSnapshot
     const juce::AudioBuffer<float>& output,
     double sampleRate);
 }
-

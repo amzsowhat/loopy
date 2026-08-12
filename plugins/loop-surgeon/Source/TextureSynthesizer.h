@@ -45,4 +45,3 @@ public:
                                              double sampleRate,
                                              TextureSynthesisSettings settings);
 };
-

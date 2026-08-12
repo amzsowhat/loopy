@@ -19,4 +19,3 @@ reverse playback. Flow, Drift and Fracture are traversal scales, not material cl
 - No subjective score, PASS label or export gate may claim that an output is good.
 - A sale build requires broad human listening, host validation, signing, installation, licensing and
   regression testing. A successful compile or numeric test is not commercial-quality evidence.
-

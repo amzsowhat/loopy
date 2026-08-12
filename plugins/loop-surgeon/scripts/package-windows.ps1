@@ -53,4 +53,3 @@ if (-not (Test-Path -LiteralPath $pluginBinary -PathType Leaf)) {
 $zip = Get-Item -LiteralPath $zipPath
 Write-Output "Package: $($zip.FullName)"
 Write-Output "Bytes:   $($zip.Length)"
-

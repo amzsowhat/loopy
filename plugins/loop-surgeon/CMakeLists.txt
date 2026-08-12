@@ -88,4 +88,3 @@ if(SOUND_VST_BUILD_TESTS)
     add_test(NAME LoopSurgeon.Engine COMMAND LoopSurgeonTests)
 
 endif()
-

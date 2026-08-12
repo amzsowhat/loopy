@@ -70,4 +70,3 @@ public:
         int endSample,
         int repairOverlapSamples = 0);
 };
-

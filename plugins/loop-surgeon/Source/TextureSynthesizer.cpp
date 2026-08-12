@@ -372,4 +372,3 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
         result.audio, -1.0f);
     return result;
 }
-

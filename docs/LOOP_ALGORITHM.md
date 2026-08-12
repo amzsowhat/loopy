@@ -25,4 +25,3 @@ order possible joins. It is not exposed as a quality rating and never blocks exp
 The mode does not synthesize white noise, randomize FFT phase, add frequency-delay motion, quantize
 to tempo, pitch-shift, stretch or reverse the source. It deliberately targets non-rhythmic SFX
 material flow rather than electronic or EDM-style processing.
-

@@ -16,4 +16,3 @@
 - Apple Silicon build, signing, installer, licence and commercial release validation.
 
 The current package is a local test build, not a sale-ready binary.
-
