@@ -6,6 +6,8 @@
 3. Insert Loop Surgeon, load audio and set Source In/Out.
 4. Test **Rotate & Repair** with Selection and an explicit Final Length.
 5. Test **Texture Loop** with Flow first, choose Output Length, then adjust Stability and Transform.
+   A/B Crush at 0%, 50% and 100%; confirm it reduces small ADSR pulses without clicks, pumping,
+   stereo movement or loss of the material.
 6. Use Preview/Stop, Source/Generated, New Variation, Save WAV and Drag Loop to DAW.
 7. Save and reopen the REAPER project. Confirm source, range, selected mode and generated loop return.
 

@@ -1,5 +1,5 @@
 juce_add_plugin(LoopSurgeon
-    VERSION 0.10.0
+    VERSION 0.11.0
     COMPANY_NAME "Sound VST Project"
     BUNDLE_ID com.amzsowhat.loopsurgeon
     PLUGIN_MANUFACTURER_CODE SVst

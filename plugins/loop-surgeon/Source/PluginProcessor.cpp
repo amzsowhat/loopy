@@ -89,6 +89,8 @@ void LoopSurgeonAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
         parameters.getRawParameterValue("textureDuration")->load());
     loopEngine.setTextureVariation(parameters.getRawParameterValue("variation")->load());
     loopEngine.setTextureFlatten(parameters.getRawParameterValue("flatten")->load());
+    loopEngine.setTextureDynamicsCrush(
+        parameters.getRawParameterValue("textureCrush")->load());
     loopEngine.setTextureSourceMatch(parameters.getRawParameterValue("sourceMatch")->load());
     loopEngine.setTextureStructure(static_cast<TextureStructure>(juce::jlimit(
         0, 2, juce::roundToInt(parameters.getRawParameterValue("textureStructure")->load()))));
@@ -117,6 +119,8 @@ void LoopSurgeonAudioProcessor::syncGenerationControlsForAnalysis() noexcept
         parameters.getRawParameterValue("variation")->load());
     loopEngine.setTextureFlatten(
         parameters.getRawParameterValue("flatten")->load());
+    loopEngine.setTextureDynamicsCrush(
+        parameters.getRawParameterValue("textureCrush")->load());
     loopEngine.setTextureSourceMatch(
         parameters.getRawParameterValue("sourceMatch")->load());
     loopEngine.setTextureStructure(static_cast<TextureStructure>(juce::jlimit(
@@ -319,6 +323,17 @@ LoopSurgeonAudioProcessor::createParameterLayout()
         "Texture Stability",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
         0.72f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction(
+            [] (const float value, int)
+            {
+                return juce::String(juce::roundToInt(value * 100.0f)) + "%";
+            })));
+
+    layout.push_back(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "textureCrush", 1 },
+        "Texture Dynamic Crush",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
+        0.0f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(
             [] (const float value, int)
             {

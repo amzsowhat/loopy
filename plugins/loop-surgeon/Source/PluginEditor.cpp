@@ -196,6 +196,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     configureSlider(durationSlider, durationLabel, "OUTPUT LENGTH");
     configureSlider(repairDurationSlider, repairDurationLabel, "FINAL LENGTH");
     configureSlider(flattenSlider, flattenLabel, "STABILITY");
+    configureSlider(dynamicsCrushSlider, dynamicsCrushLabel, "CRUSH");
     configureSlider(sourceMatchSlider, sourceMatchLabel, "TRANSFORM");
     crossfadeSlider.setTooltip(
         "Maximum overlap used to repair the source's original end-to-start seam");
@@ -205,6 +206,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         "Exact R&R output length inside Source In/Out; Selection keeps the complete range");
     flattenSlider.setTooltip(
         "Controls how strongly macro dynamics and one-shot movement are stabilised");
+    dynamicsCrushSlider.setTooltip(
+        "Flattens smaller local ADSR rises and dips after the texture is built; 0% preserves the current result exactly");
     sourceMatchSlider.setTooltip(
         "Transformation depth: increases non-linear source traversal while retaining the selected material's waveform identity");
     auto& parameters = processor.getParameterState();
@@ -217,6 +220,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "repairDuration", repairDurationSlider);
     flattenAttachment = std::make_unique<SliderAttachment>(
         parameters, "flatten", flattenSlider);
+    dynamicsCrushAttachment = std::make_unique<SliderAttachment>(
+        parameters, "textureCrush", dynamicsCrushSlider);
     sourceMatchAttachment = std::make_unique<SliderAttachment>(
         parameters, "sourceMatch", sourceMatchSlider);
 
@@ -255,8 +260,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "textureStructure", textureStructureBox);
 
     setResizable(true, true);
-    setResizeLimits(920, 760, 1320, 940);
-    setSize(1040, 800);
+    setResizeLimits(920, 820, 1320, 1000);
+    setSize(1040, 850);
     updatePrimaryAction();
     startTimerHz(12);
 }
@@ -318,7 +323,7 @@ void LoopSurgeonAudioProcessorEditor::resized()
     waveformCard = area.removeFromTop(244);
     area.removeFromTop(10);
 
-    auto bottom = area.removeFromTop(257);
+    auto bottom = area.removeFromTop(298);
     const auto leftWidth = (bottom.getWidth() - 10) / 2;
     auditionCard = bottom.removeFromLeft(leftWidth);
     bottom.removeFromLeft(10);
@@ -388,6 +393,10 @@ void LoopSurgeonAudioProcessorEditor::resized()
     auto flattenRow = finish.removeFromTop(36);
     flattenLabel.setBounds(flattenRow.removeFromLeft(112));
     flattenSlider.setBounds(flattenRow);
+    finish.removeFromTop(5);
+    auto crushRow = finish.removeFromTop(36);
+    dynamicsCrushLabel.setBounds(crushRow.removeFromLeft(112));
+    dynamicsCrushSlider.setBounds(crushRow);
     finish.removeFromTop(5);
     auto matchRow = finish.removeFromTop(36);
     sourceMatchLabel.setBounds(matchRow.removeFromLeft(112));
@@ -553,6 +562,8 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     repairDurationSlider.setVisible(directModeSelected);
     flattenLabel.setVisible(!directModeSelected);
     flattenSlider.setVisible(!directModeSelected);
+    dynamicsCrushLabel.setVisible(!directModeSelected);
+    dynamicsCrushSlider.setVisible(!directModeSelected);
     sourceMatchLabel.setVisible(!directModeSelected);
     sourceMatchSlider.setVisible(!directModeSelected);
     textureStructureLabel.setVisible(!directModeSelected);

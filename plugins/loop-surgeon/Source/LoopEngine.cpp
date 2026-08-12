@@ -112,6 +112,12 @@ void LoopEngine::setTextureFlatten(const float amount) noexcept
                          std::memory_order_relaxed);
 }
 
+void LoopEngine::setTextureDynamicsCrush(const float amount) noexcept
+{
+    textureDynamicsCrush.store(juce::jlimit(0.0f, 1.0f, amount),
+                               std::memory_order_relaxed);
+}
+
 void LoopEngine::setTextureSourceMatch(const float amount) noexcept
 {
     textureSourceMatch.store(juce::jlimit(0.0f, 1.0f, amount),
@@ -787,4 +793,3 @@ void LoopEngine::stopAnalysisThread()
         analysisThread.join();
     analysisPending.store(false);
 }
-

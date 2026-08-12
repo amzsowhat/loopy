@@ -6,6 +6,7 @@
 #include <cmath>
 #include <iostream>
 #include <thread>
+#include <vector>
 
 namespace
 {
@@ -27,6 +28,37 @@ bool waitForReady(LoopEngine& engine)
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
     return false;
+}
+
+double localLevelVariation(const juce::AudioBuffer<float>& audio,
+                           const int window,
+                           const int hop)
+{
+    std::vector<double> levels;
+    for (int start = 0; start + window <= audio.getNumSamples(); start += hop)
+    {
+        double energy = 0.0;
+        auto count = 0;
+        for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+            for (int sample = 0; sample < window; ++sample)
+            {
+                const auto value = static_cast<double>(audio.getSample(channel, start + sample));
+                energy += value * value;
+                ++count;
+            }
+        levels.push_back(std::sqrt(energy / static_cast<double>(juce::jmax(1, count))));
+    }
+    if (levels.empty())
+        return 0.0;
+    auto mean = 0.0;
+    for (const auto level : levels)
+        mean += level;
+    mean /= static_cast<double>(levels.size());
+    auto variance = 0.0;
+    for (const auto level : levels)
+        variance += (level - mean) * (level - mean);
+    return std::sqrt(variance / static_cast<double>(levels.size()))
+           / juce::jmax(1.0e-9, mean);
 }
 }
 
@@ -108,10 +140,39 @@ int main()
     passed &= expect(deterministic,
                      "Texture construction must be deterministic for a stored seed");
 
+    juce::AudioBuffer<float> dynamicsProbe(2, 16000);
+    for (int sample = 0; sample < dynamicsProbe.getNumSamples(); ++sample)
+    {
+        const auto time = static_cast<float>(sample) / static_cast<float>(sampleRate);
+        const auto envelope = 0.18f + 0.82f * std::pow(
+            0.5f + 0.5f * std::sin(juce::MathConstants<float>::twoPi * 2.7f * time), 2.0f);
+        const auto carrier = 0.58f * std::sin(
+            juce::MathConstants<float>::twoPi * 173.0f * time)
+            + 0.24f * std::sin(juce::MathConstants<float>::twoPi * 311.0f * time);
+        dynamicsProbe.setSample(0, sample, envelope * carrier);
+        dynamicsProbe.setSample(1, sample, envelope * 0.94f * carrier);
+    }
+    auto uncrushedSettings = textureSettings;
+    uncrushedSettings.flatten = 0.0f;
+    uncrushedSettings.dynamicsCrush = 0.0f;
+    const auto uncrushed = TextureSynthesizer::synthesize(
+        dynamicsProbe, sampleRate, uncrushedSettings);
+    auto crushedSettings = uncrushedSettings;
+    crushedSettings.dynamicsCrush = 1.0f;
+    const auto crushed = TextureSynthesizer::synthesize(
+        dynamicsProbe, sampleRate, crushedSettings);
+    passed &= expect(crushed.audio.getNumSamples() == uncrushed.audio.getNumSamples()
+                         && crushed.containsOnlyFiniteSamples,
+                     "Dynamic Crush must preserve exact length and numeric safety");
+    passed &= expect(localLevelVariation(crushed.audio, 320, 80)
+                         < localLevelVariation(uncrushed.audio, 320, 80),
+                     "Dynamic Crush should reduce linked local-envelope variation");
+
     LoopEngine textureEngine;
     textureEngine.prepare(sampleRate, 64, 2);
     textureEngine.setGenerationMode(LoopEngine::GenerationMode::textureLoop);
     textureEngine.setTextureDurationSeconds(4.0f);
+    textureEngine.setTextureDynamicsCrush(0.8f);
     textureEngine.submitSource(repeated, "source-probe.wav");
     passed &= expect(textureEngine.reanalyzeSourceRange(0.1f, 0.9f),
                      "Texture mode should accept Source In/Out");

@@ -7,12 +7,15 @@
   and DAW-state recall.
 - Texture Loop uses circular material-flow construction from the selected waveform. The prior
   spectral/noise resynthesis and separate spectral-delay experiment are removed.
+- Texture Crush is a post-construction, circular and stereo-linked local-envelope control. Its
+  default 0% preserves the approved 0.10 output exactly.
 - Spectrum, phase plot, stereo correlation, position and true peak are diagnostics, not ratings.
 
 ## Not yet verified
 
 - Subjective usefulness and material identity across a broad listening corpus.
 - Current REAPER host behavior with the new Texture algorithm beyond local engine tests.
+- Subjective Crush behaviour on real SFX, especially pumping and excessive material flattening.
 - Apple Silicon build, signing, installer, licence and commercial release validation.
 
 The current package is a local test build, not a sale-ready binary.

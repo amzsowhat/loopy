@@ -41,6 +41,7 @@ public:
     void setTextureDurationSeconds(float seconds) noexcept;
     void setTextureVariation(float amount) noexcept;
     void setTextureFlatten(float amount) noexcept;
+    void setTextureDynamicsCrush(float amount) noexcept;
     void setTextureSourceMatch(float amount) noexcept;
     void setTextureStructure(TextureStructure structure) noexcept
     {
@@ -138,6 +139,7 @@ private:
     std::atomic<float> textureDurationSeconds { 24.0f };
     std::atomic<float> textureVariation { 0.72f };
     std::atomic<float> textureFlatten { 0.72f };
+    std::atomic<float> textureDynamicsCrush { 0.0f };
     std::atomic<float> textureSourceMatch { 0.85f };
     std::atomic<TextureStructure> textureStructure { TextureStructure::automatic };
     std::atomic<uint32_t> textureSeed { 0x4c535501u };

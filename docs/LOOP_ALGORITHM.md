@@ -20,7 +20,9 @@ order possible joins. It is not exposed as a quality rating and never blocks exp
    avoidance and Transform-controlled departure from the original timeline.
 5. Place every region into an exact-length circular buffer with a square-root Hann overlap. Regions
    crossing the end wrap through the beginning, so the loop boundary is part of the construction.
-6. Apply bounded channel-energy balancing, DC/non-finite repair and a -1 dBTP ceiling.
+6. Optionally apply Crush: two circular, stereo-linked RMS-envelope correction scales reduce smaller
+   ADSR pulses. At 0% this stage is an exact bypass.
+7. Apply bounded channel-energy balancing, DC/non-finite repair and a -1 dBTP ceiling.
 
 The mode does not synthesize white noise, randomize FFT phase, add frequency-delay motion, quantize
 to tempo, pitch-shift, stretch or reverse the source. It deliberately targets non-rhythmic SFX

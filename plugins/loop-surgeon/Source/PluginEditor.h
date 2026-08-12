@@ -133,6 +133,7 @@ private:
     juce::Slider durationSlider;
     juce::Slider repairDurationSlider;
     juce::Slider flattenSlider;
+    juce::Slider dynamicsCrushSlider;
     juce::Slider sourceMatchSlider;
     juce::ComboBox generationModeBox;
     juce::ComboBox textureStructureBox;
@@ -141,6 +142,7 @@ private:
     juce::Label durationLabel;
     juce::Label repairDurationLabel;
     juce::Label flattenLabel;
+    juce::Label dynamicsCrushLabel;
     juce::Label sourceMatchLabel;
     juce::Label modeLabel;
     juce::Label textureStructureLabel;
@@ -149,6 +151,7 @@ private:
     std::unique_ptr<SliderAttachment> durationAttachment;
     std::unique_ptr<SliderAttachment> repairDurationAttachment;
     std::unique_ptr<SliderAttachment> flattenAttachment;
+    std::unique_ptr<SliderAttachment> dynamicsCrushAttachment;
     std::unique_ptr<SliderAttachment> sourceMatchAttachment;
     std::unique_ptr<ComboBoxAttachment> modeAttachment;
     std::unique_ptr<ComboBoxAttachment> textureStructureAttachment;

@@ -226,6 +226,122 @@ void balanceChannelEnergy(juce::AudioBuffer<float>& audio, const float amount)
         audio.applyGain(1, 0, audio.getNumSamples(),
             std::pow(juce::jlimit(0.72f, 1.38f, target / right), amount));
 }
+
+void flattenCircularEnvelope(juce::AudioBuffer<float>& audio,
+                             const double sampleRate,
+                             const float amount,
+                             const double windowSeconds)
+{
+    const auto samples = audio.getNumSamples();
+    const auto channels = audio.getNumChannels();
+    if (samples < 32 || channels <= 0 || amount <= 0.0f)
+        return;
+
+    const auto window = juce::jlimit(16, samples,
+        juce::roundToInt(sampleRate * windowSeconds));
+    const auto hop = juce::jmax(8, window / 5);
+    const auto frames = juce::jmax(2, (samples + hop - 1) / hop);
+    std::vector<float> levels(static_cast<size_t>(frames), 0.0f);
+    auto maximumLevel = 0.0f;
+
+    const auto wrap = [samples] (int index) noexcept
+    {
+        index %= samples;
+        return index < 0 ? index + samples : index;
+    };
+    const auto linkedPower = [&audio, channels] (const int index) noexcept
+    {
+        double power = 0.0;
+        for (int channel = 0; channel < channels; ++channel)
+        {
+            const auto value = static_cast<double>(audio.getSample(channel, index));
+            power += value * value;
+        }
+        return power / static_cast<double>(channels);
+    };
+
+    auto windowStart = wrap(-window / 2);
+    auto energy = 0.0;
+    for (int offset = 0; offset < window; ++offset)
+        energy += linkedPower(wrap(windowStart + offset));
+
+    for (int frame = 0; frame < frames; ++frame)
+    {
+        if (frame > 0)
+        {
+            const auto advance = juce::jmin(hop, samples - (frame - 1) * hop);
+            for (int offset = 0; offset < advance; ++offset)
+            {
+                energy -= linkedPower(windowStart);
+                energy += linkedPower(wrap(windowStart + window));
+                windowStart = wrap(windowStart + 1);
+            }
+        }
+        const auto level = static_cast<float>(std::sqrt(
+            juce::jmax(0.0, energy) / static_cast<double>(window)));
+        levels[static_cast<size_t>(frame)] = level;
+        maximumLevel = juce::jmax(maximumLevel, level);
+    }
+
+    std::vector<float> activeLevels;
+    activeLevels.reserve(levels.size());
+    for (const auto level : levels)
+        if (level >= maximumLevel * 0.025f)
+            activeLevels.push_back(level);
+    const auto target = juce::jmax(1.0e-7f,
+        activeLevels.empty() ? median(levels) : median(activeLevels));
+
+    std::vector<float> gains(levels.size(), 1.0f);
+    for (size_t frame = 0; frame < levels.size(); ++frame)
+    {
+        const auto protectedLevel = juce::jmax(levels[frame], target * 0.14f);
+        const auto requested = std::pow(target / protectedLevel, amount);
+        gains[frame] = juce::jlimit(0.42f, 2.4f, requested);
+    }
+
+    std::vector<float> smoothed(gains.size(), 1.0f);
+    for (int pass = 0; pass < 3; ++pass)
+    {
+        for (size_t frame = 0; frame < gains.size(); ++frame)
+        {
+            const auto previous = (frame + gains.size() - 1u) % gains.size();
+            const auto next = (frame + 1u) % gains.size();
+            smoothed[frame] = 0.25f * gains[previous]
+                              + 0.50f * gains[frame]
+                              + 0.25f * gains[next];
+        }
+        gains.swap(smoothed);
+    }
+
+    for (int sample = 0; sample < samples; ++sample)
+    {
+        const auto first = juce::jmin(frames - 1, sample / hop);
+        const auto second = (first + 1) % frames;
+        const auto frameStart = first * hop;
+        const auto span = first == frames - 1 ? samples - frameStart : hop;
+        const auto fraction = static_cast<float>(sample - frameStart)
+                              / static_cast<float>(juce::jmax(1, span));
+        const auto gain = gains[static_cast<size_t>(first)]
+                          + fraction * (gains[static_cast<size_t>(second)]
+                                        - gains[static_cast<size_t>(first)]);
+        for (int channel = 0; channel < channels; ++channel)
+            audio.setSample(channel, sample, audio.getSample(channel, sample) * gain);
+    }
+}
+
+void applyDynamicsCrush(juce::AudioBuffer<float>& audio,
+                        const double sampleRate,
+                        const float amount)
+{
+    const auto crush = juce::jlimit(0.0f, 1.0f, amount);
+    if (crush <= 0.0f)
+        return;
+
+    // Two linked, circular time scales reduce short attack/release pulses without changing
+    // stereo image or introducing a privileged loop boundary.
+    flattenCircularEnvelope(audio, sampleRate, 0.72f * crush, 0.085);
+    flattenCircularEnvelope(audio, sampleRate, 0.46f * crush, 0.310);
+}
 }
 
 TextureSynthesisResult TextureSynthesizer::synthesize(
@@ -360,6 +476,7 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
                 result.audio.getSample(channel, sample) / normalizer);
     }
 
+    applyDynamicsCrush(result.audio, sampleRate, settings.dynamicsCrush);
     balanceChannelEnergy(result.audio, 0.45f * stability * transform);
     const auto sourceRms = SignalDiagnostics::calculateRms(source);
     const auto outputRms = SignalDiagnostics::calculateRms(result.audio);

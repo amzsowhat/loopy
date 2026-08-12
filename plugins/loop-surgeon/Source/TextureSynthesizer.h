@@ -20,6 +20,9 @@ struct TextureSynthesisSettings
     float variation = 0.72f;
     // 0 keeps the source's macro movement, 1 removes more of its long envelope.
     float flatten = 0.72f;
+    // Post-construction local-envelope flattening. Zero is an exact bypass so existing
+    // sessions and the approved 0.10 sound remain unchanged.
+    float dynamicsCrush = 0.0f;
     // Transformation depth. The legacy field name remains stable for DAW state compatibility.
     float sourceMatch = 0.85f;
     TextureStructure structure = TextureStructure::automatic;

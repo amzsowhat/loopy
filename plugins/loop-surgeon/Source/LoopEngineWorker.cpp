@@ -118,6 +118,7 @@ void LoopEngine::analysisLoop()
                 std::memory_order_relaxed);
             settings.variation = textureVariation.load(std::memory_order_relaxed);
             settings.flatten = textureFlatten.load(std::memory_order_relaxed);
+            settings.dynamicsCrush = textureDynamicsCrush.load(std::memory_order_relaxed);
             settings.sourceMatch = textureSourceMatch.load(std::memory_order_relaxed);
             settings.structure = textureStructure.load(std::memory_order_relaxed);
             const auto baseSeed = textureSeed.load(std::memory_order_relaxed);
