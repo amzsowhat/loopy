@@ -19,14 +19,18 @@ juce_add_plugin(LoopSurgeon
 target_sources(LoopSurgeon
     PRIVATE
         Source/LoopEngine.cpp
+        Source/LoopEngineWorker.cpp
         Source/LoopEngine.h
         Source/LoopAnalyzer.cpp
+        Source/LoopAnalyzerInternal.cpp
+        Source/LoopAnalyzerInternal.h
         Source/LoopAnalyzer.h
         Source/SignalDiagnostics.cpp
         Source/SignalDiagnostics.h
         Source/TextureSynthesizer.cpp
         Source/TextureSynthesizer.h
         Source/PluginEditor.cpp
+        Source/PluginEditorComponents.cpp
         Source/PluginEditor.h
         Source/PluginProcessor.cpp
         Source/PluginProcessor.h
@@ -60,8 +64,11 @@ if(SOUND_VST_BUILD_TESTS)
     target_sources(LoopSurgeonTests
         PRIVATE
             Source/LoopEngine.cpp
+            Source/LoopEngineWorker.cpp
             Source/LoopEngine.h
             Source/LoopAnalyzer.cpp
+            Source/LoopAnalyzerInternal.cpp
+            Source/LoopAnalyzerInternal.h
             Source/LoopAnalyzer.h
             Source/SignalDiagnostics.cpp
             Source/SignalDiagnostics.h

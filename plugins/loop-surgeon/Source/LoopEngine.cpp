@@ -386,4 +386,405 @@ void LoopEngine::process(juce::AudioBuffer<float>& buffer, const float wetMix) n
                 continue;
             }
 
-            state.store(State::capturing, std÷Žt¶‰žËkºwµç@€€€€€€€€€€€€…¹‘¥‘…Ñ”¹ÍÑ…ÉÑM…µÁ±”€¬ô¥µÁ½ÉÑ•‘=™™Í•Ðì(€€€€€€€€€€€€€€€…¹‘¥‘…Ñ”¹•¹‘M…µÁ±”€¬ô¥µÁ½ÉÑ•‘=™™Í•Ðì(€€€€€€€€€€€€€€€¥˜€¡…¹‘¥‘…Ñ”¹É½Ñ…Ñ¥½¹M…µÁ±”€øô€À¤(€€€€€€€€€€€€€€€€€€€…¹‘¥‘…Ñ”¹É½Ñ…Ñ¥½¹M…µÁ±”€¬ô¥µÁ½ÉÑ•‘=™™Í•Ðì(€€€€€€€€€€€ô(€€€€€€€€€€€…¹‘¥‘…Ñ•I•Ù¥Í¥½¸¹™•Ñ¡}…‘ Ä°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€€€€€€€€€¥˜€¡¥µÁ½ÉÑ•‘I•Á±…•ÍÕÉÉ•¹ÑM½ÕÉ”¤(€€€€€€€€€€€€€€€Í½ÕÉ•I•Ù¥Í¥½¸¹™•Ñ¡}…‘ Ä°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€€€€€ô((€€€€€€€¥˜€¡¹•áÑM¹…ÁÍ¡½Ð¹Ù…±¥¤(€€€€€€€ì(€€€€€€€€€€€½¹ÍÐÍÑèéÍ½Á•‘}±½¬Í¹…ÁÍ¡½Ñ1½¬¡Í¥¹…±M¹…ÁÍ¡½Ñ5ÕÑ•à¤ì(€€€€€€€€€€€Í¥¹…±M¹…ÁÍ¡½Ð€ô¹•áÑM¹…ÁÍ¡½Ðì(€€€€€€€ô((€€€€€€€…ÁÑÕÉ•‘M…µÁ±•½Õ¹Ð¹ÍÑ½É”¡Í•±•Ñ•‘M…µÁ±•Ì¤ì(€€€€€€€•™™•Ñ¥Ù•É½ÍÍ™…‘•M…µÁ±•Ì¹ÍÑ½É” (€€€€€€€€€€€É•ÍÕ±Ð¹É½Ñ…Ñ¥½¹M…µÁ±”€øô€À€ü€À€èÉ•ÍÕ±Ð¹É•Á…¥É=Ù•É±…ÁM…µÁ±•Ì¤ì(€€€€€€€Á±…å‰…­A½Í¥Ñ¥½¸€ô•™™•Ñ¥Ù•É½ÍÍ™…‘•M…µÁ±•Ì¹±½…¡ÍÑèéµ•µ½Éå}½É‘•É}É•±…á•¤ì(€€€€€€€ÑÉÕ•A•…­‰ÑÀ¹ÍÑ½É”¡Í•±•Ñ•‘QÉÕ•A•…¬¤ì(€€€€€€€ÁÉ•™•É1¥¹•…ÉI•Á…¥É…‘”¹ÍÑ½É”¡É•ÍÕ±Ð¹ÁÉ•™•É1¥¹•…ÉI•Á…¥É…‘”¤ì(€€€€€€€±…ÍÑUÍ•‘•¹•É…Ñ¥½¹5½‘”¹ÍÑ½É”¡•¹•É…Ñ¥½¹5½‘”èéÉ½Ñ…Ñ•I•Á…¥È¤ì(€€€€€€€Í•±•Ñ•‘MÑ…ÉÑM…µÁ±”¹ÍÑ½É”¡É•ÍÕ±Ð¹ÍÑ…ÉÑM…µÁ±”€¬¥µÁ½ÉÑ•‘=™™Í•Ð¤ì(€€€€€€€Í•±•Ñ•‘¹‘M…µÁ±”¹ÍÑ½É”¡É•ÍÕ±Ð¹•¹‘M…µÁ±”(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€´€¡É•ÍÕ±Ð¹É½Ñ…Ñ¥½¹M…µÁ±”€ð€À(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€üÉ•ÍÕ±Ð¹É•Á…¥É=Ù•É±…ÁM…µÁ±•Ì€è€À¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¬¥µÁ½ÉÑ•‘=™™Í•Ð¤ì(€€€€€€€Í•±•Ñ•‘I½Ñ…Ñ¥½¹M…µÁ±”¹ÍÑ½É”¡É•ÍÕ±Ð¹É½Ñ…Ñ¥½¹M…µÁ±”€øô€À(€€€€€€€€€€€€üÉ•ÍÕ±Ð¹É½Ñ…Ñ¥½¹M…µÁ±”€¬¥µÁ½ÉÑ•‘=™™Í•Ð€è€´Ä¤ì(€€€€€€€Í•±•Ñ•‘M½ÕÉ•M…µÁ±•Ì¹ÍÑ½É”¡¥µÁ½ÉÑ•‘Õ±±M½ÕÉ•M…µÁ±•Ì¤ì(€€€€€€€…¹…±åÍ¥ÍI…¹•MÑ…ÉÑM…µÁ±”¹ÍÑ½É”¡¥µÁ½ÉÑ•‘=™™Í•Ð¤ì(€€€€€€€…¹…±åÍ¥ÍI…¹•¹‘M…µÁ±”¹ÍÑ½É”¡¥µÁ½ÉÑ•‘=™™Í•Ð€¬Í½ÕÉ•M…µÁ±•½Õ¹Ð¤ì(€€€€€€€Í½ÕÉ•A±…å‰…­A½Í¥Ñ¥½¸€ô¥µÁ½ÉÑ•‘=™™Í•Ðì(€€€€€€€ÍÑ…Ñ”¹ÍÑ½É”¡MÑ…Ñ”èéÉ•…‘ä°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€€€€€…¹…±åÍ¥ÍAÉ½É•ÍÌ¹ÍÑ½É” Ä¸Á˜°ÍÑèéµ•µ½Éå}½É‘•É}É•±…á•¤ì(€€€ô)ô()Ù½¥1½½Á¹¥¹”èéÉ•Í•Ñ¥…¹½ÍÑ¥Ì ¤¹½•á•ÁÐ)ì(€€€ÑÉÕ•A•…­‰ÑÀ¹ÍÑ½É” ´ÄÀÀ¸Á˜¤ì(€€€ÁÉ•™•É1¥¹•…ÉI•Á…¥É…‘”¹ÍÑ½É”¡™…±Í”¤ì)ô()©Õ”èé5•µ½Éå	±½¬1½½Á¹¥¹”èéÉ•…Ñ•1½½ÁMÑ…Ñ” ¤½¹ÍÐ)ì(€€€©Õ”èé5•µ½Éå	±½¬É•ÍÕ±Ðì(€€€½¹ÍÐÍÑèéÍ½Á•‘}±½¬±½¬¡Í½ÕÉ•…Ñ…5ÕÑ•à°±½½Á…Ñ…5ÕÑ•à¤ì(€€€¥˜€¡±½½Á	Õ™™•È¹•Ñ9Õµ¡…¹¹•±Ì ¤€ôô€Àñð±½½Á	Õ™™•È¹•Ñ9ÕµM…µÁ±•Ì ¤€ôô€À¤(€€€€€€€É•ÑÕÉ¸É•ÍÕ±Ðì((€€€©Õ”èé5•µ½Éå=ÕÑÁÕÑMÑÉ•…´‘•ÍÑ¥¹…Ñ¥½¸¡É•ÍÕ±Ð°™…±Í”¤ì(€€€ì(€€€€€€€©Õ”èéi%A½µÁÉ•ÍÍ½É=ÕÑÁÕÑMÑÉ•…´½µÁÉ•ÍÍ• ™‘•ÍÑ¥¹…Ñ¥½¸°€Ø°™…±Í”¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡ÍÑ…Ñ•5…¥Œ¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡ÍÑ…Ñ•Y•ÉÍ¥½¸¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•½Õ‰±”¡Í…µÁ±•I…Ñ”¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡ÍÑ…Ñ¥}…ÍÐñ¥¹Ðø¡±…ÍÑUÍ•‘•¹•É…Ñ¥½¹5½‘”¹±½… ¤¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡±½½Á	Õ™™•È¹•Ñ9Õµ¡…¹¹•±Ì ¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡±½½Á	Õ™™•È¹•Ñ9ÕµM…µÁ±•Ì ¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡ÁÉ•™•É1¥¹•…ÉI•Á…¥É…‘”¹±½… ¤€ü€Ä€è€À¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•±½…Ð¡ÑÉÕ•A•…­‰ÑÀ¹±½… ¤¤ì(€€€€€€€™½È€¡¥¹Ð¡…¹¹•°€ô€Àì¡…¹¹•°€ð±½½Á	Õ™™•È¹•Ñ9Õµ¡…¹¹•±Ì ¤ì€¬­¡…¹¹•°¤(€€€€€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ”¡±½½Á	Õ™™•È¹•ÑI•…‘A½¥¹Ñ•È¡¡…¹¹•°¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ÍÑ…Ñ¥}…ÍÐñÍ¥é•}Ðø¡±½½Á	Õ™™•È¹•Ñ9ÕµM…µÁ±•Ì ¤¤€¨Í¥é•½˜¡™±½…Ð¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•MÑÉ¥¹œ¡ÕÉÉ•¹ÑM½ÕÉ•9…µ”¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡ÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È¹•Ñ9Õµ¡…¹¹•±Ì ¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡ÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È¹•Ñ9ÕµM…µÁ±•Ì ¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡Í•±•Ñ•‘MÑ…ÉÑM…µÁ±”¹±½… ¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡Í•±•Ñ•‘¹‘M…µÁ±”¹±½… ¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡Í•±•Ñ•‘I½Ñ…Ñ¥½¹M…µÁ±”¹±½… ¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡Í•±•Ñ•‘M½ÕÉ•M…µÁ±•Ì¹±½… ¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡…¹…±åÍ¥ÍI…¹•MÑ…ÉÑM…µÁ±”¹±½… ¤¤ì(€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ•%¹Ð¡…¹…±åÍ¥ÍI…¹•¹‘M…µÁ±”¹±½… ¤¤ì(€€€€€€€™½È€¡¥¹Ð¡…¹¹•°€ô€Àì¡…¹¹•°€ðÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È¹•Ñ9Õµ¡…¹¹•±Ì ¤ì€¬­¡…¹¹•°¤(€€€€€€€€€€€½µÁÉ•ÍÍ•¹ÝÉ¥Ñ”¡ÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È¹•ÑI•…‘A½¥¹Ñ•È¡¡…¹¹•°¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€ÍÑ…Ñ¥}…ÍÐñÍ¥é•}Ðø¡ÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È¹•Ñ9ÕµM…µÁ±•Ì ¤¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¨Í¥é•½˜¡™±½…Ð¤¤ì(€€€ô(€€€É•ÑÕÉ¸É•ÍÕ±Ðì)ô()‰½½°1½½Á¹¥¹”èéÉ•ÍÑ½É•1½½ÁMÑ…Ñ”¡½¹ÍÐÙ½¥¨‘…Ñ„°½¹ÍÐÍ¥é•}ÐÍ¥é”¤)ì(€€€¥˜€¡‘…Ñ„€ôô¹Õ±±ÁÑÈñðÍ¥é”€ôô€À¤(€€€€€€€É•ÑÕÉ¸™…±Í”ì((€€€©Õ”èé5•µ½Éå%¹ÁÕÑMÑÉ•…´Í½ÕÉ”¡‘…Ñ„°Í¥é”°™…±Í”¤ì(€€€©Õ”èéi%A•½µÁÉ•ÍÍ½É%¹ÁÕÑMÑÉ•…´‘•½µÁÉ•ÍÍ• ™Í½ÕÉ”°™…±Í”¤ì(€€€¥˜€¡‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤€„ôÍÑ…Ñ•5…¥Œ¤(€€€€€€€É•ÑÕÉ¸™…±Í”ì((€€€½¹ÍÐ…ÕÑ¼Í…Ù•‘Y•ÉÍ¥½¸€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€¥˜€¡Í…Ù•‘Y•ÉÍ¥½¸€ð€ÄñðÍ…Ù•‘Y•ÉÍ¥½¸€øÍÑ…Ñ•Y•ÉÍ¥½¸¤(€€€€€€€É•ÑÕÉ¸™…±Í”ì(€€€½¹ÍÐ…ÕÑ¼Í…Ù•‘M…µÁ±•I…Ñ”€ô‘•½µÁÉ•ÍÍ•¹É•…‘½Õ‰±” ¤ì(€€€…ÕÑ¼Í…Ù•‘5½‘”€ô•¹•É…Ñ¥½¹5½‘”èéÉ½Ñ…Ñ•I•Á…¥Èì(€€€¥˜€¡Í…Ù•‘Y•ÉÍ¥½¸€øô€È¤(€€€ì(€€€€€€€½¹ÍÐ…ÕÑ¼ÍÑ½É•‘5½‘”€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€€€€€Í…Ù•‘5½‘”€ôÍ…Ù•‘Y•ÉÍ¥½¸€ðô€Ì(€€€€€€€€€€€€ü€¡ÍÑ½É•‘5½‘”€ôô€Ä€ü•¹•É…Ñ¥½¹5½‘”èéÑ•áÑÕÉ•1½½À(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€è•¹•É…Ñ¥½¹5½‘”èéÉ½Ñ…Ñ•I•Á…¥È¤(€€€€€€€€€€€€è€¡ÍÑ½É•‘5½‘”€ôôÍÑ…Ñ¥}…ÍÐñ¥¹Ðø¡•¹•É…Ñ¥½¹5½‘”èéÑ•áÑÕÉ•1½½À¤(€€€€€€€€€€€€€€€€€€€ü•¹•É…Ñ¥½¹5½‘”èéÑ•áÑÕÉ•1½½À€è•¹•É…Ñ¥½¹5½‘”èéÉ½Ñ…Ñ•I•Á…¥È¤ì(€€€ô(€€€½¹ÍÐ…ÕÑ¼¡…¹¹•±Ì€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€½¹ÍÐ…ÕÑ¼Í…µÁ±•Ì€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€¥˜€¡Í…Ù•‘M…µÁ±•I…Ñ”€ðô€À¸Àñð¡…¹¹•±Ì€ð€Äñð¡…¹¹•±Ì€ø€ÈñðÍ…µÁ±•Ì€ð€Ä(€€€€€€€ñðÍ…µÁ±•Ì€ø©Õ”èéÉ½Õ¹‘Q½%¹Ð¡Í…Ù•‘M…µÁ±•I…Ñ”€¨µ…á¥µÕµQ•áÑÕÉ•M•½¹‘Ì¤¤(€€€€€€€É•ÑÕÉ¸™…±Í”ì((€€€…ÕÑ¼Í…Ù•‘AÉ•™•É1¥¹•…É…‘”€ô™…±Í”ì(€€€¥˜€¡Í…Ù•‘Y•ÉÍ¥½¸€øô€Ø¤(€€€ì(€€€€€€€Í…Ù•‘AÉ•™•É1¥¹•…É…‘”€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤€„ô€Àì(€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤¤ì(€€€ô(€€€•±Í”(€€€ì(€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤¤ì(€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤¤ì(€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤¤ì(€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤¤ì(€€€€€€€½¹ÍÐ…ÕÑ¼±•…åA¡…Í•M¥µ¥±…É¥Ñä€ô‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤ì(€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤¤ì(€€€€€€€Í…Ù•‘AÉ•™•É1¥¹•…É…‘”€ô±•…åA¡…Í•M¥µ¥±…É¥Ñä€øô€ÜÔ¸Á˜ì(€€€€€€€¥˜€¡Í…Ù•‘Y•ÉÍ¥½¸€øô€Ì¤(€€€€€€€ì(€€€€€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤¤ì(€€€€€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤¤ì(€€€€€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘±½…Ð ¤¤ì(€€€€€€€€€€€ÍÑ…Ñ¥}…ÍÐñÙ½¥ø¡‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤¤ì(€€€€€€€ô(€€€ô(€€€©Õ”èéÕ‘¥½	Õ™™•Èñ™±½…ÐøÉ•ÍÑ½É•¡¡…¹¹•±Ì°Í…µÁ±•Ì¤ì(€€€™½È€¡¥¹Ð¡…¹¹•°€ô€Àì¡…¹¹•°€ð¡…¹¹•±Ìì€¬­¡…¹¹•°¤(€€€ì(€€€€€€€½¹ÍÐ…ÕÑ¼‰åÑ•Ì€ôÍÑ…Ñ¥}…ÍÐñ¥¹Ðø¡ÍÑ…Ñ¥}…ÍÐñÍ¥é•}Ðø¡Í…µÁ±•Ì¤€¨Í¥é•½˜¡™±½…Ð¤¤ì(€€€€€€€¥˜€¡‘•½µÁÉ•ÍÍ•¹É•…¡É•ÍÑ½É•¹•Ñ]É¥Ñ•A½¥¹Ñ•È¡¡…¹¹•°¤°‰åÑ•Ì¤€„ô‰åÑ•Ì¤(€€€€€€€€€€€É•ÑÕÉ¸™…±Í”ì(€€€ô((€€€©Õ”èéMÑÉ¥¹œÉ•ÍÑ½É•‘M½ÕÉ•9…µ”ì(€€€©Õ”èéÕ‘¥½	Õ™™•Èñ™±½…ÐøÉ•ÍÑ½É•‘M½ÕÉ”ì(€€€…ÕÑ¼Í…Ù•‘M•±•Ñ•‘MÑ…ÉÐ€ô€Àì(€€€…ÕÑ¼Í…Ù•‘M•±•Ñ•‘¹€ô€Àì(€€€…ÕÑ¼Í…Ù•‘I½Ñ…Ñ¥½¸€ô€´Äì(€€€…ÕÑ¼Í…Ù•‘M•±•Ñ•‘M½ÕÉ•M…µÁ±•Ì€ô€Àì(€€€…ÕÑ¼Í…Ù•‘I…¹•MÑ…ÉÐ€ô€Àì(€€€…ÕÑ¼Í…Ù•‘I…¹•¹€ô€Àì(€€€¥˜€¡Í…Ù•‘Y•ÉÍ¥½¸€øô€Ô¤(€€€ì(€€€€€€€É•ÍÑ½É•‘M½ÕÉ•9…µ”€ô‘•½µÁÉ•ÍÍ•¹É•…‘MÑÉ¥¹œ ¤ì(€€€€€€€½¹ÍÐ…ÕÑ¼Í½ÕÉ•¡…¹¹•±Ì€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€€€€€½¹ÍÐ…ÕÑ¼Í½ÕÉ•M…µÁ±•Ì€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€€€€€Í…Ù•‘M•±•Ñ•‘MÑ…ÉÐ€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€€€€€Í…Ù•‘M•±•Ñ•‘¹€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€€€€€Í…Ù•‘I½Ñ…Ñ¥½¸€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€€€€€Í…Ù•‘M•±•Ñ•‘M½ÕÉ•M…µÁ±•Ì€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€€€€€Í…Ù•‘I…¹•MÑ…ÉÐ€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€€€€€Í…Ù•‘I…¹•¹€ô‘•½µÁÉ•ÍÍ•¹É•…‘%¹Ð ¤ì(€€€€€€€¥˜€¡Í½ÕÉ•¡…¹¹•±Ì€ð€ÀñðÍ½ÕÉ•¡…¹¹•±Ì€ø€ÈñðÍ½ÕÉ•M…µÁ±•Ì€ð€À(€€€€€€€€€€€ñðÍ½ÕÉ•M…µÁ±•Ì€ø©Õ”èéÉ½Õ¹‘Q½%¹Ð¡Í…Ù•‘M…µÁ±•I…Ñ”€¨µ…á¥µÕµQ•áÑÕÉ•M•½¹‘Ì¤(€€€€€€€€€€€ñð€¡Í½ÕÉ•M…µÁ±•Ì€ø€À€˜˜Í½ÕÉ•¡…¹¹•±Ì€ôô€À¤¤(€€€€€€€€€€€É•ÑÕÉ¸™…±Í”ì(€€€€€€€É•ÍÑ½É•‘M½ÕÉ”¹Í•ÑM¥é”¡Í½ÕÉ•¡…¹¹•±Ì°Í½ÕÉ•M…µÁ±•Ì°™…±Í”°™…±Í”°™…±Í”¤ì(€€€€€€€™½È€¡¥¹Ð¡…¹¹•°€ô€Àì¡…¹¹•°€ðÍ½ÕÉ•¡…¹¹•±Ìì€¬­¡…¹¹•°¤(€€€€€€€ì(€€€€€€€€€€€½¹ÍÐ…ÕÑ¼‰åÑ•Ì€ôÍÑ…Ñ¥}…ÍÐñ¥¹Ðø (€€€€€€€€€€€€€€€ÍÑ…Ñ¥}…ÍÐñÍ¥é•}Ðø¡Í½ÕÉ•M…µÁ±•Ì¤€¨Í¥é•½˜¡™±½…Ð¤¤ì(€€€€€€€€€€€¥˜€¡‘•½µÁÉ•ÍÍ•¹É•…¡É•ÍÑ½É•‘M½ÕÉ”¹•Ñ]É¥Ñ•A½¥¹Ñ•È¡¡…¹¹•°¤°‰åÑ•Ì¤€„ô‰åÑ•Ì¤(€€€€€€€€€€€€€€€É•ÑÕÉ¸™…±Í”ì(€€€€€€€ô(€€€ô((€€€•¹•É…Ñ¥½¸¹™•Ñ¡}…‘ Ä°ÍÑèéµ•µ½Éå}½É‘•É}…Å}É•°¤ì(€€€ÍÑ…Ñ”¹ÍÑ½É”¡MÑ…Ñ”èé…¹…±åÍ¥¹œ°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€Ý¡¥±”€¡…Ñ¥Ù•Õ‘¥½I•…‘•ÉÌ¹±½…¡ÍÑèéµ•µ½Éå}½É‘•É}…ÅÕ¥É”¤€„ô€À¤(€€€€€€€ÍÑèéÑ¡¥Í}Ñ¡É•…èéå¥•± ¤ì(€€€½¹ÍÐ…ÕÑ¼Ñ…É•ÑM…µÁ±•Ì€ô©Õ”èé©±¥µ¥Ð Ä°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€©Õ”èéÉ½Õ¹‘Q½%¹Ð¡Í…µÁ±•I…Ñ”€¨µ…á¥µÕµQ•áÑÕÉ•M•½¹‘Ì¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€©Õ”èéÉ½Õ¹‘Q½%¹Ð¡ÍÑ…Ñ¥}…ÍÐñ‘½Õ‰±”ø¡Í…µÁ±•Ì¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¨Í…µÁ±•I…Ñ”€¼Í…Ù•‘M…µÁ±•I…Ñ”¤¤ì(€€€©Õ”èéÕ‘¥½	Õ™™•Èñ™±½…ÐøÉ•ÍÑ½É•‘M½ÕÉ•Ñ!½ÍÑI…Ñ”ì(€€€¥˜€¡É•ÍÑ½É•‘M½ÕÉ”¹•Ñ9ÕµM…µÁ±•Ì ¤€ø€À¤(€€€ì(€€€€€€€½¹ÍÐ…ÕÑ¼Ñ…É•ÑM½ÕÉ•M…µÁ±•Ì€ô©Õ”èé©±¥µ¥Ð (€€€€€€€€€€€€Ä°©Õ”èéÉ½Õ¹‘Q½%¹Ð¡Í…µÁ±•I…Ñ”€¨µ…á¥µÕµQ•áÑÕÉ•M•½¹‘Ì¤°(€€€€€€€€€€€©Õ”èéÉ½Õ¹‘Q½%¹Ð¡ÍÑ…Ñ¥}…ÍÐñ‘½Õ‰±”ø¡É•ÍÑ½É•‘M½ÕÉ”¹•Ñ9ÕµM…µÁ±•Ì ¤¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€¨Í…µÁ±•I…Ñ”€¼Í…Ù•‘M…µÁ±•I…Ñ”¤¤ì(€€€€€€€É•ÍÑ½É•‘M½ÕÉ•Ñ!½ÍÑI…Ñ”¹Í•ÑM¥é”¡É•ÍÑ½É•‘M½ÕÉ”¹•Ñ9Õµ¡…¹¹•±Ì ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€Ñ…É•ÑM½ÕÉ•M…µÁ±•Ì°™…±Í”°™…±Í”°™…±Í”¤ì(€€€€€€€½¹ÍÐ…ÕÑ¼ÍÁ••‘I…Ñ¥¼€ôÍ…Ù•‘M…µÁ±•I…Ñ”€¼Í…µÁ±•I…Ñ”ì(€€€€€€€™½È€¡¥¹Ð¡…¹¹•°€ô€Àì¡…¹¹•°€ðÉ•ÍÑ½É•‘M½ÕÉ”¹•Ñ9Õµ¡…¹¹•±Ì ¤ì€¬­¡…¹¹•°¤(€€€€€€€ì(€€€€€€€€€€€©Õ”èé]¥¹‘½Ý•‘M¥¹%¹Ñ•ÉÁ½±…Ñ½È¥¹Ñ•ÉÁ½±…Ñ½Èì(€€€€€€€€€€€¥¹Ñ•ÉÁ½±…Ñ½È¹ÁÉ½•ÍÌ¡ÍÁ••‘I…Ñ¥¼°É•ÍÑ½É•‘M½ÕÉ”¹•ÑI•…‘A½¥¹Ñ•È¡¡…¹¹•°¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€É•ÍÑ½É•‘M½ÕÉ•Ñ!½ÍÑI…Ñ”¹•Ñ]É¥Ñ•A½¥¹Ñ•È¡¡…¹¹•°¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€Ñ…É•ÑM½ÕÉ•M…µÁ±•Ì°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€É•ÍÑ½É•‘M½ÕÉ”¹•Ñ9ÕµM…µÁ±•Ì ¤°€À¤ì(€€€€€€€ô(€€€ô(€€€…ÕÑ¼É•ÍÑ½É•‘QÉÕ•A•…¬€ô€´ÄÀÀ¸Á˜ì(€€€ì(€€€€€€€½¹ÍÐÍÑèéÍ½Á•‘}±½¬±½¬¡±½½Á…Ñ…5ÕÑ•à¤ì(€€€€€€€±½½Á	Õ™™•È¹Í•ÑM¥é”¡¡…¹¹•±Ì°Ñ…É•ÑM…µÁ±•Ì°™…±Í”°™…±Í”°™…±Í”¤ì(€€€€€€€½¹ÍÐ…ÕÑ¼ÍÁ••‘I…Ñ¥¼€ôÍ…Ù•‘M…µÁ±•I…Ñ”€¼Í…µÁ±•I…Ñ”ì(€€€€€€€™½È€¡¥¹Ð¡…¹¹•°€ô€Àì¡…¹¹•°€ð¡…¹¹•±Ìì€¬­¡…¹¹•°¤(€€€€€€€ì(€€€€€€€€€€€©Õ”èé]¥¹‘½Ý•‘M¥¹%¹Ñ•ÉÁ½±…Ñ½È¥¹Ñ•ÉÁ½±…Ñ½Èì(€€€€€€€€€€€¥¹Ñ•ÉÁ½±…Ñ½È¹ÁÉ½•ÍÌ¡ÍÁ••‘I…Ñ¥¼°É•ÍÑ½É•¹•ÑI•…‘A½¥¹Ñ•È¡¡…¹¹•°¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€±½½Á	Õ™™•È¹•Ñ]É¥Ñ•A½¥¹Ñ•È¡¡…¹¹•°¤°Ñ…É•ÑM…µÁ±•Ì°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€Í…µÁ±•Ì°€À¤ì(€€€€€€€ô(€€€€€€€©Õ”èé¥¹½É•U¹ÕÍ•¡M¥¹…±¥…¹½ÍÑ¥ÌèéÉ•Á…¥É9½¹¥¹¥Ñ•¹‘I•µ½Ù•Œ¡±½½Á	Õ™™•È¤¤ì(€€€€€€€É•ÍÑ½É•‘QÉÕ•A•…¬€ôM¥¹…±¥…¹½ÍÑ¥Ìèé…ÁÁ±å¥ÉÕ±…ÉQÉÕ•A•…­•¥±¥¹œ¡±½½Á	Õ™™•È°€´Ä¸Á˜¤ì(€€€ô((€€€½¹ÍÐ…ÕÑ¼Í½ÕÉ•M…±”€ôÍÑ…Ñ¥}…ÍÐñ‘½Õ‰±”ø¡Í…µÁ±•I…Ñ”¤€¼Í…Ù•‘M…µÁ±•I…Ñ”ì(€€€¥˜€¡É•ÍÑ½É•‘M½ÕÉ•Ñ!½ÍÑI…Ñ”¹•Ñ9ÕµM…µÁ±•Ì ¤€ø€À¤(€€€ì(€€€€€€€½¹ÍÐÍÑèéÍ½Á•‘}±½¬±½¬¡Í½ÕÉ•…Ñ…5ÕÑ•à¤ì(€€€€€€€ÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È€ôÍÑèéµ½Ù”¡É•ÍÑ½É•‘M½ÕÉ•Ñ!½ÍÑI…Ñ”¤ì(€€€€€€€ÕÉÉ•¹ÑM½ÕÉ•9…µ”€ôÉ•ÍÑ½É•‘M½ÕÉ•9…µ”ì(€€€€€€€Ý…Ù•™½ÉµAÉ•Ù¥•Ü€ô‰Õ¥±‘]…Ù•™½ÉµAÉ•Ù¥•Ü¡ÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È¤ì(€€€€€€€Í½ÕÉ•…¹‘¥‘…Ñ•Ì¹±•…È ¤ì(€€€€€€€Ñ•áÑÕÉ•Y…É¥…¹ÑÌ¹±•…È ¤ì(€€€€€€€Í½ÕÉ•I•Ù¥Í¥½¸¹™•Ñ¡}…‘ Ä°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€€€€€…¹‘¥‘…Ñ•I•Ù¥Í¥½¸¹™•Ñ¡}…‘ Ä°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€ô(€€€•±Í”(€€€ì(€€€€€€€½¹ÍÐÍÑèéÍ½Á•‘}±½¬±½¬¡Í½ÕÉ•…Ñ…5ÕÑ•à¤ì(€€€€€€€ÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È¹Í•ÑM¥é” À°€À¤ì(€€€€€€€ÕÉÉ•¹ÑM½ÕÉ•9…µ”¹±•…È ¤ì(€€€€€€€Ý…Ù•™½ÉµAÉ•Ù¥•Ü¹±•…È ¤ì(€€€€€€€Í½ÕÉ•…¹‘¥‘…Ñ•Ì¹±•…È ¤ì(€€€€€€€Ñ•áÑÕÉ•Y…É¥…¹ÑÌ¹±•…È ¤ì(€€€€€€€Í½ÕÉ•I•Ù¥Í¥½¸¹™•Ñ¡}…‘ Ä°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€€€€€…¹‘¥‘…Ñ•I•Ù¥Í¥½¸¹™•Ñ¡}…‘ Ä°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€ô((€€€…ÁÑÕÉ•‘M…µÁ±•½Õ¹Ð¹ÍÑ½É”¡Ñ…É•ÑM…µÁ±•Ì¤ì(€€€•™™•Ñ¥Ù•É½ÍÍ™…‘•M…µÁ±•Ì¹ÍÑ½É”¡Í…Ù•‘Y•ÉÍ¥½¸€ðô€Ì(€€€€€€€€€€€€˜˜Í…Ù•‘5½‘”€ôô•¹•É…Ñ¥½¹5½‘”èéÉ½Ñ…Ñ•I•Á…¥È(€€€€€€€€ü©Õ”èé©±¥µ¥Ð À°Ñ…É•ÑM…µÁ±•Ì€¼€Ì°(€€€€€€€€€€€©Õ”èéÉ½Õ¹‘Q½%¹Ð¡Í…µÁ±•I…Ñ”(€€€€€€€€€€€€€€€€¨É½ÍÍ™…‘•5¥±±¥Í•½¹‘Ì¹±½…¡ÍÑèéµ•µ½Éå}½É‘•É}É•±…á•¤€¨€À¸ÀÀÄ¤¤(€€€€€€€€è€À¤ì(€€€Á±…å‰…­A½Í¥Ñ¥½¸€ô•™™•Ñ¥Ù•É½ÍÍ™…‘•M…µÁ±•Ì¹±½…¡ÍÑèéµ•µ½Éå}½É‘•É}É•±…á•¤ì(€€€ÑÉÕ•A•…­‰ÑÀ¹ÍÑ½É”¡É•ÍÑ½É•‘QÉÕ•A•…¬¤ì(€€€ÁÉ•™•É1¥¹•…ÉI•Á…¥É…‘”¹ÍÑ½É”¡Í…Ù•‘AÉ•™•É1¥¹•…É…‘”¤ì(€€€±…ÍÑUÍ•‘•¹•É…Ñ¥½¹5½‘”¹ÍÑ½É”¡Í…Ù•‘5½‘”¤ì(€€€½¹ÍÐ…ÕÑ¼Í…±•M…µÁ±”€ômÍ½ÕÉ•M…±•t€¡½¹ÍÐ¥¹ÐÍ…µÁ±”¤(€€€ì(€€€€€€€É•ÑÕÉ¸Í…µÁ±”€ð€À€ü€´Ä€è©Õ”èéÉ½Õ¹‘Q½%¹Ð¡Í…µÁ±”€¨Í½ÕÉ•M…±”¤ì(€€€ôì(€€€½¹ÍÐ…ÕÑ¼É•ÍÑ½É•‘M½ÕÉ•M…µÁ±•Ì€ôÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È¹•Ñ9ÕµM…µÁ±•Ì ¤ì(€€€¥˜€¡Í…Ù•‘Y•ÉÍ¥½¸€øô€Ô€˜˜É•ÍÑ½É•‘M½ÕÉ•M…µÁ±•Ì€ø€À¤(€€€ì(€€€€€€€Í•±•Ñ•‘M½ÕÉ•M…µÁ±•Ì¹ÍÑ½É”¡©Õ”èé©±¥µ¥Ð (€€€€€€€€€€€€Ä°É•ÍÑ½É•‘M½ÕÉ•M…µÁ±•Ì°(€€€€€€€€€€€©Õ”èé©µ…à Ä°Í…±•M…µÁ±”¡Í…Ù•‘M•±•Ñ•‘M½ÕÉ•M…µÁ±•Ì¤¤¤¤ì(€€€€€€€Í•±•Ñ•‘MÑ…ÉÑM…µÁ±”¹ÍÑ½É”¡©Õ”èé©±¥µ¥Ð (€€€€€€€€€€€€À°É•ÍÑ½É•‘M½ÕÉ•M…µÁ±•Ì€´€Ä°Í…±•M…µÁ±”¡Í…Ù•‘M•±•Ñ•‘MÑ…ÉÐ¤¤¤ì(€€€€€€€Í•±•Ñ•‘¹‘M…µÁ±”¹ÍÑ½É”¡©Õ”èé©±¥µ¥Ð (€€€€€€€€€€€Í•±•Ñ•‘MÑ…ÉÑM…µÁ±”¹±½… ¤€¬€Ä°É•ÍÑ½É•‘M½ÕÉ•M…µÁ±•Ì°(€€€€€€€€€€€Í…±•M…µÁ±”¡Í…Ù•‘M•±•Ñ•‘¹¤¤¤ì(€€€€€€€½¹ÍÐ…ÕÑ¼É•ÍÑ½É•‘M•±•Ñ¥½¹M…µÁ±•Ì€ôÍ•±•Ñ•‘¹‘M…µÁ±”¹±½… ¤(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€´Í•±•Ñ•‘MÑ…ÉÑM…µÁ±”¹±½… ¤ì(€€€€€€€Í•±•Ñ•‘I½Ñ…Ñ¥½¹M…µÁ±”¹ÍÑ½É”¡Í…Ù•‘I½Ñ…Ñ¥½¸€ð€ÀñðÉ•ÍÑ½É•‘M•±•Ñ¥½¹M…µÁ±•Ì€ð€Ì(€€€€€€€€€€€€ü€´Ä€è©Õ”èé©±¥µ¥Ð (€€€€€€€€€€€€€€€Í•±•Ñ•‘MÑ…ÉÑM…µÁ±”¹±½… ¤€¬€Ä°Í•±•Ñ•‘¹‘M…µÁ±”¹±½… ¤€´€Ä°(€€€€€€€€€€€€€€€Í…±•M…µÁ±”¡Í…Ù•‘I½Ñ…Ñ¥½¸¤¤¤ì(€€€€€€€…¹…±åÍ¥ÍI…¹•MÑ…ÉÑM…µÁ±”¹ÍÑ½É”¡©Õ”èé©±¥µ¥Ð (€€€€€€€€€€€€À°É•ÍÑ½É•‘M½ÕÉ•M…µÁ±•Ì€´€Ä°Í…±•M…µÁ±”¡Í…Ù•‘I…¹•MÑ…ÉÐ¤¤¤ì(€€€€€€€…¹…±åÍ¥ÍI…¹•¹‘M…µÁ±”¹ÍÑ½É”¡©Õ”èé©±¥µ¥Ð (€€€€€€€€€€€…¹…±åÍ¥ÍI…¹•MÑ…ÉÑM…µÁ±”¹±½… ¤€¬€Ä°É•ÍÑ½É•‘M½ÕÉ•M…µÁ±•Ì°(€€€€€€€€€€€Í…±•M…µÁ±”¡Í…Ù•‘I…¹•¹¤¤¤ì(€€€€€€€Í½ÕÉ•A±…å‰…­A½Í¥Ñ¥½¸€ô…¹…±åÍ¥ÍI…¹•MÑ…ÉÑM…µÁ±”¹±½… ¤ì(€€€ô(€€€•±Í”(€€€ì(€€€€€€€Í•±•Ñ•‘M½ÕÉ•M…µÁ±•Ì¹ÍÑ½É” À¤ì(€€€€€€€Í•±•Ñ•‘MÑ…ÉÑM…µÁ±”¹ÍÑ½É” À¤ì(€€€€€€€Í•±•Ñ•‘¹‘M…µÁ±”¹ÍÑ½É” À¤ì(€€€€€€€Í•±•Ñ•‘I½Ñ…Ñ¥½¹M…µÁ±”¹ÍÑ½É” ´Ä¤ì(€€€€€€€…¹…±åÍ¥ÍI…¹•MÑ…ÉÑM…µÁ±”¹ÍÑ½É” À¤ì(€€€€€€€…¹…±åÍ¥ÍI…¹•¹‘M…µÁ±”¹ÍÑ½É” À¤ì(€€€€€€€Í½ÕÉ•A±…å‰…­A½Í¥Ñ¥½¸€ô€Àì(€€€ô(€€€…Ñ¥Ù•Q•áÑÕÉ•Y…É¥…¹Ð¹ÍÑ½É” ´Ä°ÍÑèéµ•µ½Éå}½É‘•É}É•±…á•¤ì(€€€M¥¹…±¥…¹½ÍÑ¥ÌèéM¥¹…±M¹…ÁÍ¡½ÐÉ•ÍÑ½É•‘M¹…ÁÍ¡½Ðì(€€€¥˜€¡É•ÍÑ½É•‘M½ÕÉ•M…µÁ±•Ì€ø€À¤(€€€ì(€€€€€€€©Õ”èéÕ‘¥½	Õ™™•Èñ™±½…ÐøÍ¹…ÁÍ¡½ÑM½ÕÉ”ì(€€€€€€€©Õ”èéÕ‘¥½	Õ™™•Èñ™±½…ÐøÍ¹…ÁÍ¡½Ñ=ÕÑÁÕÐì(€€€€€€€ì(€€€€€€€€€€€½¹ÍÐÍÑèéÍ½Á•‘}±½¬±½¬¡Í½ÕÉ•…Ñ…5ÕÑ•à¤ì(€€€€€€€€€€€½¹ÍÐ…ÕÑ¼É…¹•MÑ…ÉÐ€ô…¹…±åÍ¥ÍI…¹•MÑ…ÉÑM…µÁ±”¹±½… ¤ì(€€€€€€€€€€€½¹ÍÐ…ÕÑ¼É…¹•¹€ô…¹…±åÍ¥ÍI…¹•¹‘M…µÁ±”¹±½… ¤ì(€€€€€€€€€€€Í¹…ÁÍ¡½ÑM½ÕÉ”¹Í•ÑM¥é”¡ÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È¹•Ñ9Õµ¡…¹¹•±Ì ¤°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€É…¹•¹€´É…¹•MÑ…ÉÐ°™…±Í”°™…±Í”°™…±Í”¤ì(€€€€€€€€€€€™½È€¡¥¹Ð¡…¹¹•°€ô€Àì¡…¹¹•°€ðÍ¹…ÁÍ¡½ÑM½ÕÉ”¹•Ñ9Õµ¡…¹¹•±Ì ¤ì€¬­¡…¹¹•°¤(€€€€€€€€€€€€€€€Í¹…ÁÍ¡½ÑM½ÕÉ”¹½ÁåÉ½´¡¡…¹¹•°°€À°ÕÉÉ•¹ÑM½ÕÉ•	Õ™™•È°¡…¹¹•°°(€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€€É…¹•MÑ…ÉÐ°É…¹•¹€´É…¹•MÑ…ÉÐ¤ì(€€€€€€€ô(€€€€€€€ì(€€€€€€€€€€€½¹ÍÐÍÑèéÍ½Á•‘}±½¬±½¬¡±½½Á…Ñ…5ÕÑ•à¤ì(€€€€€€€€€€€Í¹…ÁÍ¡½Ñ=ÕÑÁÕÐ€ô±½½Á	Õ™™•Èì(€€€€€€€ô(€€€€€€€É•ÍÑ½É•‘M¹…ÁÍ¡½Ð€ôM¥¹…±¥…¹½ÍÑ¥Ìèé…¹…±åÍ•M½ÕÉ•¹‘=ÕÑÁÕÐ (€€€€€€€€€€€Í¹…ÁÍ¡½ÑM½ÕÉ”°Í¹…ÁÍ¡½Ñ=ÕÑÁÕÐ°Í…µÁ±•I…Ñ”¤ì(€€€ô(€€€ì(€€€€€€€½¹ÍÐÍÑèéÍ½Á•‘}±½¬±½¬¡Í¥¹…±M¹…ÁÍ¡½Ñ5ÕÑ•à¤ì(€€€€€€€Í¥¹…±M¹…ÁÍ¡½Ð€ôÉ•ÍÑ½É•‘M¹…ÁÍ¡½Ðì(€€€ô(€€€…ÁÑÕÉ•AÉ½É•ÍÌ¹ÍÑ½É” Ä¸Á˜¤ì(€€€…¹…±åÍ¥ÍAÉ½É•ÍÌ¹ÍÑ½É” Ä¸Á˜°ÍÑèéµ•µ½Éå}½É‘•É}É•±…á•¤ì(€€€ÁÉ•Ù¥•ÝA±…å¥¹œ¹ÍÑ½É”¡™…±Í”°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€ÍÑ…Ñ”¹ÍÑ½É”¡MÑ…Ñ”èéÉ•…‘ä°ÍÑèéµ•µ½Éå}½É‘•É}É•±•…Í”¤ì(€€€É•ÑÕÉ¸ÑÉÕ”ì)ô(
+            state.store(State::capturing, std::memory_order_release);
+            currentState = State::capturing;
+        }
+
+        if (currentState == State::capturing)
+        {
+            const auto channelCount = juce::jmin(buffer.getNumChannels(), captureBuffer.getNumChannels());
+            for (int channel = 0; channel < channelCount; ++channel)
+                captureBuffer.setSample(channel, captureWritePosition, buffer.getSample(channel, sample));
+
+            ++captureWritePosition;
+            captureProgress.store(static_cast<float>(captureWritePosition)
+                                      / static_cast<float>(juce::jmax(1, captureSampleCount)),
+                                  std::memory_order_relaxed);
+
+            if (captureWritePosition >= captureSampleCount)
+                finishCapture();
+
+            mixSmoother.skip(1);
+            continue;
+        }
+
+        if (!previewPlaying.load(std::memory_order_relaxed)
+            || !hasReadLease || currentState != State::ready
+            || capturedSampleCount.load(std::memory_order_relaxed) <= 0)
+        {
+            mixSmoother.skip(1);
+            continue;
+        }
+
+        const auto auditionOriginal = previewMode.load(std::memory_order_relaxed) == PreviewMode::original
+                                      && currentSourceBuffer.getNumSamples() > 0;
+        const auto sourceChannels = auditionOriginal ? currentSourceBuffer.getNumChannels()
+                                                     : loopBuffer.getNumChannels();
+        const auto mix = mixSmoother.getNextValue();
+        for (int channel = 0; channel < buffer.getNumChannels(); ++channel)
+        {
+            const auto dry = buffer.getSample(channel, sample);
+            const auto sourceChannel = juce::jlimit(0, juce::jmax(0, sourceChannels - 1), channel);
+            const auto wet = auditionOriginal ? readSourceSample(sourceChannel)
+                                              : readLoopSample(sourceChannel);
+            buffer.setSample(channel, sample, dry + mix * (wet - dry));
+        }
+
+        if (auditionOriginal)
+            advanceSourcePlaybackPosition();
+        else
+            advancePlaybackPosition();
+    }
+
+    if (hasReadLease)
+        activeAudioReaders.fetch_sub(1, std::memory_order_release);
+}
+
+LoopEngine::State LoopEngine::getState() const noexcept
+{
+    return state.load(std::memory_order_acquire);
+}
+
+float LoopEngine::getCaptureProgress() const noexcept { return captureProgress.load(); }
+int LoopEngine::getCapturedSampleCount() const noexcept { return capturedSampleCount.load(); }
+
+juce::String LoopEngine::getSourceName() const
+{
+    const std::scoped_lock lock(sourceDataMutex);
+    return currentSourceName;
+}
+
+double LoopEngine::getSourceDurationSeconds() const
+{
+    const std::scoped_lock lock(sourceDataMutex);
+    return static_cast<double>(currentSourceBuffer.getNumSamples()) / sampleRate;
+}
+
+int LoopEngine::getCandidateCount() const
+{
+    const std::scoped_lock lock(sourceDataMutex);
+    if (!textureVariants.empty())
+        return static_cast<int>(textureVariants.size());
+    return static_cast<int>(sourceCandidates.size());
+}
+
+uint64_t LoopEngine::getCandidateRevision() const noexcept { return candidateRevision.load(); }
+uint64_t LoopEngine::getSourceRevision() const noexcept { return sourceRevision.load(); }
+
+juce::String LoopEngine::getCandidateDescription(const int index) const
+{
+    const std::scoped_lock lock(sourceDataMutex);
+    if (juce::isPositiveAndBelow(index, static_cast<int>(textureVariants.size())))
+    {
+        const auto& variant = textureVariants[static_cast<size_t>(index)];
+        const auto samples = index == activeTextureVariant.load(std::memory_order_relaxed)
+            ? capturedSampleCount.load(std::memory_order_relaxed)
+            : variant.audio.getNumSamples();
+        const auto seconds = static_cast<double>(samples) / sampleRate;
+        const auto structure = variant.usedStructure == TextureStructure::particles
+            ? juce::String("Fracture")
+            : variant.usedStructure == TextureStructure::continuous
+                ? juce::String("Drift") : juce::String("Flow");
+        return "Texture " + juce::String(index + 1) + "  |  " + structure
+               + "  |  " + juce::String(seconds, 1) + " s";
+    }
+    if (!juce::isPositiveAndBelow(index, static_cast<int>(sourceCandidates.size())))
+        return {};
+    const auto& candidate = sourceCandidates[static_cast<size_t>(index)];
+    const auto repairSamples = candidate.repairOverlapSamples;
+    const auto seconds = static_cast<double>(candidate.endSample - candidate.startSample - repairSamples)
+                         / sampleRate;
+    return juce::String(candidate.rotationSample >= 0 ? "Repair " : "Candidate ")
+           + juce::String(index + 1) + "  |  " + juce::String(seconds, 2) + " s";
+}
+
+void LoopEngine::selectCandidate(const int index)
+{
+    generation.fetch_add(1, std::memory_order_acq_rel);
+    state.store(State::analysing, std::memory_order_release);
+    analysisProgress.store(0.0f, std::memory_order_relaxed);
+    while (activeAudioReaders.load(std::memory_order_acquire) != 0)
+        std::this_thread::yield();
+
+    LoopAnalysisResult result;
+    auto selectedTexture = false;
+    auto textureSamples = 0;
+    auto textureTruePeak = -100.0f;
+    juce::AudioBuffer<float> selectedAudio;
+    juce::AudioBuffer<float> snapshotSource;
+    juce::AudioBuffer<float> snapshotOutput;
+    {
+        const std::scoped_lock sourceLock(sourceDataMutex);
+        const auto snapshotStart = juce::jlimit(
+            0, juce::jmax(0, currentSourceBuffer.getNumSamples() - 1),
+            analysisRangeStartSample.load(std::memory_order_relaxed));
+        const auto snapshotEnd = juce::jlimit(
+            snapshotStart + 1, currentSourceBuffer.getNumSamples(),
+            analysisRangeEndSample.load(std::memory_order_relaxed));
+        snapshotSource.setSize(currentSourceBuffer.getNumChannels(),
+                               snapshotEnd - snapshotStart, false, false, false);
+        for (int channel = 0; channel < snapshotSource.getNumChannels(); ++channel)
+            snapshotSource.copyFrom(channel, 0, currentSourceBuffer, channel,
+                                    snapshotStart, snapshotEnd - snapshotStart);
+        if (juce::isPositiveAndBelow(index, static_cast<int>(textureVariants.size())))
+        {
+            selectedTexture = true;
+            auto& texture = textureVariants[static_cast<size_t>(index)];
+            textureTruePeak = texture.truePeakDbtp;
+            const auto previous = activeTextureVariant.load(std::memory_order_relaxed);
+            if (index != previous)
+            {
+                const std::scoped_lock loopLock(loopDataMutex);
+                std::swap(loopBuffer, texture.audio);
+                if (juce::isPositiveAndBelow(
+                        previous, static_cast<int>(textureVariants.size())))
+                    std::swap(textureVariants[static_cast<size_t>(previous)].audio,
+                              texture.audio);
+                textureSamples = loopBuffer.getNumSamples();
+                activeTextureVariant.store(index, std::memory_order_relaxed);
+            }
+            else
+            {
+                textureSamples = capturedSampleCount.load(std::memory_order_relaxed);
+            }
+        }
+        else
+        {
+            if (!juce::isPositiveAndBelow(index, static_cast<int>(sourceCandidates.size())))
+            {
+                state.store(State::ready, std::memory_order_release);
+                return;
+            }
+            result = sourceCandidates[static_cast<size_t>(index)];
+            if (result.rotationSample >= 0)
+            {
+                selectedAudio = LoopAnalyzer::renderRotateRepair(
+                    currentSourceBuffer, result);
+            }
+            else
+            {
+                const auto samples = result.endSample - result.startSample;
+                selectedAudio.setSize(currentSourceBuffer.getNumChannels(), samples,
+                                      false, false, false);
+                for (int channel = 0; channel < selectedAudio.getNumChannels(); ++channel)
+                    selectedAudio.copyFrom(channel, 0, currentSourceBuffer, channel,
+                                           result.startSample, samples);
+            }
+        }
+        if (selectedTexture)
+        {
+            const std::scoped_lock loopLock(loopDataMutex);
+            snapshotOutput = loopBuffer;
+        }
+        else
+        {
+            snapshotOutput = selectedAudio;
+        }
+    }
+    const auto nextSnapshot = SignalDiagnostics::analyseSourceAndOutput(
+        snapshotSource, snapshotOutput, sampleRate);
+    {
+        const std::scoped_lock snapshotLock(signalSnapshotMutex);
+        signalSnapshot = nextSnapshot;
+    }
+    const auto selectedTruePeak = selectedAudio.getNumSamples() > 0
+        ? juce::Decibels::gainToDecibels(juce::jmax(
+            1.0e-9f, SignalDiagnostics::estimateCircularTruePeak(selectedAudio)))
+        : -100.0f;
+    if (selectedTexture)
+    {
+        capturedSampleCount.store(textureSamples);
+        effectiveCrossfadeSamples.store(0);
+        selectedRotationSample.store(-1);
+        playbackPosition = 0;
+        truePeakDbtp.store(textureTruePeak);
+        preferLinearRepairFade.store(false);
+        lastUsedGenerationMode.store(GenerationMode::textureLoop);
+        previewMode.store(PreviewMode::loop);
+        previewRestartRequested.store(true, std::memory_order_release);
+        state.store(State::ready, std::memory_order_release);
+        analysisProgress.store(1.0f, std::memory_order_relaxed);
+        return;
+    }
+
+    {
+        const std::scoped_lock loopLock(loopDataMutex);
+        loopBuffer = std::move(selectedAudio);
+    }
+    capturedSampleCount.store(loopBuffer.getNumSamples());
+    selectedStartSample.store(result.startSample);
+    selectedRotationSample.store(result.rotationSample);
+    const auto repairSamples = result.repairOverlapSamples;
+    effectiveCrossfadeSamples.store(result.rotationSample >= 0 ? 0 : repairSamples);
+    playbackPosition = effectiveCrossfadeSamples.load(std::memory_order_relaxed);
+    selectedEndSample.store(result.rotationSample >= 0
+                                ? result.endSample : result.endSample - repairSamples);
+    truePeakDbtp.store(selectedTruePeak);
+    preferLinearRepairFade.store(result.preferLinearRepairFade);
+    lastUsedGenerationMode.store(GenerationMode::rotateRepair);
+    state.store(State::ready, std::memory_order_release);
+    analysisProgress.store(1.0f, std::memory_order_relaxed);
+}
+
+std::vector<float> LoopEngine::getWaveformPreview() const
+{
+    const std::scoped_lock lock(sourceDataMutex);
+    return waveformPreview;
+}
+
+float LoopEngine::getRotationProportion() const noexcept
+{
+    return static_cast<float>(selectedRotationSample.load())
+           / static_cast<float>(juce::jmax(1, selectedSourceSamples.load()));
+}
+
+float LoopEngine::getAnalysisRangeStartProportion() const noexcept
+{
+    return juce::jlimit(0.0f, 1.0f,
+        static_cast<float>(analysisRangeStartSample.load())
+            / static_cast<float>(juce::jmax(1, selectedSourceSamples.load())));
+}
+
+float LoopEngine::getAnalysisRangeEndProportion() const noexcept
+{
+    return juce::jlimit(0.0f, 1.0f,
+        static_cast<float>(analysisRangeEndSample.load())
+            / static_cast<float>(juce::jmax(1, selectedSourceSamples.load())));
+}
+
+juce::AudioBuffer<float> LoopEngine::createRenderedLoop() const
+{
+    const std::scoped_lock lock(loopDataMutex);
+    const auto samples = loopBuffer.getNumSamples();
+    const auto channels = loopBuffer.getNumChannels();
+    if (samples < 2 || channels < 1)
+        return {};
+
+    const auto fade = juce::jlimit(0, samples / 3,
+                                   effectiveCrossfadeSamples.load(std::memory_order_relaxed));
+    if (fade == 0)
+        return loopBuffer;
+
+    juce::AudioBuffer<float> rendered(channels, samples - fade);
+    const auto middle = samples - 2 * fade;
+    const auto useLinearFade = preferLinearRepairFade.load(std::memory_order_relaxed);
+    for (int channel = 0; channel < channels; ++channel)
+    {
+        if (middle > 0)
+            rendered.copyFrom(channel, 0, loopBuffer, channel, fade, middle);
+        for (int index = 0; index < fade; ++index)
+        {
+            const auto phase = static_cast<float>(index + 1) / static_cast<float>(fade + 1);
+            const auto tailGain = useLinearFade ? 1.0f - phase
+                                                : std::cos(phase * juce::MathConstants<float>::halfPi);
+            const auto headGain = useLinearFade ? phase
+                                                : std::sin(phase * juce::MathConstants<float>::halfPi);
+            const auto tail = loopBuffer.getSample(channel, samples - fade + index);
+            const auto head = loopBuffer.getSample(channel, index);
+            rendered.setSample(channel, middle + index,
+                               tailGain * tail + headGain * head);
+        }
+    }
+    return rendered;
+}
+
+SignalDiagnostics::SignalSnapshot LoopEngine::getSignalSnapshot() const
+{
+    const std::scoped_lock lock(signalSnapshotMutex);
+    return signalSnapshot;
+}
+
+void LoopEngine::applyPendingRequests() noexcept
+{
+    if (!captureRequested.exchange(false, std::memory_order_acq_rel)
+        || state.load(std::memory_order_acquire) == State::analysing
+        || captureBuffer.getNumSamples() == 0)
+        return;
+
+    generation.fetch_add(1, std::memory_order_acq_rel);
+    requestedLoopSamples = juce::jlimit(1,
+                                       captureBuffer.getNumSamples(),
+                                       juce::roundToInt(sampleRate * loopLengthSeconds));
+    captureSampleCount = juce::jmin(captureBuffer.getNumSamples(), requestedLoopSamples);
+    captureWritePosition = 0;
+    scheduledCaptureDelay = requestedStartDelay.load(std::memory_order_relaxed);
+    captureProgress.store(0.0f);
+    resetDiagnostics();
+    state.store(scheduledCaptureDelay > 0 ? State::armed : State::capturing,
+                std::memory_order_release);
+}
+
+void LoopEngine::finishCapture() noexcept
+{
+    captureWritePosition = captureSampleCount;
+    captureProgress.store(1.0f);
+    state.store(State::analysing, std::memory_order_release);
+    analysisPending.store(true, std::memory_order_release);
+    analysisCondition.notify_one();
+}
+
+float LoopEngine::readLoopSample(const int channel) const noexcept
+{
+    const auto loopSamples = capturedSampleCount.load(std::memory_order_relaxed);
+    const auto maximumCrossfade = juce::jmax(0, loopSamples / 2);
+    const auto crossfadeSamples = juce::jlimit(
+        0, maximumCrossfade, effectiveCrossfadeSamples.load(std::memory_order_relaxed));
+
+    if (crossfadeSamples == 0 || playbackPosition < loopSamples - crossfadeSamples)
+        return loopBuffer.getSample(channel, playbackPosition);
+
+    const auto crossfadeIndex = playbackPosition - (loopSamples - crossfadeSamples);
+    const auto alpha = static_cast<float>(crossfadeIndex + 1)
+                       / static_cast<float>(crossfadeSamples + 1);
+    const auto useLinearFade = preferLinearRepairFade.load(std::memory_order_relaxed);
+    const auto tailGain = useLinearFade ? 1.0f - alpha
+                                        : std::cos(alpha * juce::MathConstants<float>::halfPi);
+    const auto headGain = useLinearFade ? alpha
+                                        : std::sin(alpha * juce::MathConstants<float>::halfPi);
+    const auto tail = loopBuffer.getSample(channel, playbackPosition);
+    const auto head = loopBuffer.getSample(channel, crossfadeIndex);
+    return tailGain * tail + headGain * head;
+}
+
+void LoopEngine::advancePlaybackPosition() noexcept
+{
+    const auto loopSamples = capturedSampleCount.load(std::memory_order_relaxed);
+    ++playbackPosition;
+    if (playbackPosition < loopSamples)
+        return;
+
+    const auto crossfadeSamples = juce::jlimit(
+        0, loopSamples / 2, effectiveCrossfadeSamples.load(std::memory_order_relaxed));
+    playbackPosition = crossfadeSamples;
+}
+
+float LoopEngine::readSourceSample(const int channel) const noexcept
+{
+    return currentSourceBuffer.getSample(channel, sourcePlaybackPosition);
+}
+
+void LoopEngine::advanceSourcePlaybackPosition() noexcept
+{
+    const auto start = analysisRangeStartSample.load(std::memory_order_relaxed);
+    const auto end = analysisRangeEndSample.load(std::memory_order_relaxed);
+    ++sourcePlaybackPosition;
+    if (sourcePlaybackPosition >= end || sourcePlaybackPosition < start)
+        sourcePlaybackPosition = start;
+}
+
+void LoopEngine::startAnalysisThread()
+{
+    stopRequested.store(false);
+    analysisPending.store(false);
+    analysisThread = std::thread([this] { analysisLoop(); });
+}
+
+void LoopEngine::stopAnalysisThread()
+{
+    stopRequested.store(true, std::memory_order_release);
+    analysisCondition.notify_all();
+    if (analysisThread.joinable())
+        analysisThread.join();
+    analysisPending.store(false);
+}
+
