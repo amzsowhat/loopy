@@ -1,6 +1,7 @@
 #include "TextureSynthesizer.h"
 
 #include "SignalDiagnostics.h"
+#include "TextureCharacter.h"
 
 #include <algorithm>
 #include <cmath>
@@ -86,9 +87,11 @@ juce::AudioBuffer<float> removeMacroEnvelope(const juce::AudioBuffer<float>& sou
     if (samples < 32 || amount <= 0.0f)
         return conditioned;
 
+    const auto sourceSeconds = static_cast<double>(samples) / sampleRate;
+    const auto windowSeconds = juce::jlimit(0.14, 0.65, sourceSeconds * 0.22);
     const auto window = juce::jlimit(32, samples,
-        juce::roundToInt(sampleRate * 0.080));
-    const auto hop = juce::jmax(16, window / 4);
+        juce::roundToInt(sampleRate * windowSeconds));
+    const auto hop = juce::jmax(16, window / 6);
     const auto frames = juce::jmax(2, 1 + (samples - 1) / hop);
     std::vector<float> levels(static_cast<size_t>(frames));
     auto maximumLevel = 0.0f;
@@ -114,20 +117,20 @@ juce::AudioBuffer<float> removeMacroEnvelope(const juce::AudioBuffer<float>& sou
     {
         const auto protectedLevel = juce::jmax(levels[frame], target * 0.12f);
         const auto requested = std::pow(target / protectedLevel, amount);
-        gains[frame] = juce::jlimit(0.40f, 3.5f, requested);
+        gains[frame] = juce::jlimit(0.55f, 2.2f, requested);
     }
-    for (int pass = 0; pass < 3; ++pass)
+    for (int pass = 0; pass < 4; ++pass)
     {
         auto previous = gains.front();
         for (size_t frame = 1; frame < gains.size(); ++frame)
         {
-            gains[frame] = 0.72f * previous + 0.28f * gains[frame];
+            gains[frame] = 0.82f * previous + 0.18f * gains[frame];
             previous = gains[frame];
         }
         previous = gains.back();
         for (size_t frame = gains.size() - 1; frame-- > 0;)
         {
-            gains[frame] = 0.72f * previous + 0.28f * gains[frame];
+            gains[frame] = 0.82f * previous + 0.18f * gains[frame];
             previous = gains[frame];
         }
     }
@@ -149,26 +152,27 @@ juce::AudioBuffer<float> removeMacroEnvelope(const juce::AudioBuffer<float>& sou
     return conditioned;
 }
 
-float transitionPenalty(const juce::AudioBuffer<float>& audio,
-                        const int previousStart, const int nextStart,
-                        const int grainSamples, const int comparisonSamples)
+float alignedOverlapPenalty(const juce::AudioBuffer<float>& audio,
+                            const int previousStart, const int nextStart,
+                            const int previousAdvance, const int overlapSamples)
 {
     double dot = 0.0;
     double previousEnergy = 0.0;
     double nextEnergy = 0.0;
     double derivativeMismatch = 0.0;
     double derivativeScale = 0.0;
-    const auto previousTail = previousStart + grainSamples - comparisonSamples;
-    const auto points = juce::jlimit(2, 48, comparisonSamples);
+    const auto overlap = juce::jmax(2, overlapSamples);
+    const auto previousOverlap = previousStart + previousAdvance;
+    const auto points = juce::jlimit(12, 128, overlap);
     for (int channel = 0; channel < audio.getNumChannels(); ++channel)
     {
         auto previousValue = 0.0;
         auto nextValue = 0.0;
         for (int point = 0; point < points; ++point)
         {
-            const auto sample = point * (comparisonSamples - 1) / (points - 1);
+            const auto sample = point * (overlap - 1) / (points - 1);
             const auto previous = static_cast<double>(
-                audio.getSample(channel, previousTail + sample));
+                audio.getSample(channel, previousOverlap + sample));
             const auto next = static_cast<double>(audio.getSample(channel, nextStart + sample));
             dot += previous * next;
             previousEnergy += previous * previous;
@@ -193,9 +197,9 @@ float transitionPenalty(const juce::AudioBuffer<float>& audio,
         / juce::jmax(1.0e-9, 0.5 * (std::sqrt(previousEnergy) + std::sqrt(nextEnergy))));
     const auto slopePenalty = static_cast<float>(
         derivativeMismatch / juce::jmax(1.0e-9, derivativeScale));
-    return 0.58f * correlationPenalty
-           + 0.24f * juce::jmin(2.0f, levelPenalty)
-           + 0.18f * juce::jmin(2.0f, slopePenalty);
+    return 0.72f * correlationPenalty
+           + 0.18f * juce::jmin(2.0f, levelPenalty)
+           + 0.10f * juce::jmin(2.0f, slopePenalty);
 }
 
 float styleGrainSeconds(const TextureStructure structure, const float variation)
@@ -203,11 +207,11 @@ float styleGrainSeconds(const TextureStructure structure, const float variation)
     switch (structure)
     {
         case TextureStructure::automatic:
-            return 0.70f - 0.28f * variation;
+            return 0.95f - 0.42f * variation;
         case TextureStructure::continuous:
-            return 0.48f - 0.22f * variation;
+            return 0.74f - 0.30f * variation;
         case TextureStructure::particles:
-            return 0.27f - 0.13f * variation;
+            return 0.46f - 0.20f * variation;
     }
     return 0.45f;
 }
@@ -366,12 +370,20 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     const auto requestedGrain = juce::roundToInt(
         sampleRate * styleGrainSeconds(settings.structure, variation));
     const auto grainSamples = juce::jlimit(32, maximumGrain, requestedGrain);
-    const auto overlapRatio = 0.60f + 0.18f * stability;
-    const auto outputHop = juce::jmax(8,
-        juce::roundToInt(static_cast<float>(grainSamples) * (1.0f - overlapRatio)));
+    const auto requestedOverlap = juce::jlimit(8, grainSamples / 3,
+        juce::roundToInt(static_cast<float>(grainSamples)
+                         * (0.12f + 0.10f * stability)));
+    const auto requestedAdvance = juce::jmax(8, grainSamples - requestedOverlap);
+    const auto segmentCount = juce::jmax(2,
+        (targetSamples + requestedAdvance - 1) / requestedAdvance);
+    std::vector<int> outputStarts(static_cast<size_t>(segmentCount));
+    for (int segment = 0; segment < segmentCount; ++segment)
+        outputStarts[static_cast<size_t>(segment)] = juce::roundToInt(
+            static_cast<double>(segment) * static_cast<double>(targetSamples)
+            / static_cast<double>(segmentCount));
     const auto maximumStart = conditioned.getNumSamples() - grainSamples;
     const auto sourceStep = juce::jmax(
-        1, juce::jmax(grainSamples / 8, maximumStart / 255));
+        1, juce::jmax(grainSamples / 12, maximumStart / 383));
     const auto referenceRms = juce::jmax(1.0e-7f,
         regionRms(conditioned, 0, conditioned.getNumSamples()));
 
@@ -393,46 +405,48 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     if (regions.empty())
         return result;
 
-    std::vector<float> window(static_cast<size_t>(grainSamples));
-    for (int sample = 0; sample < grainSamples; ++sample)
-    {
-        const auto phase = juce::MathConstants<float>::twoPi
-                           * static_cast<float>(sample)
-                           / static_cast<float>(grainSamples);
-        window[static_cast<size_t>(sample)] = std::sqrt(
-            juce::jmax(0.0f, 0.5f - 0.5f * std::cos(phase)));
-    }
-
     result.audio.setSize(channels, targetSamples, false, true, false);
     std::vector<float> normalization(static_cast<size_t>(targetSamples), 0.0f);
     auto randomState = settings.seed == 0 ? 1u : settings.seed;
-    const auto comparisonSamples = juce::jlimit(
-        8, juce::jmax(8, grainSamples / 4),
-        juce::roundToInt(sampleRate * 0.020));
     const auto regionSpan = static_cast<float>(juce::jmax(1, maximumStart));
     const auto refractorySteps = juce::jlimit(3, 14,
         4 + juce::roundToInt(8.0f * transform));
-    auto previousRegion = 0;
-    auto stepIndex = 0;
+    auto previousStart = 0;
+    auto firstStart = 0;
 
-    for (int outputStart = 0; outputStart < targetSamples;
-         outputStart += outputHop, ++stepIndex)
+    for (int stepIndex = 0; stepIndex < segmentCount; ++stepIndex)
     {
+        const auto outputStart = outputStarts[static_cast<size_t>(stepIndex)];
+        const auto previousOutput = stepIndex == 0
+            ? outputStarts.back() - targetSamples
+            : outputStarts[static_cast<size_t>(stepIndex - 1)];
+        const auto nextOutput = stepIndex + 1 == segmentCount
+            ? targetSamples : outputStarts[static_cast<size_t>(stepIndex + 1)];
+        const auto previousAdvance = outputStart - previousOutput;
+        const auto nextAdvance = nextOutput - outputStart;
+        const auto overlapFromPrevious = grainSamples - previousAdvance;
+        const auto overlapToNext = grainSamples - nextAdvance;
         auto bestRegion = 0;
         auto bestPenalty = std::numeric_limits<float>::max();
         const auto expectedStart = stepIndex == 0 ? 0
-            : (regions[static_cast<size_t>(previousRegion)].start + outputHop)
+            : (previousStart + previousAdvance)
                 % juce::jmax(1, maximumStart + 1);
         for (int index = 0; index < static_cast<int>(regions.size()); ++index)
         {
             auto& region = regions[static_cast<size_t>(index)];
-            const auto sourceDistance = std::abs(region.start - expectedStart) / regionSpan;
+            const auto directDistance = std::abs(region.start - expectedStart);
+            const auto sourceDistance = static_cast<float>(juce::jmin(
+                directDistance, juce::jmax(0, maximumStart + 1 - directDistance)))
+                / regionSpan;
             const auto basePenalty = 0.34f * region.activityPenalty
                                      + 0.38f * stability * region.stationarityPenalty;
             const auto continuityPenalty = stepIndex == 0 ? 0.0f
-                : transitionPenalty(conditioned,
-                    regions[static_cast<size_t>(previousRegion)].start,
-                    region.start, grainSamples, comparisonSamples);
+                : alignedOverlapPenalty(conditioned, previousStart, region.start,
+                                        previousAdvance, overlapFromPrevious);
+            const auto closurePenalty = stepIndex + 1 == segmentCount && stepIndex > 0
+                ? alignedOverlapPenalty(conditioned, region.start, firstStart,
+                                        nextAdvance, overlapToNext)
+                : 0.0f;
             const auto age = stepIndex - region.lastUsedStep;
             const auto reusePenalty = age < refractorySteps
                 ? 3.0f * static_cast<float>(refractorySteps - age)
@@ -441,7 +455,8 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
             const auto jitter = (randomUnit(randomState) - 0.5f)
                                 * variation * 0.10f;
             const auto penalty = basePenalty
-                + (0.68f + 0.20f * transform) * continuityPenalty
+                + (0.82f + 0.24f * transform) * continuityPenalty
+                + 0.88f * closurePenalty
                 + (stepIndex == 0 ? 0.0f
                                   : (1.0f - transform) * 0.42f * sourceDistance)
                 + reusePenalty + jitter;
@@ -453,17 +468,61 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
         }
 
         auto& chosen = regions[static_cast<size_t>(bestRegion)];
+        auto chosenStart = chosen.start;
+        if (stepIndex > 0 && sourceStep > 1)
+        {
+            const auto radius = juce::jmax(1, sourceStep / 2);
+            const auto refinementStep = juce::jmax(1, radius / 48);
+            auto refinedPenalty = std::numeric_limits<float>::max();
+            const auto firstCandidate = juce::jmax(0, chosen.start - radius);
+            const auto lastCandidate = juce::jmin(maximumStart, chosen.start + radius);
+            for (int candidate = firstCandidate; candidate <= lastCandidate;
+                 candidate += refinementStep)
+            {
+                auto penalty = alignedOverlapPenalty(
+                    conditioned, previousStart, candidate,
+                    previousAdvance, overlapFromPrevious);
+                if (stepIndex + 1 == segmentCount)
+                    penalty += 0.82f * alignedOverlapPenalty(
+                        conditioned, candidate, firstStart,
+                        nextAdvance, overlapToNext);
+                penalty += 0.04f * static_cast<float>(std::abs(candidate - chosen.start))
+                           / static_cast<float>(radius);
+                if (penalty < refinedPenalty)
+                {
+                    refinedPenalty = penalty;
+                    chosenStart = candidate;
+                }
+            }
+        }
         chosen.lastUsedStep = stepIndex;
-        previousRegion = bestRegion;
-        result.analysisFrameStarts.push_back(chosen.start);
+        previousStart = chosenStart;
+        if (stepIndex == 0)
+            firstStart = chosenStart;
+        result.analysisFrameStarts.push_back(chosenStart);
         for (int sample = 0; sample < grainSamples; ++sample)
         {
             const auto outputSample = (outputStart + sample) % targetSamples;
-            const auto gain = window[static_cast<size_t>(sample)];
+            auto gain = 1.0f;
+            if (sample < overlapFromPrevious)
+            {
+                const auto phase = juce::MathConstants<float>::pi
+                    * (static_cast<float>(sample) + 0.5f)
+                    / static_cast<float>(overlapFromPrevious);
+                gain *= 0.5f - 0.5f * std::cos(phase);
+            }
+            if (sample >= grainSamples - overlapToNext)
+            {
+                const auto offset = sample - (grainSamples - overlapToNext);
+                const auto phase = juce::MathConstants<float>::pi
+                    * (static_cast<float>(offset) + 0.5f)
+                    / static_cast<float>(overlapToNext);
+                gain *= 0.5f + 0.5f * std::cos(phase);
+            }
             normalization[static_cast<size_t>(outputSample)] += gain;
             for (int channel = 0; channel < channels; ++channel)
                 result.audio.addSample(channel, outputSample,
-                    conditioned.getSample(channel, chosen.start + sample) * gain);
+                    conditioned.getSample(channel, chosenStart + sample) * gain);
         }
     }
 
@@ -477,6 +536,9 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     }
 
     applyDynamicsCrush(result.audio, sampleRate, settings.dynamicsCrush);
+    TextureCharacterProcessor::apply(result.audio, sampleRate,
+                                     settings.character, settings.characterAmount,
+                                     settings.seed ^ 0xa53c9e1du);
     balanceChannelEnergy(result.audio, 0.45f * stability * transform);
     const auto sourceRms = SignalDiagnostics::calculateRms(source);
     const auto outputRms = SignalDiagnostics::calculateRms(result.audio);
@@ -484,6 +546,7 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
         result.audio.applyGain(juce::jlimit(0.5f, 2.0f, sourceRms / outputRms));
 
     result.usedStructure = settings.structure;
+    result.usedCharacter = settings.character;
     result.containsOnlyFiniteSamples = SignalDiagnostics::repairNonFiniteAndRemoveDc(result.audio);
     result.truePeakDbtp = SignalDiagnostics::applyCircularTruePeakCeiling(
         result.audio, -1.0f);

@@ -16,19 +16,23 @@ boundary and repairs the moved original head/tail join.
 
 1. Define the source material with Source In/Out.
 2. Select Flow, Drift or Fracture, set Output Length, Stability and Transform.
-3. Raise Crush only when smaller repeated ADSR rises and dips still remain; 0% is the unchanged
-   0.10 texture result and 100% applies the strongest linked local-envelope flattening.
-4. Generate, audition and use New Variation when another deterministic traversal is wanted.
-5. Save WAV or drag the exact-length result into the DAW.
+3. Raise Crush only when smaller repeated ADSR rises and dips still remain.
+4. Leave Extra Off for Natural, or select Patina, Bloom or Fray and set Extra Amount.
+5. Generate, audition and use New Variation when another deterministic traversal is wanted.
+6. Save WAV or drag the exact-length result into the DAW.
 
 Texture Loop uses the selected waveform itself. It removes a controllable amount of macro envelope,
-chooses phase-compatible regions, avoids recently used regions and assembles them into a circular
-overlap-add buffer. Stereo channels always use the same traversal. No named-material classifier,
+chooses phase-compatible regions, avoids recently used regions and assembles them with short,
+actual-overlap-aligned circular crossfades. Stereo channels always use the same traversal. No named-material classifier,
 synthetic noise source, oscillator, spectral delay, pitch shift or reverse path exists.
 
 Crush is not a conventional compressor and does not alter stereo channels independently. It applies
 two circular, linked RMS-envelope correction scales after construction, then the existing loudness,
-DC and true-peak safeguards run. Its default is an exact bypass for backward compatibility.
+DC and true-peak safeguards run. Its 0% position is an exact bypass of the Crush stage.
+
+Extra is a separate optional stage after Natural. Off and 0% are exact bypasses. Patina uses
+memory-bearing nonlinear colour, Bloom uses source-derived circular diffusion, and Fray emphasizes
+short material detail. None replaces the Natural generator.
 
 ## Evidence boundary
 
@@ -36,11 +40,8 @@ The local VST3 and Standalone compile and deterministic/state tests pass. These 
 software behavior and numeric safety, not subjective audio quality. No quality total, PASS badge,
 subjective sub-score or export gate exists.
 
-## Character expansion boundary
+## Neural-network boundary
 
-Optional character processing may be added after the Natural result, with Natural remaining the
-default and an exact bypass. Source-derived diffusion, nonlinear colour and resonant imprinting are
-reasonable experiments, but each needs real SFX listening before it becomes a shipped option.
-A neural waveform generator is not planned: there is no licensed training corpus or evidence that
+A neural waveform generator is not included: there is no licensed training corpus or evidence that
 its deployment cost improves this task. A later small model may assist source segmentation or
-parameter suggestions only after the deterministic engine has a regression corpus.
+parameter suggestions only after the deterministic engine has a real-SFX regression corpus.

@@ -2,6 +2,8 @@
 
 #include <juce_audio_basics/juce_audio_basics.h>
 
+#include "TextureCharacter.h"
+
 #include <cstdint>
 #include <vector>
 
@@ -26,6 +28,8 @@ struct TextureSynthesisSettings
     // Transformation depth. The legacy field name remains stable for DAW state compatibility.
     float sourceMatch = 0.85f;
     TextureStructure structure = TextureStructure::automatic;
+    TextureCharacter character = TextureCharacter::off;
+    float characterAmount = 0.5f;
     uint32_t seed = 0x4c535501u;
 };
 
@@ -35,6 +39,7 @@ struct TextureSynthesisResult
     std::vector<int> analysisFrameStarts;
     float truePeakDbtp = -100.0f;
     TextureStructure usedStructure = TextureStructure::continuous;
+    TextureCharacter usedCharacter = TextureCharacter::off;
     bool containsOnlyFiniteSamples = false;
 };
 

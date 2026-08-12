@@ -491,7 +491,14 @@ juce::String LoopEngine::getCandidateDescription(const int index) const
             ? juce::String("Fracture")
             : variant.usedStructure == TextureStructure::continuous
                 ? juce::String("Drift") : juce::String("Flow");
+        const auto character = variant.usedCharacter == TextureCharacter::patina
+            ? juce::String("Patina")
+            : variant.usedCharacter == TextureCharacter::bloom
+                ? juce::String("Bloom")
+                : variant.usedCharacter == TextureCharacter::fray
+                    ? juce::String("Fray") : juce::String("Natural");
         return "Texture " + juce::String(index + 1) + "  |  " + structure
+               + "  |  " + character
                + "  |  " + juce::String(seconds, 1) + " s";
     }
     if (!juce::isPositiveAndBelow(index, static_cast<int>(sourceCandidates.size())))

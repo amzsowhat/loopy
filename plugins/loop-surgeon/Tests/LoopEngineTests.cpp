@@ -3,6 +3,7 @@
 #include "TextureSynthesizer.h"
 
 #include <chrono>
+#include <array>
 #include <cmath>
 #include <iostream>
 #include <thread>
@@ -59,6 +60,37 @@ double localLevelVariation(const juce::AudioBuffer<float>& audio,
         variance += (level - mean) * (level - mean);
     return std::sqrt(variance / static_cast<double>(levels.size()))
            / juce::jmax(1.0e-9, mean);
+}
+
+bool buffersEqual(const juce::AudioBuffer<float>& first,
+                  const juce::AudioBuffer<float>& second)
+{
+    if (first.getNumChannels() != second.getNumChannels()
+        || first.getNumSamples() != second.getNumSamples())
+        return false;
+    for (int channel = 0; channel < first.getNumChannels(); ++channel)
+        for (int sample = 0; sample < first.getNumSamples(); ++sample)
+            if (first.getSample(channel, sample) != second.getSample(channel, sample))
+                return false;
+    return true;
+}
+
+double averageDifference(const juce::AudioBuffer<float>& first,
+                         const juce::AudioBuffer<float>& second)
+{
+    if (first.getNumChannels() != second.getNumChannels()
+        || first.getNumSamples() != second.getNumSamples())
+        return 0.0;
+    double difference = 0.0;
+    auto count = 0;
+    for (int channel = 0; channel < first.getNumChannels(); ++channel)
+        for (int sample = 0; sample < first.getNumSamples(); ++sample)
+        {
+            difference += std::abs(static_cast<double>(first.getSample(channel, sample)
+                                                       - second.getSample(channel, sample)));
+            ++count;
+        }
+    return difference / static_cast<double>(juce::jmax(1, count));
 }
 }
 
@@ -140,6 +172,52 @@ int main()
     passed &= expect(deterministic,
                      "Texture construction must be deterministic for a stored seed");
 
+    juce::AudioBuffer<float> steadyTone(2, 20000);
+    for (int sample = 0; sample < steadyTone.getNumSamples(); ++sample)
+    {
+        const auto phase = juce::MathConstants<float>::twoPi * 173.0f
+                           * static_cast<float>(sample) / static_cast<float>(sampleRate);
+        steadyTone.setSample(0, sample, 0.58f * std::sin(phase));
+        steadyTone.setSample(1, sample, 0.54f * std::sin(phase + 0.06f));
+    }
+    auto naturalSettings = textureSettings;
+    naturalSettings.flatten = 0.0f;
+    naturalSettings.dynamicsCrush = 0.0f;
+    naturalSettings.character = TextureCharacter::off;
+    const auto naturalTone = TextureSynthesizer::synthesize(
+        steadyTone, sampleRate, naturalSettings);
+    passed &= expect(localLevelVariation(naturalTone.audio, 320, 80) < 0.08,
+                     "Natural overlap should not impose strong periodic beating on a steady tone");
+
+    auto characterOff = textureSettings;
+    characterOff.character = TextureCharacter::off;
+    characterOff.characterAmount = 1.0f;
+    const auto offResult = TextureSynthesizer::synthesize(
+        repeated, sampleRate, characterOff);
+    auto zeroCharacter = characterOff;
+    zeroCharacter.character = TextureCharacter::fray;
+    zeroCharacter.characterAmount = 0.0f;
+    const auto zeroResult = TextureSynthesizer::synthesize(
+        repeated, sampleRate, zeroCharacter);
+    passed &= expect(buffersEqual(offResult.audio, zeroResult.audio),
+                     "Extra Off and zero amount must be exact audio bypasses");
+
+    for (const auto character : std::array<TextureCharacter, 3> {
+             TextureCharacter::patina, TextureCharacter::bloom, TextureCharacter::fray })
+    {
+        auto characterSettings = characterOff;
+        characterSettings.character = character;
+        characterSettings.characterAmount = 1.0f;
+        const auto characterResult = TextureSynthesizer::synthesize(
+            repeated, sampleRate, characterSettings);
+        passed &= expect(characterResult.containsOnlyFiniteSamples
+                             && characterResult.audio.getNumSamples()
+                                    == offResult.audio.getNumSamples(),
+                         "Every Extra style must preserve exact length and numeric safety");
+        passed &= expect(averageDifference(offResult.audio, characterResult.audio) > 1.0e-4,
+                         "Every Extra style must create an audible-scale signal change");
+    }
+
     juce::AudioBuffer<float> dynamicsProbe(2, 16000);
     for (int sample = 0; sample < dynamicsProbe.getNumSamples(); ++sample)
     {
@@ -173,6 +251,8 @@ int main()
     textureEngine.setGenerationMode(LoopEngine::GenerationMode::textureLoop);
     textureEngine.setTextureDurationSeconds(4.0f);
     textureEngine.setTextureDynamicsCrush(0.8f);
+    textureEngine.setTextureCharacter(TextureCharacter::bloom);
+    textureEngine.setTextureCharacterAmount(0.45f);
     textureEngine.submitSource(repeated, "source-probe.wav");
     passed &= expect(textureEngine.reanalyzeSourceRange(0.1f, 0.9f),
                      "Texture mode should accept Source In/Out");
@@ -180,7 +260,9 @@ int main()
                      "Texture generation should complete inside LoopEngine");
     passed &= expect(textureEngine.getLastUsedGenerationMode()
                          == LoopEngine::GenerationMode::textureLoop,
-                     "Texture mode should remain active after generation");
+                      "Texture mode should remain active after generation");
+    passed &= expect(textureEngine.getCandidateDescription(0).contains("Bloom"),
+                     "LoopEngine should apply and identify the selected Extra style");
     passed &= expect(textureEngine.createRenderedLoop().getNumSamples() == 16000,
                      "Texture mode should expose the requested loop to the DAW");
 

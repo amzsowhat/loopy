@@ -20,13 +20,15 @@ Host input -> dry path -----------------------> output mixer
 ```
 
 The audio thread only writes the preallocated capture workspace. A worker analyzes that immutable
-capture and publishes an exact-size loop while playback is paused in the `analysing` state. UI
+capture and publishes either an exact-size Rotate & Repair loop or an exact-size Texture Loop while
+playback is paused in the `analysing` state. Texture construction, Crush and optional Extra
+character processing all run on that worker. UI
 requests are represented by atomics and applied at the beginning of an audio block. The engine
 performs no file I/O, full-buffer clearing, analysis pass, lock wait, or heap allocation in
 `process()`.
 
 ## State boundary
 
-Version 1 stores automatable parameters and gzip-compressed 32-bit float loop audio in the host
+State version 2 stores automatable parameters and gzip-compressed 32-bit float loop audio in the host
 project. A later production design may additionally persist captures as managed assets with hashes
 and relink support instead of embedding larger audio assets in plug-in state.

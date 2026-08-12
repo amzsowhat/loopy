@@ -121,6 +121,8 @@ void LoopEngine::analysisLoop()
             settings.dynamicsCrush = textureDynamicsCrush.load(std::memory_order_relaxed);
             settings.sourceMatch = textureSourceMatch.load(std::memory_order_relaxed);
             settings.structure = textureStructure.load(std::memory_order_relaxed);
+            settings.character = textureCharacter.load(std::memory_order_relaxed);
+            settings.characterAmount = textureCharacterAmount.load(std::memory_order_relaxed);
             const auto baseSeed = textureSeed.load(std::memory_order_relaxed);
             generatedTextures.reserve(1);
             constexpr uint32_t maximumAttempts = 1;

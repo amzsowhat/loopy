@@ -94,6 +94,10 @@ void LoopSurgeonAudioProcessor::processBlock(juce::AudioBuffer<float>& buffer,
     loopEngine.setTextureSourceMatch(parameters.getRawParameterValue("sourceMatch")->load());
     loopEngine.setTextureStructure(static_cast<TextureStructure>(juce::jlimit(
         0, 2, juce::roundToInt(parameters.getRawParameterValue("textureStructure")->load()))));
+    loopEngine.setTextureCharacter(static_cast<TextureCharacter>(juce::jlimit(
+        0, 3, juce::roundToInt(parameters.getRawParameterValue("textureCharacter")->load()))));
+    loopEngine.setTextureCharacterAmount(
+        parameters.getRawParameterValue("textureCharacterAmount")->load());
     const auto selectedMode = juce::roundToInt(
         parameters.getRawParameterValue("generationMode")->load());
     loopEngine.setGenerationMode(selectedMode == 1
@@ -126,6 +130,11 @@ void LoopSurgeonAudioProcessor::syncGenerationControlsForAnalysis() noexcept
     loopEngine.setTextureStructure(static_cast<TextureStructure>(juce::jlimit(
         0, 2, juce::roundToInt(
                   parameters.getRawParameterValue("textureStructure")->load()))));
+    loopEngine.setTextureCharacter(static_cast<TextureCharacter>(juce::jlimit(
+        0, 3, juce::roundToInt(
+                  parameters.getRawParameterValue("textureCharacter")->load()))));
+    loopEngine.setTextureCharacterAmount(
+        parameters.getRawParameterValue("textureCharacterAmount")->load());
     const auto selectedMode = juce::roundToInt(
         parameters.getRawParameterValue("generationMode")->load());
     loopEngine.setGenerationMode(selectedMode == 1
@@ -354,8 +363,25 @@ LoopSurgeonAudioProcessor::createParameterLayout()
     layout.push_back(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID { "textureStructure", 1 },
         "Texture Style",
-        juce::StringArray { "Organism", "Spectral Drift", "Fracture" },
+        juce::StringArray { "Flow", "Drift", "Fracture" },
         0));
+
+    layout.push_back(std::make_unique<juce::AudioParameterChoice>(
+        juce::ParameterID { "textureCharacter", 1 },
+        "Texture Extra Character",
+        juce::StringArray { "Off", "Patina", "Bloom", "Fray" },
+        0));
+
+    layout.push_back(std::make_unique<juce::AudioParameterFloat>(
+        juce::ParameterID { "textureCharacterAmount", 1 },
+        "Texture Extra Amount",
+        juce::NormalisableRange<float> { 0.0f, 1.0f, 0.01f },
+        0.5f,
+        juce::AudioParameterFloatAttributes().withStringFromValueFunction(
+            [] (const float value, int)
+            {
+                return juce::String(juce::roundToInt(value * 100.0f)) + "%";
+            })));
 
     return { layout.begin(), layout.end() };
 }

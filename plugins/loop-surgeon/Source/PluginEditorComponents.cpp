@@ -4,15 +4,15 @@
 
 namespace
 {
-constexpr auto background = 0xff0b1016;
-constexpr auto panel = 0xff121a24;
-constexpr auto panelRaised = 0xff17222e;
-constexpr auto border = 0xff263545;
-constexpr auto textPrimary = 0xfff2f6fa;
-constexpr auto textMuted = 0xff8d9aaa;
-constexpr auto searchBlue = 0xff4ea1ff;
-constexpr auto loopGreen = 0xff51d6a5;
-constexpr auto warningAmber = 0xffffb65c;
+constexpr auto background = 0xff0b0d10;
+constexpr auto panel = 0xff15191e;
+constexpr auto panelRaised = 0xff1d232a;
+constexpr auto border = 0xff343b45;
+constexpr auto textPrimary = 0xfff1eee7;
+constexpr auto textMuted = 0xffa6adb7;
+constexpr auto searchBlue = 0xff7f9fc9;
+constexpr auto loopGreen = 0xff82b5a5;
+constexpr auto warningAmber = 0xffd79a52;
 }
 
 LoopSurgeonLookAndFeel::LoopSurgeonLookAndFeel()
@@ -20,21 +20,21 @@ LoopSurgeonLookAndFeel::LoopSurgeonLookAndFeel()
     setColour(juce::Label::textColourId, juce::Colour(textPrimary));
     setColour(juce::TextButton::textColourOffId, juce::Colour(textPrimary));
     setColour(juce::TextButton::textColourOnId, juce::Colour(textPrimary));
-    setColour(juce::TextButton::buttonColourId, juce::Colour(0xff263443));
-    setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff315b78));
+    setColour(juce::TextButton::buttonColourId, juce::Colour(0xff30363e));
+    setColour(juce::TextButton::buttonOnColourId, juce::Colour(0xff435d78));
     setColour(juce::ComboBox::backgroundColourId, juce::Colour(panelRaised));
     setColour(juce::ComboBox::outlineColourId, juce::Colour(border));
     setColour(juce::ComboBox::textColourId, juce::Colour(textPrimary));
-    setColour(juce::ComboBox::arrowColourId, juce::Colour(0xffa9b7c6));
-    setColour(juce::Slider::trackColourId, juce::Colour(0xff2b3948));
-    setColour(juce::Slider::backgroundColourId, juce::Colour(0xff2b3948));
+    setColour(juce::ComboBox::arrowColourId, juce::Colour(textMuted));
+    setColour(juce::Slider::trackColourId, juce::Colour(0xff3b414a));
+    setColour(juce::Slider::backgroundColourId, juce::Colour(0xff30353d));
     setColour(juce::Slider::thumbColourId, juce::Colour(loopGreen));
     setColour(juce::Slider::textBoxTextColourId, juce::Colour(textPrimary));
     setColour(juce::Slider::textBoxBackgroundColourId, juce::Colour(panelRaised));
     setColour(juce::Slider::textBoxOutlineColourId, juce::Colour(border));
     setColour(juce::PopupMenu::backgroundColourId, juce::Colour(panelRaised));
     setColour(juce::PopupMenu::textColourId, juce::Colour(textPrimary));
-    setColour(juce::PopupMenu::highlightedBackgroundColourId, juce::Colour(0xff294766));
+    setColour(juce::PopupMenu::highlightedBackgroundColourId, juce::Colour(0xff435d78));
 }
 
 void LoopSurgeonLookAndFeel::drawButtonBackground(
@@ -59,16 +59,19 @@ void LoopSurgeonLookAndFeel::drawButtonBackground(
     graphics.drawRoundedRectangle(bounds, 7.0f, 1.0f);
 }
 
-juce::Font LoopSurgeonLookAndFeel::getTextButtonFont(juce::TextButton&, const int buttonHeight)
+juce::Font LoopSurgeonLookAndFeel::getTextButtonFont(juce::TextButton& button,
+                                                     const int buttonHeight)
 {
+    if (button.getComponentID() == "primaryAction")
+        return juce::Font(juce::FontOptions(19.0f, juce::Font::bold));
     return juce::Font(juce::FontOptions(
-        juce::jlimit(12.0f, 15.0f, static_cast<float>(buttonHeight) * 0.38f),
+        juce::jlimit(14.0f, 16.0f, static_cast<float>(buttonHeight) * 0.40f),
         juce::Font::bold));
 }
 
 juce::Font LoopSurgeonLookAndFeel::getComboBoxFont(juce::ComboBox&)
 {
-    return juce::Font(juce::FontOptions(13.0f));
+    return juce::Font(juce::FontOptions(15.0f));
 }
 
 void LoopWaveformView::setWaveform(std::vector<float> newPeaks)
@@ -104,7 +107,7 @@ bool LoopWaveformView::isEditingRotation() const noexcept
 void LoopWaveformView::paint(juce::Graphics& graphics)
 {
     auto bounds = getLocalBounds().toFloat();
-    graphics.setColour(juce::Colour(0xff0d141c));
+    graphics.setColour(juce::Colour(0xff101318));
     graphics.fillRoundedRectangle(bounds, 8.0f);
     graphics.setColour(juce::Colour(border));
     graphics.drawRoundedRectangle(bounds.reduced(0.5f), 8.0f, 1.0f);
@@ -112,7 +115,7 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
     for (int division = 1; division < 8; ++division)
     {
         const auto x = bounds.getX() + bounds.getWidth() * static_cast<float>(division) / 8.0f;
-        graphics.setColour(juce::Colour(0xff263545).withAlpha(division == 4 ? 0.65f : 0.35f));
+        graphics.setColour(juce::Colour(border).withAlpha(division == 4 ? 0.65f : 0.35f));
         graphics.drawVerticalLine(juce::roundToInt(x), bounds.getY() + 24.0f,
                                   bounds.getBottom() - 24.0f);
     }
@@ -131,7 +134,7 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
     graphics.setColour(juce::Colour(searchBlue).withAlpha(0.10f));
     graphics.fillRect(juce::Rectangle<float>(
         sourceX, bounds.getY(), sourceRight - sourceX, bounds.getHeight()));
-    graphics.setColour(juce::Colour(0xff05080c).withAlpha(0.56f));
+    graphics.setColour(juce::Colour(0xff080a0d).withAlpha(0.62f));
     graphics.fillRect(bounds.withWidth(juce::jmax(0.0f, sourceX - bounds.getX())));
     graphics.fillRect(bounds.withX(sourceRight)
                           .withWidth(juce::jmax(0.0f, bounds.getRight() - sourceRight)));
@@ -146,7 +149,7 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
         waveform.startNewSubPath(x, centre - amplitude);
         waveform.lineTo(x, centre + amplitude);
     }
-    graphics.setColour(juce::Colour(0xffa4b3c3).withAlpha(0.88f));
+    graphics.setColour(juce::Colour(0xffc4c9cf).withAlpha(0.88f));
     graphics.strokePath(waveform, juce::PathStrokeType(1.0f));
 
     const auto drawMarker = [&] (const float proportion, const juce::String& label,
@@ -167,7 +170,7 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
         graphics.setColour(colour.withAlpha(0.20f));
         graphics.fillRoundedRectangle(tag, 4.0f);
         graphics.setColour(colour);
-        graphics.setFont(juce::FontOptions(9.5f, juce::Font::bold));
+        graphics.setFont(juce::FontOptions(11.5f, juce::Font::bold));
         graphics.drawText(label, tag, juce::Justification::centred);
     };
 
@@ -256,7 +259,7 @@ void SignalAnalysisView::paint(juce::Graphics& graphics)
     content.removeFromLeft(10.0f);
     auto meterArea = content;
 
-    graphics.setFont(juce::FontOptions(8.5f, juce::Font::bold));
+    graphics.setFont(juce::FontOptions(11.5f, juce::Font::bold));
     graphics.setColour(juce::Colour(textMuted));
     graphics.drawText("SPECTRUM  SOURCE / LOOP", spectrumArea.removeFromTop(12.0f),
                       juce::Justification::centredLeft);
@@ -325,7 +328,7 @@ void SignalAnalysisView::paint(juce::Graphics& graphics)
     graphics.fillRoundedRectangle(markerX - 2.0f, correlationTrack.getY() - 2.0f,
                                   4.0f, correlationTrack.getHeight() + 4.0f, 2.0f);
     graphics.setColour(juce::Colour(textPrimary));
-    graphics.setFont(juce::FontOptions(10.0f, juce::Font::bold));
+    graphics.setFont(juce::FontOptions(12.5f, juce::Font::bold));
     graphics.drawText(juce::String(correlation, 2), meterArea.removeFromTop(18.0f),
                       juce::Justification::centredLeft);
     const auto imbalance = snapshot.outputImbalanceDb;
@@ -374,4 +377,3 @@ void RenderDragButton::mouseUp(const juce::MouseEvent& event)
     juce::TextButton::mouseUp(event);
     dragStarted = false;
 }
-

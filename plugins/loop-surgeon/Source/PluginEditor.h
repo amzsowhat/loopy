@@ -123,7 +123,7 @@ private:
     juce::TextButton previewTransportButton { "Preview" };
     juce::TextButton originalPreviewButton { "Source" };
     juce::TextButton loopPreviewButton { "Generated" };
-    juce::TextButton importButton { "Choose Audio..." };
+    juce::TextButton importButton { "Load Audio..." };
     RenderDragButton dragToDawButton;
     juce::TextButton exportButton { "Save WAV..." };
     juce::TextButton captureButton { "Record DAW Input" };
@@ -135,8 +135,10 @@ private:
     juce::Slider flattenSlider;
     juce::Slider dynamicsCrushSlider;
     juce::Slider sourceMatchSlider;
+    juce::Slider characterAmountSlider;
     juce::ComboBox generationModeBox;
     juce::ComboBox textureStructureBox;
+    juce::ComboBox characterBox;
     juce::Label crossfadeLabel;
     juce::Label mixLabel;
     juce::Label durationLabel;
@@ -144,8 +146,10 @@ private:
     juce::Label flattenLabel;
     juce::Label dynamicsCrushLabel;
     juce::Label sourceMatchLabel;
+    juce::Label characterAmountLabel;
     juce::Label modeLabel;
     juce::Label textureStructureLabel;
+    juce::Label characterLabel;
     std::unique_ptr<SliderAttachment> crossfadeAttachment;
     std::unique_ptr<SliderAttachment> mixAttachment;
     std::unique_ptr<SliderAttachment> durationAttachment;
@@ -153,10 +157,14 @@ private:
     std::unique_ptr<SliderAttachment> flattenAttachment;
     std::unique_ptr<SliderAttachment> dynamicsCrushAttachment;
     std::unique_ptr<SliderAttachment> sourceMatchAttachment;
+    std::unique_ptr<SliderAttachment> characterAmountAttachment;
     std::unique_ptr<ComboBoxAttachment> modeAttachment;
     std::unique_ptr<ComboBoxAttachment> textureStructureAttachment;
+    std::unique_ptr<ComboBoxAttachment> characterAttachment;
     std::unique_ptr<juce::FileChooser> fileChooser;
     juce::String lastMessage;
+    juce::String transientStatusMessage;
+    double transientStatusExpiresAtMs = 0.0;
     juce::String displayedSource;
     int displayedCandidateCount = -1;
     uint64_t displayedCandidateRevision = 0;
@@ -166,6 +174,7 @@ private:
     juce::Rectangle<int> waveformCard;
     juce::Rectangle<int> auditionCard;
     juce::Rectangle<int> finishCard;
+    juce::Rectangle<int> primaryActionArea;
     juce::Rectangle<int> footerArea;
 
     JUCE_DECLARE_NON_COPYABLE_WITH_LEAK_DETECTOR(LoopSurgeonAudioProcessorEditor)

@@ -14,7 +14,8 @@ between Source In and Source Out and create an exact user-defined output length.
 - **Rotate & Repair** automates the conventional rotate, overlap and seam-repair workflow.
 - **Texture Loop** removes macro one-shot movement and constructs a circular long-form SFX texture
   from phase-coherent regions of the selected waveform. It does not add oscillators, synthetic
-  noise, pitch shifting, spectral delay, tempo-locked movement or reverse playback.
+  noise, pitch shifting, spectral delay, tempo-locked movement or reverse playback. Natural is the
+  default; Patina, Bloom and Fray are optional post-texture Extra styles with a complete bypass.
 
 Generated audio is stored in DAW state and can be saved as 24-bit WAV or dragged to the DAW.
 

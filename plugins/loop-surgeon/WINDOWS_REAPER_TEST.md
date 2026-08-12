@@ -8,8 +8,10 @@
 5. Test **Texture Loop** with Flow first, choose Output Length, then adjust Stability and Transform.
    A/B Crush at 0%, 50% and 100%; confirm it reduces small ADSR pulses without clicks, pumping,
    stereo movement or loss of the material.
-6. Use Preview/Stop, Source/Generated, New Variation, Save WAV and Drag Loop to DAW.
-7. Save and reopen the REAPER project. Confirm source, range, selected mode and generated loop return.
+6. Leave Extra Off for the Natural reference. Then test Patina, Bloom and Fray at 50% and 100%;
+   confirm returning Extra to Off removes the character stage completely.
+7. Use Preview/Stop, Source/Generated, New Variation, Save WAV and Drag Loop to DAW.
+8. Save and reopen the REAPER project. Confirm source, range, selected mode and generated loop return.
 
 Texture Loop should be judged as SFX material construction. Report obvious source-event repetition,
 clicks, bursts, tonal/electronic artifacts, stereo collapse or failure to preserve material identity.
