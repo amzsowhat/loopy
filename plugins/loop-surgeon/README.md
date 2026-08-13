@@ -4,11 +4,13 @@ Loop Surgeon is one VST3 with two equally available workflows.
 
 ## Interface
 
-The 0.13 interface uses one fixed left-to-right machine flow: source range, mode-specific shaping,
-Generate, result audition and delivery. Rotate & Repair and Texture Loop share the same controls and
-output area; changing mode only changes the relevant shaping controls. The illustrated skin and
-controls are bundled raster assets, while the waveform, values, states and interaction remain live
-JUCE components. No WebView or audio-thread UI work is used.
+The 0.14 interface uses one product-specific splice-loop illustration as its functional map rather
+than placing conventional panels over a background. Source selection occupies the upper-left loop
+cavity, mode-specific shaping attaches to the upper-right repaired band, Generate sits on the main
+splice, and result/output occupy the lower return path. Load, DAW capture and Clear remain compact
+text actions in the top bar. Changing mode shows only its real controls; the result drawer appears
+only after generation. JUCE still owns every label, value, state and hit target. No WebView or
+audio-thread UI work is used.
 
 ## Rotate & Repair
 

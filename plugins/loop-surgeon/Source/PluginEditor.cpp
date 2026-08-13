@@ -4,13 +4,14 @@
 
 namespace
 {
-constexpr auto ink = 0xff191416;
-constexpr auto softInk = 0xff544b47;
-constexpr auto paper = 0xffe7ddbf;
-constexpr auto acidYellow = 0xffe4c72b;
-constexpr auto fadedCoral = 0xffd96d5e;
-constexpr auto dustyViolet = 0xff76608f;
-constexpr auto mint = 0xff8ba98f;
+constexpr auto ink = 0xff101014;
+constexpr auto softInk = 0xffa8a3a0;
+constexpr auto paper = 0xfff5f0de;
+constexpr auto acidYellow = 0xfff0ee63;
+constexpr auto fadedCoral = 0xffff625f;
+constexpr auto dustyViolet = 0xff8367e8;
+constexpr auto mint = 0xff57e0b5;
+constexpr auto charcoal = 0xff222128;
 }
 
 LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
@@ -21,14 +22,14 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
 
     titleLabel.setText("LOOP SURGEON", juce::dontSendNotification);
     titleLabel.setComponentID("displayTitle");
-    titleLabel.setFont(lookAndFeel.getDisplayFont(37.0f));
-    titleLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
+    titleLabel.setFont(lookAndFeel.getDisplayFont(34.0f));
+    titleLabel.setColour(juce::Label::textColourId, juce::Colour(paper));
     addAndMakeVisible(titleLabel);
 
-    versionLabel.setText("0.13  /  LOCAL TEST",
+    versionLabel.setText("0.14 / LOCAL TEST",
                          juce::dontSendNotification);
-    versionLabel.setFont(lookAndFeel.getHandFont(13.0f));
-    versionLabel.setJustificationType(juce::Justification::centredRight);
+    versionLabel.setFont(lookAndFeel.getHandFont(11.5f));
+    versionLabel.setJustificationType(juce::Justification::centredLeft);
     versionLabel.setColour(juce::Label::textColourId, juce::Colour(softInk));
     addAndMakeVisible(versionLabel);
 
@@ -38,11 +39,13 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     addAndMakeVisible(dropLabel);
 
     sourceLabel.setColour(juce::Label::textColourId, juce::Colour(softInk));
-    sourceLabel.setFont(lookAndFeel.getHandFont(13.5f));
+    sourceLabel.setFont(lookAndFeel.getHandFont(13.0f));
+    sourceLabel.setJustificationType(juce::Justification::centred);
     sourceLabel.setMinimumHorizontalScale(0.7f);
+    sourceLabel.setText("NO SOURCE", juce::dontSendNotification);
     addAndMakeVisible(sourceLabel);
 
-    statusLabel.setColour(juce::Label::textColourId, juce::Colour(softInk));
+    statusLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
     statusLabel.setFont(lookAndFeel.getHandFont(13.5f));
     addAndMakeVisible(statusLabel);
 
@@ -64,7 +67,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
             lastMessage = "Loop start must remain inside the blue source range";
     };
     rangeLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
-    rangeLabel.setFont(lookAndFeel.getHandFont(12.5f));
+    rangeLabel.setJustificationType(juce::Justification::centredLeft);
+    rangeLabel.setFont(lookAndFeel.getHandFont(12.0f));
     addAndMakeVisible(rangeLabel);
 
     analyzeRangeButton.onClick = [this]
@@ -109,6 +113,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         waveformView.setSourceRange(0.0f, 1.0f);
         lastMessage = "Using the full source";
     };
+    resetRangeButton.setComponentID("textAction");
     addAndMakeVisible(resetRangeButton);
 
     previewTransportButton.onClick = [this]
@@ -117,6 +122,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         processor.setPreviewPlaying(shouldPlay);
         lastMessage = shouldPlay ? "Preview started" : "Preview stopped";
     };
+    previewTransportButton.setComponentID("tailAction");
     previewTransportButton.setColour(juce::TextButton::buttonColourId,
                                      juce::Colour(fadedCoral));
     addAndMakeVisible(previewTransportButton);
@@ -138,6 +144,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         lastMessage = "Auditioning generated result";
     };
     loopPreviewButton.setToggleState(true, juce::dontSendNotification);
+    originalPreviewButton.setComponentID("segmented");
+    loopPreviewButton.setComponentID("segmented");
     addAndMakeVisible(originalPreviewButton);
     addAndMakeVisible(loopPreviewButton);
 
@@ -164,17 +172,21 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         else
             lastMessage = "Load a source before creating a new variation";
     };
+    regenerateButton.setComponentID("textAction");
     addAndMakeVisible(regenerateButton);
 
     importButton.onClick = [this] { chooseImportFile(); };
+    importButton.setComponentID("headerAction");
     importButton.setColour(juce::TextButton::buttonColourId, juce::Colour(acidYellow));
     addAndMakeVisible(importButton);
 
     exportButton.onClick = [this] { chooseExportFile(); };
+    exportButton.setComponentID("tailAction");
     exportButton.setColour(juce::TextButton::buttonColourId, juce::Colour(mint));
     addAndMakeVisible(exportButton);
 
     dragToDawButton.prepareFile = [this] { return prepareDawDragFile(); };
+    dragToDawButton.setComponentID("tailAction");
     dragToDawButton.reportStatus = [this] (const juce::String& message)
     {
         lastMessage = message;
@@ -188,6 +200,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         processor.beginCapture();
         lastMessage = "DAW input capture armed";
     };
+    captureButton.setComponentID("headerAction");
     addAndMakeVisible(captureButton);
 
     clearButton.onClick = [this]
@@ -197,6 +210,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         lastMessage = "Result cleared - source retained";
         updatePrimaryAction();
     };
+    clearButton.setComponentID("headerAction");
     clearButton.setColour(juce::TextButton::buttonColourId, juce::Colour(paper));
     addAndMakeVisible(clearButton);
 
@@ -208,6 +222,10 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     configureSlider(dynamicsCrushSlider, dynamicsCrushLabel, "CRUSH");
     configureSlider(sourceMatchSlider, sourceMatchLabel, "TRANSFORM");
     configureSlider(characterAmountSlider, characterAmountLabel, "EXTRA MIX");
+    mixSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    mixSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 64, 22);
+    characterAmountSlider.setSliderStyle(juce::Slider::LinearHorizontal);
+    characterAmountSlider.setTextBoxStyle(juce::Slider::TextBoxRight, false, 64, 22);
     crossfadeSlider.setTooltip(
         "Maximum overlap used to repair the source's original end-to-start seam");
     durationSlider.setTooltip(
@@ -240,8 +258,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "textureCharacterAmount", characterAmountSlider);
 
     modeLabel.setText("MODE", juce::dontSendNotification);
-    modeLabel.setFont(lookAndFeel.getHandFont(13.0f));
-    modeLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
+    modeLabel.setFont(lookAndFeel.getDisplayFont(12.0f));
+    modeLabel.setColour(juce::Label::textColourId, juce::Colour(paper));
     addAndMakeVisible(modeLabel);
     generationModeBox.addItem("Rotate & Repair", 1);
     generationModeBox.addItem("Texture Loop", 2);
@@ -257,7 +275,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "generationMode", generationModeBox);
 
     textureStructureLabel.setText("MOTION", juce::dontSendNotification);
-    textureStructureLabel.setFont(lookAndFeel.getHandFont(12.0f));
+    textureStructureLabel.setFont(lookAndFeel.getDisplayFont(11.0f));
     textureStructureLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
     addAndMakeVisible(textureStructureLabel);
     textureStructureBox.addItem("Flow", 1);
@@ -275,7 +293,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "textureStructure", textureStructureBox);
 
     characterLabel.setText("EXTRA", juce::dontSendNotification);
-    characterLabel.setFont(lookAndFeel.getHandFont(12.0f));
+    characterLabel.setFont(lookAndFeel.getDisplayFont(11.0f));
     characterLabel.setColour(juce::Label::textColourId, juce::Colour(ink));
     addAndMakeVisible(characterLabel);
     characterBox.addItem("Off", 1);
@@ -294,11 +312,39 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     characterAttachment = std::make_unique<ComboBoxAttachment>(
         parameters, "textureCharacter", characterBox);
 
+    applyModeLayout();
+    const auto directModeSelected = generationModeBox.getSelectedItemIndex() == 0;
+    durationLabel.setVisible(!directModeSelected);
+    durationSlider.setVisible(!directModeSelected);
+    repairDurationLabel.setVisible(directModeSelected);
+    repairDurationSlider.setVisible(directModeSelected);
+    flattenLabel.setVisible(!directModeSelected);
+    flattenSlider.setVisible(!directModeSelected);
+    dynamicsCrushLabel.setVisible(!directModeSelected);
+    dynamicsCrushSlider.setVisible(!directModeSelected);
+    sourceMatchLabel.setVisible(!directModeSelected);
+    sourceMatchSlider.setVisible(!directModeSelected);
+    textureStructureLabel.setVisible(!directModeSelected);
+    textureStructureBox.setVisible(!directModeSelected);
+    characterLabel.setVisible(!directModeSelected);
+    characterBox.setVisible(!directModeSelected);
+    characterAmountLabel.setVisible(!directModeSelected);
+    characterAmountSlider.setVisible(!directModeSelected);
+    characterAmountSlider.setEnabled(!directModeSelected
+        && characterBox.getSelectedItemIndex() > 0);
+    crossfadeLabel.setVisible(directModeSelected);
+    crossfadeSlider.setVisible(directModeSelected);
+    candidateBox.setVisible(false);
+    originalPreviewButton.setVisible(false);
+    loopPreviewButton.setVisible(false);
+    regenerateButton.setVisible(false);
+    signalAnalysisView.setVisible(false);
+
     setResizable(true, true);
-    setResizeLimits(1050, 700, 1536, 1024);
+    setResizeLimits(1050, 630, 1536, 922);
     if (auto* editorConstrainer = getConstrainer())
-        editorConstrainer->setFixedAspectRatio(1.5);
-    setSize(1200, 800);
+        editorConstrainer->setFixedAspectRatio(5.0 / 3.0);
+    setSize(1200, 720);
     updatePrimaryAction();
     startTimerHz(12);
 }
@@ -312,34 +358,66 @@ LoopSurgeonAudioProcessorEditor::~LoopSurgeonAudioProcessorEditor()
 void LoopSurgeonAudioProcessorEditor::paint(juce::Graphics& graphics)
 {
     graphics.fillAll(juce::Colour(ink));
-    const auto& skin = lookAndFeel.getMachineSkin();
-    if (skin.isValid())
-        graphics.drawImage(skin, getLocalBounds().toFloat(),
-                           juce::RectanglePlacement::stretchToFit);
-    else
-        graphics.fillAll(juce::Colour(paper));
-
-    const auto scale = static_cast<float>(getWidth()) / 1200.0f;
-    const auto box = [scale] (const float x, const float y,
-                              const float width, const float height)
+    const auto sx = static_cast<float>(getWidth()) / 1200.0f;
+    const auto sy = static_cast<float>(getHeight()) / 720.0f;
+    const auto box = [sx, sy] (const float x, const float y,
+                               const float width, const float height)
     {
-        return juce::Rectangle<float>(x * scale, y * scale,
-                                      width * scale, height * scale);
+        return juce::Rectangle<float>(x * sx, y * sy,
+                                      width * sx, height * sy);
     };
-    graphics.setColour(juce::Colour(ink).withAlpha(0.82f));
-    graphics.setFont(lookAndFeel.getHandFont(13.0f * scale));
-    graphics.drawText("SOURCE RANGE", box(105.0f, 124.0f, 240.0f, 22.0f),
-                      juce::Justification::centredLeft);
-    graphics.drawText("SHAPE", box(814.0f, 124.0f, 150.0f, 22.0f),
-                      juce::Justification::centredLeft);
-    graphics.drawText("RESULT MONITOR", box(102.0f, 571.0f, 260.0f, 20.0f),
-                      juce::Justification::centredLeft);
+
+    graphics.setColour(juce::Colour(0xff18171d));
+    graphics.fillRect(box(0.0f, 0.0f, 1200.0f, 92.0f));
+    graphics.setColour(juce::Colour(acidYellow));
+    graphics.fillRect(box(0.0f, 92.0f, 1200.0f, 4.0f));
+
+    graphics.setColour(juce::Colour(0xfff0ee63));
+    graphics.fillRect(box(0.0f, 96.0f, 1200.0f, 604.0f));
+    graphics.setColour(juce::Colour(0xff57e0b5));
+    graphics.fillRect(box(0.0f, 96.0f, 18.0f, 604.0f));
+    graphics.setColour(juce::Colour(0xffff625f));
+    graphics.fillRect(box(18.0f, 96.0f, 8.0f, 604.0f));
+
+    const auto& field = lookAndFeel.getFieldImage();
+    if (field.isValid())
+    {
+        juce::Graphics::ScopedSaveState state(graphics);
+        graphics.reduceClipRegion(box(26.0f, 96.0f, 1174.0f, 604.0f).toNearestInt());
+        graphics.setOpacity(displayedResultReady ? 0.96f
+                            : displayedSourceReady ? 0.88f : 0.78f);
+        graphics.drawImage(field, box(42.0f, 108.0f, 1116.0f, 570.0f),
+                           juce::RectanglePlacement::centred);
+        graphics.setOpacity(1.0f);
+    }
+
+    const auto nodeGlow = [&] (const juce::Point<float> centre,
+                               const bool active, const juce::Colour colour)
+    {
+        if (!active)
+            return;
+        graphics.setColour(colour.withAlpha(0.16f));
+        graphics.fillEllipse(juce::Rectangle<float>(68.0f * sx, 68.0f * sy)
+                                 .withCentre(centre));
+        graphics.setColour(colour.withAlpha(0.76f));
+        graphics.drawEllipse(juce::Rectangle<float>(58.0f * sx, 58.0f * sy)
+                                 .withCentre(centre), 2.0f * sx);
+    };
+    nodeGlow(box(384.0f, 292.0f, 1.0f, 1.0f).getCentre(),
+             displayedSourceReady, juce::Colour(mint));
+    nodeGlow(box(956.0f, 348.0f, 1.0f, 1.0f).getCentre(),
+             displayedSourceReady, juce::Colour(fadedCoral));
+    nodeGlow(box(758.0f, 582.0f, 1.0f, 1.0f).getCentre(),
+             displayedResultReady, juce::Colour(dustyViolet));
+
+    graphics.setColour(juce::Colour(0xff18171d));
+    graphics.fillRect(box(0.0f, 700.0f, 1200.0f, 20.0f));
 }
 
 void LoopSurgeonAudioProcessorEditor::resized()
 {
     const auto sx = static_cast<float>(getWidth()) / 1200.0f;
-    const auto sy = static_cast<float>(getHeight()) / 800.0f;
+    const auto sy = static_cast<float>(getHeight()) / 720.0f;
     const auto box = [sx, sy] (const float x, const float y,
                               const float width, const float height)
     {
@@ -348,44 +426,44 @@ void LoopSurgeonAudioProcessorEditor::resized()
                                     juce::roundToInt(height * sy));
     };
 
-    titleLabel.setBounds(box(100.0f, 25.0f, 350.0f, 48.0f));
-    versionLabel.setBounds(box(102.0f, 74.0f, 220.0f, 18.0f));
-    sourceLabel.setBounds(box(445.0f, 35.0f, 280.0f, 44.0f));
-    importButton.setBounds(box(740.0f, 35.0f, 110.0f, 43.0f));
-    captureButton.setBounds(box(860.0f, 35.0f, 140.0f, 43.0f));
-    clearButton.setBounds(box(1010.0f, 35.0f, 105.0f, 43.0f));
+    titleLabel.setBounds(box(46.0f, 13.0f, 350.0f, 45.0f));
+    versionLabel.setBounds(box(46.0f, 701.0f, 280.0f, 17.0f));
+    sourceLabel.setBounds(box(292.0f, 22.0f, 226.0f, 43.0f));
+    importButton.setBounds(box(732.0f, 26.0f, 112.0f, 34.0f));
+    captureButton.setBounds(box(858.0f, 26.0f, 140.0f, 34.0f));
+    clearButton.setBounds(box(1012.0f, 26.0f, 104.0f, 34.0f));
     dropLabel.setBounds({});
 
-    waveformView.setBounds(box(104.0f, 150.0f, 644.0f, 306.0f));
-    rangeLabel.setBounds(box(112.0f, 420.0f, 478.0f, 27.0f));
-    resetRangeButton.setBounds(box(603.0f, 414.0f, 130.0f, 32.0f));
+    waveformView.setBounds(box(140.0f, 190.0f, 374.0f, 142.0f));
+    rangeLabel.setBounds(box(148.0f, 334.0f, 274.0f, 24.0f));
+    resetRangeButton.setBounds(box(420.0f, 334.0f, 94.0f, 24.0f));
 
-    modeLabel.setBounds(box(820.0f, 140.0f, 280.0f, 20.0f));
-    generationModeBox.setBounds(box(820.0f, 163.0f, 280.0f, 48.0f));
-    textureStructureLabel.setBounds(box(820.0f, 214.0f, 130.0f, 15.0f));
-    textureStructureBox.setBounds(box(820.0f, 230.0f, 130.0f, 31.0f));
-    characterLabel.setBounds(box(970.0f, 214.0f, 130.0f, 15.0f));
-    characterBox.setBounds(box(970.0f, 230.0f, 130.0f, 31.0f));
+    modeLabel.setBounds(box(536.0f, 15.0f, 54.0f, 16.0f));
+    generationModeBox.setBounds(box(536.0f, 32.0f, 184.0f, 34.0f));
+    textureStructureLabel.setBounds(box(620.0f, 192.0f, 116.0f, 16.0f));
+    textureStructureBox.setBounds(box(620.0f, 208.0f, 116.0f, 32.0f));
+    characterLabel.setBounds(box(650.0f, 250.0f, 116.0f, 16.0f));
+    characterBox.setBounds(box(650.0f, 266.0f, 116.0f, 32.0f));
     applyModeLayout();
 
-    statusLabel.setBounds(box(100.0f, 500.0f, 510.0f, 25.0f));
-    candidateBox.setBounds(box(100.0f, 535.0f, 235.0f, 35.0f));
-    originalPreviewButton.setBounds(box(345.0f, 535.0f, 92.0f, 35.0f));
-    loopPreviewButton.setBounds(box(446.0f, 535.0f, 108.0f, 35.0f));
-    regenerateButton.setBounds(box(563.0f, 535.0f, 132.0f, 35.0f));
-    signalAnalysisView.setBounds(box(104.0f, 595.0f, 535.0f, 111.0f));
+    statusLabel.setBounds(box(88.0f, 430.0f, 604.0f, 26.0f));
+    candidateBox.setBounds(box(140.0f, 344.0f, 180.0f, 30.0f));
+    originalPreviewButton.setBounds(box(322.0f, 344.0f, 64.0f, 30.0f));
+    loopPreviewButton.setBounds(box(386.0f, 344.0f, 64.0f, 30.0f));
+    regenerateButton.setBounds(box(450.0f, 344.0f, 94.0f, 30.0f));
+    signalAnalysisView.setBounds(box(140.0f, 190.0f, 374.0f, 142.0f));
 
-    primaryActionArea = box(790.0f, 505.0f, 194.0f, 184.0f);
+    primaryActionArea = box(526.0f, 438.0f, 176.0f, 176.0f);
     analyzeRangeButton.setBounds(primaryActionArea);
-    previewTransportButton.setBounds(box(703.0f, 693.0f, 105.0f, 66.0f));
-    dragToDawButton.setBounds(box(820.0f, 693.0f, 132.0f, 66.0f));
-    exportButton.setBounds(box(966.0f, 693.0f, 128.0f, 66.0f));
+    previewTransportButton.setBounds(box(698.0f, 626.0f, 70.0f, 42.0f));
+    dragToDawButton.setBounds(box(782.0f, 610.0f, 76.0f, 42.0f));
+    exportButton.setBounds(box(846.0f, 586.0f, 70.0f, 42.0f));
 }
 
 void LoopSurgeonAudioProcessorEditor::applyModeLayout()
 {
     const auto sx = static_cast<float>(getWidth()) / 1200.0f;
-    const auto sy = static_cast<float>(getHeight()) / 800.0f;
+    const auto sy = static_cast<float>(getHeight()) / 720.0f;
     const auto box = [sx, sy] (const float x, const float y,
                               const float width, const float height)
     {
@@ -393,30 +471,42 @@ void LoopSurgeonAudioProcessorEditor::applyModeLayout()
                                     juce::roundToInt(width * sx),
                                     juce::roundToInt(height * sy));
     };
-    const auto setCell = [&] (juce::Label& label, juce::Slider& slider,
-                              const int column, const int row)
+    const auto setKnob = [&] (juce::Label& label, juce::Slider& slider,
+                              const float x, const float y,
+                              const float width, const float height)
     {
-        const auto x = 805.0f + static_cast<float>(column) * 99.0f;
-        const auto y = 266.0f + static_cast<float>(row) * 103.0f;
-        label.setBounds(box(x, y, 94.0f, 17.0f));
+        label.setBounds(box(x, y, width, 18.0f));
         label.setJustificationType(juce::Justification::centred);
-        slider.setBounds(box(x, y + 15.0f, 94.0f, 88.0f));
+        slider.setBounds(box(x, y + 15.0f, width, height));
+    };
+    const auto setStrip = [&] (juce::Label& label, juce::Slider& slider,
+                               const float y)
+    {
+        label.setBounds(box(768.0f, y, 88.0f, 30.0f));
+        label.setJustificationType(juce::Justification::centredLeft);
+        slider.setBounds(box(856.0f, y, 250.0f, 30.0f));
     };
 
     if (generationModeBox.getSelectedItemIndex() == 0)
     {
-        setCell(repairDurationLabel, repairDurationSlider, 0, 0);
-        setCell(crossfadeLabel, crossfadeSlider, 1, 0);
-        setCell(mixLabel, mixSlider, 2, 0);
+        setKnob(repairDurationLabel, repairDurationSlider,
+                775.0f, 130.0f, 110.0f, 112.0f);
+        setKnob(crossfadeLabel, crossfadeSlider,
+                900.0f, 150.0f, 110.0f, 112.0f);
+        setStrip(mixLabel, mixSlider, 416.0f);
     }
     else
     {
-        setCell(durationLabel, durationSlider, 0, 0);
-        setCell(flattenLabel, flattenSlider, 1, 0);
-        setCell(dynamicsCrushLabel, dynamicsCrushSlider, 2, 0);
-        setCell(sourceMatchLabel, sourceMatchSlider, 0, 1);
-        setCell(characterAmountLabel, characterAmountSlider, 1, 1);
-        setCell(mixLabel, mixSlider, 2, 1);
+        setKnob(durationLabel, durationSlider,
+                775.0f, 130.0f, 110.0f, 100.0f);
+        setKnob(flattenLabel, flattenSlider,
+                900.0f, 150.0f, 110.0f, 100.0f);
+        setKnob(dynamicsCrushLabel, dynamicsCrushSlider,
+                775.0f, 250.0f, 110.0f, 100.0f);
+        setKnob(sourceMatchLabel, sourceMatchSlider,
+                900.0f, 274.0f, 110.0f, 100.0f);
+        setStrip(characterAmountLabel, characterAmountSlider, 416.0f);
+        setStrip(mixLabel, mixSlider, 448.0f);
     }
 }
 
@@ -504,6 +594,12 @@ juce::File LoopSurgeonAudioProcessorEditor::prepareDawDragFile()
 void LoopSurgeonAudioProcessorEditor::timerCallback()
 {
     const auto source = processor.getSourceName();
+    const auto sourceReady = source.isNotEmpty();
+    if (displayedSourceReady != sourceReady)
+    {
+        displayedSourceReady = sourceReady;
+        repaint();
+    }
     sourceLabel.setText(source.isEmpty() ? "No source loaded" : source,
                         juce::dontSendNotification);
     const auto candidateCount = processor.getCandidateCount();
@@ -538,6 +634,11 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
 
     const auto state = processor.getLoopState();
     const auto ready = state == LoopEngine::State::ready;
+    if (displayedResultReady != ready)
+    {
+        displayedResultReady = ready;
+        repaint();
+    }
     const auto textureResult = ready
         && processor.getLastUsedGenerationMode()
                == LoopEngine::GenerationMode::textureLoop;
@@ -563,7 +664,17 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     regenerateButton.setEnabled(ready
         && processor.getLastUsedGenerationMode()
                == LoopEngine::GenerationMode::textureLoop);
-    regenerateButton.setVisible(selectedTextureMode);
+    candidateBox.setVisible(ready);
+    originalPreviewButton.setVisible(ready);
+    loopPreviewButton.setVisible(ready);
+    regenerateButton.setVisible(ready && selectedTextureMode);
+    signalAnalysisView.setVisible(ready);
+    waveformView.setVisible(!ready);
+    rangeLabel.setVisible(!ready);
+    resetRangeButton.setVisible(!ready);
+    previewTransportButton.setVisible(ready);
+    dragToDawButton.setVisible(ready);
+    exportButton.setVisible(ready);
     clearButton.setEnabled(source.isNotEmpty() || ready);
 
     const auto directModeSelected = generationModeBox.getSelectedItemIndex() == 0;
@@ -652,7 +763,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
         }
     }
     statusLabel.setColour(juce::Label::textColourId,
-        juce::Colour(state == LoopEngine::State::failed ? fadedCoral : softInk));
+        juce::Colour(state == LoopEngine::State::failed ? fadedCoral : ink));
     statusLabel.setText(statusText, juce::dontSendNotification);
     repaint();
 }
@@ -706,7 +817,8 @@ void LoopSurgeonAudioProcessorEditor::configureSlider(
                      juce::Colours::transparentBlack);
     addAndMakeVisible(slider);
     label.setText(text, juce::dontSendNotification);
-    label.setFont(lookAndFeel.getHandFont(11.3f));
+    label.setFont(lookAndFeel.getDisplayFont(10.8f));
     label.setColour(juce::Label::textColourId, juce::Colour(ink));
     addAndMakeVisible(label);
 }
+

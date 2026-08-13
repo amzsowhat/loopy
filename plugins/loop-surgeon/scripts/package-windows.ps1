@@ -1,5 +1,6 @@
 param(
-    [string] $Version = "0.13.0-local-test"
+    [string] $Version = "0.14.0-local-test",
+    [string] $BuildDirectory = ""
 )
 
 $ErrorActionPreference = "Stop"
@@ -15,7 +16,21 @@ if ($expectedPluginVersion -notmatch '^\d+\.\d+\.\d+$') {
 
 $repositoryRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot "..\..\.."))
 $buildRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot "build"))
-$pluginPath = Join-Path $buildRoot "vs2022\plugins\loop-surgeon\LoopSurgeon_artefacts\Release\VST3\Loop Surgeon.vst3"
+$candidatePluginPaths = if ($BuildDirectory) {
+    $resolvedBuildDirectory = [IO.Path]::GetFullPath($BuildDirectory)
+    @(
+        (Join-Path $resolvedBuildDirectory "loop-surgeon\LoopSurgeon_artefacts\Release\VST3\Loop Surgeon.vst3"),
+        (Join-Path $resolvedBuildDirectory "plugins\loop-surgeon\LoopSurgeon_artefacts\Release\VST3\Loop Surgeon.vst3")
+    )
+} else {
+    @(
+        (Join-Path $buildRoot "vs2022\plugins\loop-surgeon\LoopSurgeon_artefacts\Release\VST3\Loop Surgeon.vst3"),
+        (Join-Path $buildRoot "loop-surgeon-ui\loop-surgeon\LoopSurgeon_artefacts\Release\VST3\Loop Surgeon.vst3")
+    )
+}
+$pluginPath = $candidatePluginPaths | Where-Object {
+    Test-Path -LiteralPath $_ -PathType Container
+} | Select-Object -First 1
 $guidePath = Join-Path $repositoryRoot "plugins\loop-surgeon\WINDOWS_REAPER_TEST.md"
 $packageRoot = Join-Path $buildRoot "packages"
 $packageName = "Loop-Surgeon-$Version-Windows-x64-VST3"
@@ -26,8 +41,8 @@ if (-not $stagePath.StartsWith($packageRoot + [IO.Path]::DirectorySeparatorChar,
     throw "Refusing to stage outside build/packages: $stagePath"
 }
 
-if (-not (Test-Path -LiteralPath $pluginPath -PathType Container)) {
-    throw "Release VST3 bundle not found: $pluginPath"
+if (-not $pluginPath) {
+    throw "Release VST3 bundle not found in: $($candidatePluginPaths -join '; ')"
 }
 
 if (-not (Test-Path -LiteralPath $guidePath -PathType Leaf)) {

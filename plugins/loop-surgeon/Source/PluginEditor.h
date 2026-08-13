@@ -19,6 +19,10 @@ public:
     void drawRotarySlider(juce::Graphics&, int x, int y, int width, int height,
                           float sliderPosition, float rotaryStartAngle,
                           float rotaryEndAngle, juce::Slider&) override;
+    void drawLinearSlider(juce::Graphics&, int x, int y, int width, int height,
+                          float sliderPosition, float minSliderPosition,
+                          float maxSliderPosition,
+                          juce::Slider::SliderStyle, juce::Slider&) override;
     void drawPopupMenuBackground(juce::Graphics&, int width, int height) override;
     void drawPopupMenuItem(juce::Graphics&, const juce::Rectangle<int>& area,
                            bool separator, bool active, bool highlighted,
@@ -35,12 +39,10 @@ public:
 
     [[nodiscard]] juce::Font getDisplayFont(float height) const;
     [[nodiscard]] juce::Font getHandFont(float height) const;
-    [[nodiscard]] const juce::Image& getMachineSkin() const noexcept { return machineSkin; }
+    [[nodiscard]] const juce::Image& getFieldImage() const noexcept { return fieldImage; }
 
 private:
-    juce::Image machineSkin;
-    juce::Image knobImage;
-    juce::Image generateButtonImage;
+    juce::Image fieldImage;
     juce::Typeface::Ptr displayTypeface;
     juce::Typeface::Ptr handTypeface;
 };
@@ -198,6 +200,8 @@ private:
     int displayedCandidateCount = -1;
     uint64_t displayedCandidateRevision = 0;
     uint64_t displayedSourceRevision = 0;
+    bool displayedResultReady = false;
+    bool displayedSourceReady = false;
 
     juce::Rectangle<int> primaryActionArea;
 

@@ -1,24 +1,31 @@
 # Loop Surgeon interface assets
 
-The three PNG files are original AI-assisted production assets made for Loop Surgeon. They are not
-copies of another plug-in interface. The visual brief combines an equipment-panel workflow with a
-bright, hand-inked underground-comic treatment: worn ivory, muted mint, sour yellow, faded coral,
-dusty violet, thick imperfect black outlines and flat print texture.
+The 0.14 interface separates functional UI from illustration. No bitmap contains live controls,
+labels, waveform data, button holes or layout sockets. JUCE draws and positions every interactive
+component, so mode changes never leave decorative controls behind and rotary centres are derived
+from component geometry.
 
-## Raster prompt set
+## Original raster assets
 
-- `loop-machine-skin.png`: front-on 3:2 strange tape-loop laboratory chassis; blank header, large
-  source display, six-socket shaping bay, continuous tape-loop path, result display, dominant action
-  socket and three delivery keys; no text, logo, waveform, eyes, alien or body parts.
-- `loop-knob.png`: isolated scalloped dusty-violet rotary control with coral cap and sour-yellow
-  pointer, hand-inked screen-print finish, generated over a green key and converted to alpha.
-- `generate-button.png`: isolated oversized ivory/coral/sour-yellow push button with a quiet centre
-  for live text, generated over a green key and converted to alpha.
+`splice-ribbon-functional.png` is an original AI-assisted functional illustration made for Loop Surgeon. Its closed,
+three-times-repaired Mobius path is the product-specific visual metaphor for selecting, cutting,
+repairing and circulating audio. It is not copied from another plug-in and deliberately excludes
+faces, creatures, eyes, hands, hardware, text and controls.
 
-The control images are rotated or pressed by JUCE at runtime. All labels, values, selection handles,
-waveforms, menus and analysis views remain real interactive components.
+Final built-in image prompt (summarised): isolated inanimate non-Euclidean cut-and-splice ribbon;
+wide Mobius loop with three repaired joints and impossible folds; contemporary underground
+editorial cartoon; flat mint, coral, black, ultraviolet and ivory fills; thick irregular ink;
+uniform magenta key; no UI, text, logos, vintage hardware, 3D, biological forms or detached
+decorations. The built-in image generation tool produced the keyed source, then the installed
+chroma-key helper converted it to this alpha PNG.
 
-## Fonts
+## Font
 
-- Bowlby One SC is bundled under the SIL Open Font License 1.1. See `BowlbyOneSC-OFL.txt`.
-- Special Elite is bundled under the Apache License 2.0. See `SpecialElite-LICENSE.txt`.
+Space Grotesk Medium and Bold are bundled under the SIL Open Font License 1.1. See
+`SpaceGrotesk-OFL.txt`. Functional labels use this single readable family; the illustration does
+not contain generated text.
+
+`splice-ribbon-functional.png` is the shipping functional illustration. The waveform cavity, four
+parameter sockets, central Generate hub and three output tails are part of the same continuous
+ribbon. JUCE adds only live waveform data, indicators, values, focus and hit targets. Rejected
+generic frames, chassis and detached button skins are intentionally excluded.
