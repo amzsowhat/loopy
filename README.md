@@ -35,15 +35,17 @@ the character of the recording while turning its texture into a usable loop.
 
 ![LOOP turns the familiar cut, rearrange and crossfade process into one workflow](docs/images/loop-workflow.svg)
 
-The old end-to-start join is moved inside the result and faded there, leaving a cleaner
-repeating boundary. loopy checks possible boundaries and fits the result to the chosen length.
+loopy searches ranges at the requested length and compares waveform, level, phase and stereo
+continuity at possible joins. It chooses an internal cut, moves the old end-to-start join into
+the middle for crossfading, then extends the completed base loop to the exact target length.
 
 ### TEXTURE
 
 ![TEXTURE collects useful detail from non-loop-ready material and builds a continuous loop](docs/images/texture-workflow.svg)
 
-loopy keeps useful sound detail, softens large rises and falls, then connects compatible
-pieces into a continuous loop. Every piece still comes from the selected recording.
+loopy first reduces slow rises and falls, then divides the selection into overlapping regions.
+It repeatedly chooses a region that joins smoothly, has stable level and was not just used,
+then wraps the overlaps through the output end; optional Crush and Character processing follow.
 
 ## Features
 

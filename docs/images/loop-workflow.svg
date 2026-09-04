@@ -1,52 +1,59 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="205" viewBox="0 0 960 205" role="img" aria-labelledby="title desc">
-  <title id="title">LOOP workflow</title>
-  <desc id="desc">Four aligned stages show the source, an internal cut, the relocated crossfaded join, and the finished loop.</desc>
+<svg xmlns="http://www.w3.org/2000/svg" width="1000" height="230" viewBox="0 0 1000 230" role="img" aria-labelledby="title desc">
+  <title id="title">How LOOP processes audio</title>
+  <desc id="desc">LOOP searches windows at the requested length, checks possible boundaries and internal cut points, moves the old head-tail join inside for crossfading, then repeats the completed base loop to the exact output length.</desc>
   <defs>
-    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
-      <path d="M0 0 L8 4 L0 8 Z" fill="#6b7280"/>
-    </marker>
+    <path id="wave" d="M0-8V8 M4-17V17 M8-9V9 M12-14V14 M16-20V20 M20-12V12 M24-25V25 M28-15V15 M32-11V11 M36-27V27 M40-19V19 M44-31V31 M48-17V17 M52-23V23 M56-13V13 M60-29V29 M64-21V21 M68-34V34 M72-18V18 M76-26V26 M80-16V16 M84-32V32 M88-22V22 M92-28V28 M96-14V14 M100-30V30 M104-20V20 M108-25V25 M112-12V12 M116-27V27 M120-18V18 M124-33V33 M128-17V17 M132-24V24 M136-14V14 M140-29V29 M144-19V19 M148-26V26 M152-13V13 M156-31V31 M160-21V21 M164-28V28 M168-15V15 M172-24V24 M176-12V12 M180-27V27 M184-18V18 M188-30V30 M192-16V16 M196-23V23 M200-11V11 M204-26V26 M208-17V17 M212-21V21 M216-10V10 M220-15V15"/>
+    <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#64748b"/></marker>
+    <clipPath id="left"><rect x="0" y="-40" width="112" height="80"/></clipPath>
+    <clipPath id="right"><rect x="112" y="-40" width="108" height="80"/></clipPath>
   </defs>
-  <rect width="960" height="205" fill="#ffffff"/>
+  <rect width="1000" height="230" fill="#fff"/>
   <g font-family="Arial, sans-serif" fill="#111827">
     <g font-size="13" font-weight="700" text-anchor="middle">
-      <text x="120" y="28">1. SOURCE</text>
-      <text x="360" y="28">2. INTERNAL CUT</text>
-      <text x="600" y="28">3. CROSSFADED JOIN</text>
-      <text x="840" y="28">4. FINISHED LOOP</text>
+      <text x="125" y="25">1. FIND A USABLE RANGE</text>
+      <text x="375" y="25">2. CHECK THE JOIN</text>
+      <text x="625" y="25">3. BUILD THE LOOP</text>
+      <text x="875" y="25">4. FIT THE LENGTH</text>
     </g>
-    <g fill="#ffffff" stroke="#9ca3af" stroke-width="1.5">
-      <rect x="30" y="58" width="180" height="92"/>
-      <rect x="270" y="58" width="180" height="92"/>
-      <rect x="510" y="58" width="180" height="92"/>
-      <rect x="750" y="58" width="180" height="92"/>
+    <g fill="none" stroke="#cbd5e1" stroke-width="1.2">
+      <rect x="20" y="48" width="210" height="158"/>
+      <rect x="270" y="48" width="210" height="158"/>
+      <rect x="520" y="48" width="210" height="158"/>
+      <rect x="770" y="48" width="210" height="158"/>
     </g>
-    <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5">
-      <path d="M42 105 C52 86 63 119 74 94 S97 79 108 110 S131 132 143 91 S166 80 178 112 S194 124 198 101" stroke="#1f2937"/>
 
-      <path d="M282 105 C292 86 303 119 314 94 S337 79 348 110" stroke="#b7791f"/>
-      <path d="M372 110 C383 132 395 91 407 82 S432 80 438 112" stroke="#c2412d"/>
-      <path d="M360 49 V159" stroke="#c2412d" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <g transform="translate(30 113) scale(.86 .82)" fill="none" stroke="#334155" stroke-width="2"><use href="#wave"/></g>
+    <rect x="53" y="69" width="151" height="88" fill="#f8fafc" fill-opacity=".45" stroke="#b45309" stroke-width="1.5"/>
+    <path d="M73 62V164M183 62V164" stroke="#b45309" stroke-width="1.5"/>
+    <g fill="#64748b" font-size="11" text-anchor="middle"><text x="73" y="180">start</text><text x="183" y="180">end</text></g>
 
-      <path d="M522 110 C533 132 545 91 557 82 S576 82 587 106" stroke="#c2412d"/>
-      <path d="M613 105 C623 86 634 119 645 94 S668 79 678 110" stroke="#b7791f"/>
-      <rect x="583" y="68" width="34" height="72" fill="#f5e6df" stroke="none"/>
-      <path d="M584 120 C592 92 601 92 616 120" stroke="#1f2937"/>
-      <path d="M584 89 C595 119 604 119 616 89" stroke="#6b7280"/>
-
-      <path d="M762 105 C772 86 783 119 794 94 S817 79 828 110 S851 132 863 91 S886 80 898 112 S914 124 918 105" stroke="#1f2937"/>
-      <path d="M762 67 V141 M918 67 V141" stroke="#c2412d" stroke-width="2"/>
-      <circle cx="762" cy="105" r="3.5" fill="#c2412d" stroke="none"/>
-      <circle cx="918" cy="105" r="3.5" fill="#c2412d" stroke="none"/>
-
-      <path d="M220 104 H255" stroke="#6b7280" stroke-width="1.8" marker-end="url(#arrow)"/>
-      <path d="M460 104 H495" stroke="#6b7280" stroke-width="1.8" marker-end="url(#arrow)"/>
-      <path d="M700 104 H735" stroke="#6b7280" stroke-width="1.8" marker-end="url(#arrow)"/>
+    <g transform="translate(280 108) scale(.86 .70)" fill="none" stroke="#334155" stroke-width="2"><use href="#wave"/></g>
+    <path d="M376 68V148" stroke="#c2412d" stroke-width="1.5" stroke-dasharray="4 4"/>
+    <path d="M370 62L382 74M382 62L370 74" stroke="#c2412d" stroke-width="1.6"/>
+    <g font-size="10.5" text-anchor="middle">
+      <text x="315" y="170" fill="#475569">waveform</text><text x="360" y="170" fill="#475569">level</text>
+      <text x="401" y="170" fill="#475569">phase</text><text x="445" y="170" fill="#475569">stereo</text>
+      <text x="315" y="187" fill="#15803d">●</text><text x="360" y="187" fill="#15803d">●</text>
+      <text x="401" y="187" fill="#15803d">●</text><text x="445" y="187" fill="#15803d">●</text>
     </g>
-    <g fill="#4b5563" font-size="12" text-anchor="middle">
-      <text x="120" y="181">choose usable material</text>
-      <text x="360" y="181">split and swap the two sections</text>
-      <text x="600" y="181">fade the relocated old boundary</text>
-      <text x="840" y="181">new start and end connect</text>
+
+    <rect x="532" y="72" width="84" height="74" fill="#fff7ed" stroke="#b45309"/>
+    <rect x="634" y="72" width="84" height="74" fill="#fef2f2" stroke="#c2412d"/>
+    <g transform="translate(537 109) scale(.34 .64)" fill="none" stroke="#b45309" stroke-width="2.2"><use href="#wave"/></g>
+    <g transform="translate(639 109) scale(.34 .64)" fill="none" stroke="#c2412d" stroke-width="2.2"><use href="#wave"/></g>
+    <rect x="607" y="68" width="36" height="82" fill="#f1f5f9" fill-opacity=".85"/>
+    <path d="M608 135C617 87 628 87 642 135M608 83C619 135 630 135 642 83" fill="none" stroke="#334155" stroke-width="1.8"/>
+    <g font-size="11" font-weight="700" text-anchor="middle"><text x="574" y="164" fill="#b45309">TAIL</text><text x="676" y="164" fill="#c2412d">HEAD</text><text x="625" y="188" fill="#475569">fade the old end-to-start join here</text></g>
+
+    <g fill="none" stroke="#334155" stroke-width="1.8">
+      <path d="M784 102v28M788 94v44M792 108v16M796 87v58M800 100v32M804 91v50M808 105v22M812 84v64M816 98v36M820 89v54M824 103v26M828 94v44M832 108v16M836 87v58M840 101v30M844 92v48M848 106v20 M852 102v28M856 94v44M860 108v16M864 87v58M868 100v32M872 91v50M876 105v22M880 84v64M884 98v36M888 89v54M892 103v26M896 94v44M900 108v16M904 87v58M908 101v30M912 92v48M916 106v20 M920 102v28M924 94v44M928 108v16M932 87v58M936 100v32M940 91v50M944 105v22M948 84v64M952 98v36M956 89v54M960 103v26"/>
+      <path d="M842 70V158M902 70V158" stroke="#b45309" stroke-dasharray="3 3"/>
+    </g>
+    <path d="M784 176H962" stroke="#64748b" stroke-width="1.2" marker-end="url(#arrow)"/>
+    <text x="873" y="192" font-size="11" text-anchor="middle" fill="#475569">complete cycles → exact target end</text>
+
+    <g fill="none" stroke="#64748b" stroke-width="1.5" marker-end="url(#arrow)">
+      <path d="M238 127H258"/><path d="M488 127H508"/><path d="M738 127H758"/>
     </g>
   </g>
 </svg>
