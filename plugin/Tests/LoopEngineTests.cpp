@@ -20,7 +20,7 @@ bool expect(const bool condition, const char* message)
 
 bool waitForReady(LoopEngine& engine)
 {
-    for (int attempt = 0; attempt < 500; ++attempt)
+    for (int attempt = 0; attempt < 2500; ++attempt)
     {
         if (engine.getState() == LoopEngine::State::ready)
             return true;
@@ -115,29 +115,54 @@ int main()
     const auto automatic = LoopAnalyzer::analyzeSource(
         repeated, sampleRate, 800, 1600, 3, 80);
     passed &= expect(!automatic.candidates.empty(),
-                     "R&R analysis should find candidates");
+                     "REPAIR analysis should find candidates");
 
     const auto exact = LoopAnalyzer::analyzeRotateRepairExact(
         repeated, sampleRate, 4000, 3, 160);
     passed &= expect(!exact.candidates.empty(),
-                     "R&R should find an exact-duration repair");
+                     "REPAIR should find an exact-duration cycle");
     if (!exact.candidates.empty())
         passed &= expect(LoopAnalyzer::renderRotateRepair(
             repeated, exact.candidates.front()).getNumSamples() == 4000,
-            "R&R final length must be sample-exact");
+            "REPAIR final length must be sample-exact");
+
+    constexpr auto extendedLength = 20000;
+    const auto extended = LoopAnalyzer::analyzeRotateRepairExact(
+        repeated, sampleRate, extendedLength, 3, 160);
+    passed &= expect(!extended.candidates.empty(),
+                     "Repair should derive a repeatable cycle for a longer output");
+    if (!extended.candidates.empty())
+        passed &= expect(LoopAnalyzer::renderRotateRepair(
+            repeated, extended.candidates.front()).getNumSamples() == extendedLength,
+            "Long Repair output must be sample-exact");
 
     LoopEngine engine;
     engine.prepare(sampleRate, 64, 2);
     engine.setGenerationMode(LoopEngine::GenerationMode::rotateRepair);
     engine.submitSource(repeated, "periodic-probe.wav");
     passed &= expect(engine.reanalyzeSourceRange(0.1f, 0.9f),
-                     "R&R should accept Source In/Out");
+                     "REPAIR should accept Source In/Out");
     passed &= expect(waitForReady(engine),
-                     "R&R analysis should complete");
+                     "REPAIR analysis should complete");
     passed &= expect(engine.getCandidateCount() > 0,
-                     "R&R should expose seam candidates");
+                     "REPAIR should expose seam candidates");
     passed &= expect(engine.setManualRotationPoint(0.4f),
-                     "R&R should accept a manual loop start");
+                     "REPAIR should accept a manual loop start");
+
+    LoopEngine extendedEngine;
+    extendedEngine.prepare(sampleRate, 64, 2);
+    extendedEngine.setGenerationMode(LoopEngine::GenerationMode::rotateRepair);
+    extendedEngine.setRepairDurationSeconds(5.0f);
+    extendedEngine.submitSource(repeated, "short-periodic-probe.wav");
+    passed &= expect(extendedEngine.reanalyzeSourceRange(0.0f, 1.0f),
+                     "Long REPAIR should accept the complete source range");
+    passed &= expect(waitForReady(extendedEngine),
+                     "Long Repair generation should complete");
+    passed &= expect(extendedEngine.getCapturedSampleCount() == extendedLength,
+                     "Repair should expand a short source to the requested duration");
+    passed &= expect(extendedEngine.setManualRotationPoint(0.4f)
+                         && extendedEngine.getCapturedSampleCount() == extendedLength,
+                     "Manual loop-start changes must preserve long Repair duration");
 
     const auto state = engine.createLoopState();
     LoopEngine restored;

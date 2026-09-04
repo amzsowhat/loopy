@@ -148,17 +148,22 @@ LoopAnalysisReport LoopAnalyzer::analyzeRotateRepairExact(
     LoopAnalysisReport report;
     const auto samples = audio.getNumSamples();
     if (audio.getNumChannels() == 0 || sampleRate <= 0.0
-        || targetOutputSamples < 256 || targetOutputSamples > samples)
+        || targetOutputSamples < 256 || samples < 256)
         return report;
 
+    const auto repetitionCount = juce::jmax(
+        1, (targetOutputSamples + samples - 1) / samples);
+    const auto cycleOutputSamples = juce::jlimit(
+        256, samples, juce::roundToInt(
+            static_cast<double>(targetOutputSamples) / repetitionCount));
     const auto maximumFade = juce::jlimit(
-        0, targetOutputSamples / 8, maximumRepairOverlapSamples);
+        0, cycleOutputSamples / 8, maximumRepairOverlapSamples);
     std::vector<int> repairOptions { 0 };
     for (const auto milliseconds : { 20, 40, 80, 140, 220 })
     {
         const auto repair = juce::jmin(
             maximumFade, juce::roundToInt(sampleRate * milliseconds * 0.001));
-        if (repair >= 2 && targetOutputSamples + repair <= samples)
+        if (repair >= 2 && cycleOutputSamples + repair <= samples)
             repairOptions.push_back(repair);
     }
     std::sort(repairOptions.begin(), repairOptions.end());
@@ -172,7 +177,7 @@ LoopAnalysisReport LoopAnalyzer::analyzeRotateRepairExact(
     std::vector<WindowCandidate> windows;
     for (const auto repair : repairOptions)
     {
-        const auto span = targetOutputSamples + repair;
+        const auto span = cycleOutputSamples + repair;
         const auto maximumStart = samples - span;
         const auto step = juce::jmax(
             1, maximumStart > 0 ? juce::jmax(juce::roundToInt(sampleRate * 0.025),
@@ -224,6 +229,8 @@ LoopAnalysisReport LoopAnalyzer::analyzeRotateRepairExact(
             }
         }
         window.result.rotationSample = bestCut;
+        window.result.targetOutputSamples = targetOutputSamples;
+        window.result.repetitionCount = repetitionCount;
         window.result.candidateFitness = 0.68f * window.result.candidateFitness
                                          + 0.32f * juce::jmax(0.0f, bestSafety);
         candidates.push_back(window.result);
@@ -298,6 +305,31 @@ juce::AudioBuffer<float> LoopAnalyzer::renderRotateRepair(
         if (suffixLength > 0)
             rendered.copyFrom(channel, prefixLength + fade, source, channel,
                               rangeStart + fade, suffixLength);
+    }
+
+    const auto targetSamples = juce::jmax(
+        renderedSamples, result.targetOutputSamples);
+    if (targetSamples > renderedSamples)
+    {
+        juce::AudioBuffer<float> extended(rendered.getNumChannels(), targetSamples);
+        const auto repetitions = juce::jmax(2, result.repetitionCount);
+        const auto phaseAdvance = static_cast<double>(renderedSamples * repetitions)
+                                  / static_cast<double>(targetSamples);
+        for (int channel = 0; channel < extended.getNumChannels(); ++channel)
+        {
+            for (int sample = 0; sample < targetSamples; ++sample)
+            {
+                const auto phase = std::fmod(sample * phaseAdvance,
+                                             static_cast<double>(renderedSamples));
+                const auto first = static_cast<int>(phase);
+                const auto next = (first + 1) % renderedSamples;
+                const auto fraction = static_cast<float>(phase - first);
+                extended.setSample(channel, sample,
+                    juce::jmap(fraction, rendered.getSample(channel, first),
+                              rendered.getSample(channel, next)));
+            }
+        }
+        rendered = std::move(extended);
     }
 
     juce::ignoreUnused(SignalDiagnostics::repairNonFiniteAndRemoveDc(rendered));

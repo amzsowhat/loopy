@@ -277,7 +277,7 @@ LoopSurgeonAudioProcessor::createParameterLayout()
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "repairDuration", 1 },
-        "R&R Final Length",
+        "Repair Final Length",
         juce::NormalisableRange<float> { 0.0f, 60.0f, 0.1f, 0.55f },
         0.0f,
         juce::AudioParameterFloatAttributes()
@@ -290,7 +290,7 @@ LoopSurgeonAudioProcessor::createParameterLayout()
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(
         juce::ParameterID { "repairLoopStart", 1 },
-        "R&R Loop Start",
+        "Repair Loop Start",
         juce::NormalisableRange<float> { 0.0f, 1.0f, 0.0001f },
         0.5f,
         juce::AudioParameterFloatAttributes().withStringFromValueFunction(
@@ -317,7 +317,7 @@ LoopSurgeonAudioProcessor::createParameterLayout()
     layout.push_back(std::make_unique<juce::AudioParameterChoice>(
         juce::ParameterID { "generationMode", 1 },
         "Generation Mode",
-        juce::StringArray { "Rotate & Repair", "Texture Loop" },
+        juce::StringArray { "Repair", "Texture" },
         0));
 
     layout.push_back(std::make_unique<juce::AudioParameterFloat>(

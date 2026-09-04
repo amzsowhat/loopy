@@ -267,8 +267,8 @@ bool LoopEngine::setManualRotationPoint(const float proportion)
             state.store(State::sourceReady, std::memory_order_release);
             return false;
         }
-        const auto rangeStart = juce::jlimit(0, total - 32, analysisRangeStartSample.load());
-        const auto rangeEnd = juce::jlimit(rangeStart + 32, total, analysisRangeEndSample.load());
+        const auto rangeStart = juce::jlimit(0, total - 32, selectedStartSample.load());
+        const auto rangeEnd = juce::jlimit(rangeStart + 32, total, selectedEndSample.load());
         const auto rotation = juce::jlimit(
             rangeStart + 1, rangeEnd - 1,
             juce::roundToInt(juce::jlimit(0.0f, 1.0f, proportion) * total));
@@ -279,6 +279,13 @@ bool LoopEngine::setManualRotationPoint(const float proportion)
         result = LoopAnalyzer::evaluateFixedRange(
             currentSourceBuffer, sampleRate, rangeStart, rangeEnd, repair);
         result.rotationSample = rotation;
+        result.targetOutputSamples = juce::jmax(
+            result.endSample - result.startSample - result.repairOverlapSamples,
+            capturedSampleCount.load(std::memory_order_relaxed));
+        result.repetitionCount = juce::jmax(
+            1, juce::roundToInt(static_cast<double>(result.targetOutputSamples)
+                                / juce::jmax(1, result.endSample - result.startSample
+                                                   - result.repairOverlapSamples)));
         selectedAudio = LoopAnalyzer::renderRotateRepair(currentSourceBuffer, result);
         snapshotSource.setSize(currentSourceBuffer.getNumChannels(),
                                rangeEnd - rangeStart, false, false, false);
@@ -505,8 +512,10 @@ juce::String LoopEngine::getCandidateDescription(const int index) const
         return {};
     const auto& candidate = sourceCandidates[static_cast<size_t>(index)];
     const auto repairSamples = candidate.repairOverlapSamples;
-    const auto seconds = static_cast<double>(candidate.endSample - candidate.startSample - repairSamples)
-                         / sampleRate;
+    const auto outputSamples = candidate.targetOutputSamples > 0
+        ? candidate.targetOutputSamples
+        : candidate.endSample - candidate.startSample - repairSamples;
+    const auto seconds = static_cast<double>(outputSamples) / sampleRate;
     return juce::String(candidate.rotationSample >= 0 ? "Repair " : "Candidate ")
            + juce::String(index + 1) + "  |  " + juce::String(seconds, 2) + " s";
 }

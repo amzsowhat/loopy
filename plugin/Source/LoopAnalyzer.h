@@ -13,7 +13,10 @@ struct LoopAnalysisResult
     float candidateFitness = 0.0f;
     bool preferLinearRepairFade = false;
     int repairOverlapSamples = 0;
-    // >= 0 marks full-selection Rotate & Repair. start/end remain the source range.
+    // The repaired source cycle may be repeated to reach a longer exact output.
+    int targetOutputSamples = 0;
+    int repetitionCount = 1;
+    // >= 0 marks REPAIR mode. start/end remain the source range.
     int rotationSample = -1;
 };
 
@@ -43,8 +46,9 @@ public:
         int maximumCandidates = 3,
         int maximumRepairOverlapSamples = 0);
 
-    // Searches inside the user selection for a contiguous source span whose repaired render is
-    // exactly targetOutputSamples long. No repetition or time stretching is introduced.
+    // For shorter/equal output, searches the selection for an exact repaired cycle.
+    // For longer output, derives a source-sized repaired cycle and repeats it an integer
+    // number of times so the final boundary lands on the same phase.
     [[nodiscard]] static LoopAnalysisReport analyzeRotateRepairExact(
         const juce::AudioBuffer<float>& sourceAudio,
         double sampleRate,

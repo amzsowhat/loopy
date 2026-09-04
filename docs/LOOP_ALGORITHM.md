@@ -1,16 +1,18 @@
 # loopy algorithms
 
-## Rotate & Repair
+## REPAIR
 
 Source In/Out is a hard boundary. With Final Length set to Selection, the engine selects an internal
 adjacent cut, rotates the range so that cut becomes the exported boundary, then repairs the moved
-original head/tail join. With an explicit Final Length it searches contiguous spans inside the
-selection and returns the exact requested sample count.
+original head/tail join. With an explicit shorter/equal Final Length it searches contiguous spans
+inside the selection. For a longer target it derives a repaired base cycle, chooses an integer
+repeat count, and maps those complete cycles onto the exact requested sample count. The exported
+end therefore reaches the same cycle phase as the beginning.
 
 Candidate comparison uses waveform, derivative, phase, spectrum and stereo differences only to
 order possible joins. It is not exposed as a quality rating and never blocks export.
 
-## Texture Loop: circular material-flow construction
+## TEXTURE: circular material-flow construction
 
 1. Read only the selected Source In/Out waveform; mono or stereo channels remain phase-aligned.
 2. Measure a slow RMS envelope and remove it by the Stability amount with bounded, smoothed gain.

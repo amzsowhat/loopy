@@ -2,10 +2,10 @@
 
 ## Implemented locally
 
-- Two selectable VST3 modes: Rotate & Repair and Texture Loop.
+- Two selectable VST3 modes: REPAIR and TEXTURE.
 - Source In/Out, exact output length, preview/stop, Source/Generated comparison, WAV export, DAW drag
   and DAW-state recall.
-- Texture Loop uses circular material-flow construction from the selected waveform. The prior
+- TEXTURE uses circular material-flow construction from the selected waveform. The prior
   spectral/noise resynthesis and separate spectral-delay experiment are removed.
 - Natural Texture now uses short complementary crossfades scored across the actual overlap, plus
   sample-scale source-position refinement. This removes the former long multi-layer overlap that

@@ -271,9 +271,9 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     crossfadeSlider.setTooltip(
         "Maximum overlap used to repair the source's original end-to-start seam");
     durationSlider.setTooltip(
-        "Exact Texture Loop length in seconds; click the value to type it");
+        "Exact TEXTURE output length in seconds; click the value to type it");
     repairDurationSlider.setTooltip(
-        "Exact R&R output length inside Source In/Out; Selection keeps the complete range");
+        "Exact REPAIR output length; shorter results select material, longer results repeat a repaired cycle");
     flattenSlider.setTooltip(
         "Controls how strongly macro dynamics and one-shot movement are stabilised");
     dynamicsCrushSlider.setTooltip(
@@ -281,7 +281,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     sourceMatchSlider.setTooltip(
         "Transformation depth: increases non-linear source traversal while retaining the selected material's waveform identity");
     repairLoopStartSlider.setTooltip(
-        "Coarse R&R join position inside Source In/Out; Join Position below is the fine control for this same boundary");
+        "Coarse REPAIR join position inside Source In/Out; Join Position below adjusts the same boundary");
     repairLoopStartSlider.onValueChange = [this]
     {
         if (generationModeBox.getSelectedItemIndex() != 0
@@ -320,8 +320,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     modeLabel.setFont(lookAndFeel.getDisplayFont(12.0f));
     modeLabel.setColour(juce::Label::textColourId, juce::Colour(paper));
     addAndMakeVisible(modeLabel);
-    generationModeBox.addItem("Rotate & Repair", 1);
-    generationModeBox.addItem("Texture Loop", 2);
+    generationModeBox.addItem("Repair", 1);
+    generationModeBox.addItem("Texture", 2);
     generationModeBox.onChange = [this]
     {
         updatePrimaryAction();
@@ -336,16 +336,16 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "generationMode", generationModeBox);
 
     rotateModeButton.setComponentID("artHeader");
-    rotateModeButton.setButtonText("ROTATE & REPAIR");
-    rotateModeButton.setTooltip("Rotate & Repair: automate the conventional loop repair workflow");
+    rotateModeButton.setButtonText("REPAIR");
+    rotateModeButton.setTooltip("REPAIR: cut, rotate, join and repeat a continuous source cycle");
     rotateModeButton.onClick = [this]
     {
         generationModeBox.setSelectedItemIndex(0, juce::sendNotificationSync);
     };
     addAndMakeVisible(rotateModeButton);
     textureModeButton.setComponentID("artHeader");
-    textureModeButton.setButtonText("TEXTURE LOOP");
-    textureModeButton.setTooltip("Texture Loop: construct a long evolving loop from selected material");
+    textureModeButton.setButtonText("TEXTURE");
+    textureModeButton.setTooltip("TEXTURE: construct an evolving loop by traversing compatible source regions");
     textureModeButton.onClick = [this]
     {
         generationModeBox.setSelectedItemIndex(1, juce::sendNotificationSync);
@@ -438,11 +438,11 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         addAndMakeVisible(button);
     };
     configureExtraHit(extraPatinaButton, 1, 0,
-                      "Persistent selection: Patina in Texture Loop; repair candidate A in Rotate & Repair");
+                      "Persistent selection: Patina in TEXTURE; repair candidate A in REPAIR");
     configureExtraHit(extraBloomButton, 2, 1,
-                      "Persistent selection: Bloom in Texture Loop; repair candidate B in Rotate & Repair");
+                      "Persistent selection: Bloom in TEXTURE; repair candidate B in REPAIR");
     configureExtraHit(extraFrayButton, 3, 2,
-                      "Persistent selection: Fray in Texture Loop; repair candidate C in Rotate & Repair");
+                      "Persistent selection: Fray in TEXTURE; repair candidate C in REPAIR");
     extraPatinaButton.setStateLabel("PATINA");
     extraBloomButton.setStateLabel("BLOOM");
     extraFrayButton.setStateLabel("FRAY");
@@ -1001,8 +1001,8 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
                 break;
             case LoopEngine::State::ready:
                 statusText = textureResult
-                    ? "Texture Loop ready - audition Generated"
-                    : "Rotate & Repair ready - audition the join";
+                    ? "TEXTURE ready - audition Generated"
+                    : "REPAIR ready - audition the join";
                 break;
             case LoopEngine::State::failed:
                 statusText = "No reliable loop found - widen the blue range or try different material";

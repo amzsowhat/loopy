@@ -1,11 +1,12 @@
 # loopy commercial product contract
 
-## Rotate & Repair
+## REPAIR
 
 Automate the conventional rotate-and-repair workflow for an already suitable ambience or long-form
-source. Respect Source In/Out and exact requested length; never hide the chosen range.
+source. Respect Source In/Out and any exact requested length. Short output selects a viable cycle;
+long output repeats a repaired cycle. Never hide the chosen range.
 
-## Texture Loop
+## TEXTURE
 
 Construct an exact-length, non-rhythmic SFX loop from the selected material while allowing the user
 to reduce macro ADSR/pass-by movement. Preserve waveform material and stereo coherence; do not rely

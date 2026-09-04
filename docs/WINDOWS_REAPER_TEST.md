@@ -6,7 +6,8 @@
 3. Insert loopy. Use **LOAD AUDIO**, or drag a WAV/AIFF/FLAC/OGG into the black waveform
    window. Drag the mint IN/OUT edges; hold Alt for fine movement, Shift-drag inside the selection
    to move it, or double-click to restore the full source.
-4. Test **ROTATE & REPAIR** with Selection and an explicit Final Length. Press the central
+4. Test **REPAIR** with Selection, a shorter Final Length and a Final Length longer than the
+   selected source. Press the central
    **GENERATE** vortex, then use **LOOP START** or the curved **JOIN POSITION** slot to move the same
    repaired boundary. Select one of the three Repair Options and audition the join.
 5. Test **TEXTURE LOOP**. Move the curved **MOTION** slot between Flow, Drift and Fracture, choose
@@ -19,5 +20,5 @@
    until a result exists. Hovering and pressing them changes the illustrated hardware state.
 8. Save and reopen the REAPER project. Confirm source, range, selected mode and generated loop return.
 
-Texture Loop should be judged as SFX material construction. Report obvious source-event repetition,
+TEXTURE should be judged as SFX material construction. Report obvious source-event repetition,
 clicks, bursts, tonal/electronic artifacts, stereo collapse or failure to preserve material identity.
