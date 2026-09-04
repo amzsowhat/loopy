@@ -66,26 +66,15 @@ loopy 是一款面向声音设计师的 JUCE 音频插件，适用于环境声�
 | Flow / Drift / Fracture | 选择素材遍历的尺度与连续性 |
 | Patina / Bloom / Fray | 应用可选的后级声音性格处理 |
 
-## 构建
+## 安装
 
-需要 CMake 3.22 或更高版本、安装 C++ 桌面开发组件的 Visual Studio 2022
-（macOS 使用 Xcode），以及首次配置时用于获取 JUCE 8.0.13 的 Git 网络连接。
+Windows 发布包内包含完整的 `loopy.vst3` 插件文件夹。
 
-```powershell
-cmake --preset vs2022-debug
-cmake --build --preset build-debug --config Debug
-ctest --preset test-debug -C Debug --output-on-failure
-```
+1. 关闭 DAW。
+2. 将整个 `loopy.vst3` 文件夹复制到 `C:\Program Files\Common Files\VST3\`。
+3. 打开 DAW，重新扫描 VST3 插件。
 
-Windows Debug VST3 输出位置：
-
-```text
-build/vs2022/plugin/LoopSurgeon_artefacts/Debug/VST3/loopy.vst3
-```
-
-将完整的 `loopy.vst3` 文件夹复制到 `C:\Program Files\Common Files\VST3\`，
-然后在 DAW 中重新扫描插件。当前 REAPER 检查流程见
-[`docs/WINDOWS_REAPER_TEST.md`](docs/WINDOWS_REAPER_TEST.md)。
+请保留 VST3 文件夹的完整结构；只复制其中的二进制文件无法正确安装插件。
 
 ## 仓库结构
 

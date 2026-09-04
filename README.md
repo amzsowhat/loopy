@@ -70,26 +70,16 @@ the character of the source while becoming steadier and less tied to its origina
 | Flow / Drift / Fracture | Choose traversal scale and continuity |
 | Patina / Bloom / Fray | Apply optional downstream character |
 
-## Build
+## Installation
 
-Requirements: CMake 3.22+, Visual Studio 2022 with the C++ desktop workload (or
-Xcode on macOS), and Git access during first configuration so CMake can fetch JUCE
-8.0.13.
+The distributed Windows package contains the complete `loopy.vst3` plug-in bundle.
 
-```powershell
-cmake --preset vs2022-debug
-cmake --build --preset build-debug --config Debug
-ctest --preset test-debug -C Debug --output-on-failure
-```
+1. Close the DAW.
+2. Copy the complete `loopy.vst3` folder to `C:\Program Files\Common Files\VST3\`.
+3. Open the DAW and rescan VST3 plug-ins.
 
-The Windows Debug VST3 is generated at:
-
-```text
-build/vs2022/plugin/LoopSurgeon_artefacts/Debug/VST3/loopy.vst3
-```
-
-Copy the complete `loopy.vst3` bundle to `C:\Program Files\Common Files\VST3\`, then
-rescan plug-ins in the DAW. See [`docs/WINDOWS_REAPER_TEST.md`](docs/WINDOWS_REAPER_TEST.md).
+Keep the bundle intact; copying only the binary inside it will not install the plug-in
+correctly.
 
 ## Repository
 
