@@ -18,21 +18,18 @@ or drag-and-drop into a DAW.
 | Output length | Any exact duration: shorter, equal or longer than the source selection | Any exact duration |
 | Longer output | Repeats a prepared cycle on phase-aligned boundaries | Continues an evolving, deterministic traversal |
 | Primary shaping | Seam placement and repair | Macro envelope, local dynamics, temporal traversal and optional character |
-| Best suited to | Material whose original timeline and motion should remain intact | Material that should become a steadier texture without turning into synthetic or generic noise |
+| Best suited to | Material whose original timeline and motion should remain intact | Continuous SFX that need steadier energy and a less literal temporal flow while retaining source identity |
 
-`LOOP` does not define itself by shortening. For a shorter target it searches the
-selection for a strong exact-length cycle. For a longer target it first derives and
-prepares a viable loop, then repeats complete cycles so the final boundary returns to the
-same phase. It covers the operations a sound designer normally performs when authoring a
-loop: choosing usable material, setting boundaries, creating a continuous join and fitting
-the result to the required duration.
+`LOOP` automates the operations a sound designer normally performs when authoring a loop:
+choosing usable material, setting boundaries, creating a continuous join and fitting the
+result to the required duration. For a shorter target it searches the selection for a
+strong exact-length cycle. For a longer target it prepares a viable base loop and repeats
+complete cycles so the final boundary returns to the same phase.
 
-`TEXTURE` is a separate source-driven construction mode, not merely the long-output mode
-and not only an ADSR flattener. It can reduce macro envelope and pass-by motion, control
-smaller repeated dynamics, and depart from the literal source timeline by joining
-phase-compatible regions on a circular timeline. The selected recording remains the only
-sound material; no oscillator, synthetic-noise bed, pitch shift, stretch or reverse path
-replaces it.
+`TEXTURE` constructs a continuous texture directly from the selected recording. It can
+reduce macro envelope and pass-by motion, control smaller repeated dynamics, and reshape
+temporal flow by joining phase-compatible regions on a circular timeline. The result keeps
+the character of the source while becoming steadier and less tied to its original sequence.
 
 ## Features
 
@@ -93,14 +90,6 @@ build/vs2022/plugin/LoopSurgeon_artefacts/Debug/VST3/loopy.vst3
 
 Copy the complete `loopy.vst3` bundle to `C:\Program Files\Common Files\VST3\`, then
 rescan plug-ins in the DAW. See [`docs/WINDOWS_REAPER_TEST.md`](docs/WINDOWS_REAPER_TEST.md).
-
-## Verification boundary
-
-Deterministic engine and state tests verify exact duration, repeatable generation and
-numeric safety. They do not establish perceptual seamlessness for every recording or
-host compatibility. Real-source listening and target-DAW acceptance remain necessary.
-
-The macOS target is configured but has not been built or signed on this Windows machine.
 
 ## Repository
 

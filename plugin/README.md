@@ -17,8 +17,8 @@ material forward and in order.
 4. For a longer target, repeat the prepared cycle an integer number of times across the
    exact output duration so the terminal boundary returns to the same phase.
 
-A shorter target therefore searches for material rather than blindly cropping from a fixed
-edge. A longer target repeats a prepared source cycle; it does not invoke TEXTURE.
+A shorter target searches for a suitable exact-length span. A longer target repeats a
+prepared source cycle.
 
 ### TEXTURE
 
@@ -29,9 +29,9 @@ changes the scale and continuity of region traversal. The engine chooses phase-c
 regions across a circular source timeline, avoids recent reuse and joins them with short
 overlap-aligned crossfades. Stereo channels always share the same traversal.
 
-TEXTURE uses no synthetic noise source, oscillator, pitch shift, reversal or named-material
-classifier. Crush applies linked circular RMS-envelope correction after construction. Extra
-is a separate optional character stage; Off and 0% are exact bypasses.
+Crush applies linked circular RMS-envelope correction after construction. Extra is a
+separate optional character stage; Off and 0% are exact bypasses. The generator remains
+source-driven and excludes synthetic sources, pitch shifting, time stretching and reversal.
 
 ## Stable parameter mapping
 
@@ -82,6 +82,3 @@ ctest --preset test-debug -C Debug --output-on-failure
 `LoopEngineTests` covers deterministic analysis, exact-length LOOP output on both sides
 of the source duration, manual-boundary state, TEXTURE determinism, bypass behavior and
 numeric safety.
-
-Compilation and automated tests do not prove subjective loop quality. Real recordings,
-repeated audition and the target host remain the product-acceptance boundary.
