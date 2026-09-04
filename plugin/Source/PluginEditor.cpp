@@ -273,7 +273,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     durationSlider.setTooltip(
         "Exact TEXTURE output length in seconds; click the value to type it");
     repairDurationSlider.setTooltip(
-        "Exact REPAIR output length; shorter results select material, longer results repeat a repaired cycle");
+        "Exact LOOP output length; shorter results select material, longer results repeat a prepared cycle");
     flattenSlider.setTooltip(
         "Controls how strongly macro dynamics and one-shot movement are stabilised");
     dynamicsCrushSlider.setTooltip(
@@ -281,7 +281,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     sourceMatchSlider.setTooltip(
         "Transformation depth: increases non-linear source traversal while retaining the selected material's waveform identity");
     repairLoopStartSlider.setTooltip(
-        "Coarse REPAIR join position inside Source In/Out; Join Position below adjusts the same boundary");
+        "Coarse LOOP boundary inside Source In/Out; Join Position below adjusts the same boundary");
     repairLoopStartSlider.onValueChange = [this]
     {
         if (generationModeBox.getSelectedItemIndex() != 0
@@ -320,7 +320,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     modeLabel.setFont(lookAndFeel.getDisplayFont(12.0f));
     modeLabel.setColour(juce::Label::textColourId, juce::Colour(paper));
     addAndMakeVisible(modeLabel);
-    generationModeBox.addItem("Repair", 1);
+    generationModeBox.addItem("Loop", 1);
     generationModeBox.addItem("Texture", 2);
     generationModeBox.onChange = [this]
     {
@@ -336,8 +336,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "generationMode", generationModeBox);
 
     rotateModeButton.setComponentID("artHeader");
-    rotateModeButton.setButtonText("REPAIR");
-    rotateModeButton.setTooltip("REPAIR: cut, rotate, join and repeat a continuous source cycle");
+    rotateModeButton.setButtonText("LOOP");
+    rotateModeButton.setTooltip("LOOP: automate selection, boundary joining and exact-length loop delivery");
     rotateModeButton.onClick = [this]
     {
         generationModeBox.setSelectedItemIndex(0, juce::sendNotificationSync);
@@ -438,11 +438,11 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         addAndMakeVisible(button);
     };
     configureExtraHit(extraPatinaButton, 1, 0,
-                      "Persistent selection: Patina in TEXTURE; repair candidate A in REPAIR");
+                      "Persistent selection: Patina in TEXTURE; loop candidate A in LOOP");
     configureExtraHit(extraBloomButton, 2, 1,
-                      "Persistent selection: Bloom in TEXTURE; repair candidate B in REPAIR");
+                      "Persistent selection: Bloom in TEXTURE; loop candidate B in LOOP");
     configureExtraHit(extraFrayButton, 3, 2,
-                      "Persistent selection: Fray in TEXTURE; repair candidate C in REPAIR");
+                      "Persistent selection: Fray in TEXTURE; loop candidate C in LOOP");
     extraPatinaButton.setStateLabel("PATINA");
     extraBloomButton.setStateLabel("BLOOM");
     extraFrayButton.setStateLabel("FRAY");
@@ -592,7 +592,7 @@ void LoopSurgeonAudioProcessorEditor::paint(juce::Graphics& graphics)
     graphics.drawText("PARAMETERS", juce::Rectangle<float>(64, 466, 200, 24), juce::Justification::centredLeft);
     graphics.drawText("OUTPUT", juce::Rectangle<float>(928, 144, 200, 28), juce::Justification::centredLeft);
     const auto repair = generationModeBox.getSelectedItemIndex() == 0;
-    graphics.drawText(repair ? "REPAIR OPTIONS" : "CHARACTER",
+    graphics.drawText(repair ? "LOOP OPTIONS" : "CHARACTER",
         juce::Rectangle<float>(928, 598, 240, 26), juce::Justification::centredLeft);
     if (!repair)
     {
@@ -862,7 +862,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
                == LoopEngine::GenerationMode::textureLoop;
     const auto selectedTextureMode = generationModeBox.getSelectedItemIndex() == 1;
     candidateBox.setTextWhenNothingSelected(selectedTextureMode
-        ? "Texture variations" : "Repair options");
+        ? "Texture variations" : "Loop options");
     if (ready && !textureResult && !waveformView.isEditingRotation())
     {
         const auto rotation = processor.getRotationProportion();
@@ -1002,7 +1002,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
             case LoopEngine::State::ready:
                 statusText = textureResult
                     ? "TEXTURE ready - audition Generated"
-                    : "REPAIR ready - audition the join";
+                    : "LOOP ready - audition the join";
                 break;
             case LoopEngine::State::failed:
                 statusText = "No reliable loop found - widen the blue range or try different material";

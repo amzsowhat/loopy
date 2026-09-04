@@ -1,11 +1,11 @@
 # loopy algorithms
 
-## REPAIR
+## LOOP
 
-Source In/Out is a hard boundary. With Final Length set to Selection, the engine selects an internal
-adjacent cut, rotates the range so that cut becomes the exported boundary, then repairs the moved
-original head/tail join. With an explicit shorter/equal Final Length it searches contiguous spans
-inside the selection. For a longer target it derives a repaired base cycle, chooses an integer
+Source In/Out is a hard boundary. With Final Length set to Selection, the engine evaluates possible
+loop boundaries and creates a continuous join within the selected material. With an explicit
+shorter/equal Final Length it searches contiguous spans inside the selection. For a longer target
+it derives a prepared base cycle, chooses an integer
 repeat count, and maps those complete cycles onto the exact requested sample count. The exported
 end therefore reaches the same cycle phase as the beginning.
 

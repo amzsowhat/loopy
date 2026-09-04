@@ -6,10 +6,10 @@
 3. Insert loopy. Use **LOAD AUDIO**, or drag a WAV/AIFF/FLAC/OGG into the black waveform
    window. Drag the mint IN/OUT edges; hold Alt for fine movement, Shift-drag inside the selection
    to move it, or double-click to restore the full source.
-4. Test **REPAIR** with Selection, a shorter Final Length and a Final Length longer than the
+4. Test **LOOP** with Selection, a shorter Final Length and a Final Length longer than the
    selected source. Press the central
    **GENERATE** vortex, then use **LOOP START** or the curved **JOIN POSITION** slot to move the same
-   repaired boundary. Select one of the three Repair Options and audition the join.
+   loop boundary. Select one of the three Loop Options and audition the join.
 5. Test **TEXTURE LOOP**. Move the curved **MOTION** slot between Flow, Drift and Fracture, choose
    Length, then adjust Stability and Transform.
    A/B Crush at 0%, 50% and 100%; confirm it reduces small ADSR pulses without clicks, pumping,

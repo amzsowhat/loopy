@@ -2,7 +2,7 @@
 
 ## Implemented locally
 
-- Two selectable VST3 modes: REPAIR and TEXTURE.
+- Two selectable VST3 modes: LOOP and TEXTURE.
 - Source In/Out, exact output length, preview/stop, Source/Generated comparison, WAV export, DAW drag
   and DAW-state recall.
 - TEXTURE uses circular material-flow construction from the selected waveform. The prior

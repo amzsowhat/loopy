@@ -16,7 +16,7 @@ struct LoopAnalysisResult
     // The repaired source cycle may be repeated to reach a longer exact output.
     int targetOutputSamples = 0;
     int repetitionCount = 1;
-    // >= 0 marks REPAIR mode. start/end remain the source range.
+    // >= 0 marks LOOP mode. start/end remain the source range.
     int rotationSample = -1;
 };
 

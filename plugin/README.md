@@ -6,19 +6,19 @@ repository-level `build/` directory.
 
 ## Processing model
 
-### REPAIR
+### LOOP
 
-REPAIR automates the conventional sound-design loop workflow while keeping the selected
+LOOP automates the conventional sound-design loop-authoring workflow while keeping the selected
 material forward and in order.
 
 1. Analyse possible continuous source spans and boundary quality.
-2. Choose an internal low-risk cut and rotate it to the exported boundary.
-3. Repair the displaced head/tail join with an overlap selected for that candidate.
-4. For a longer target, repeat the repaired cycle an integer number of times across the
+2. Choose loop boundaries with low discontinuity risk.
+3. Create a continuous join using the overlap selected for that candidate.
+4. For a longer target, repeat the prepared cycle an integer number of times across the
    exact output duration so the terminal boundary returns to the same phase.
 
 A shorter target therefore searches for material rather than blindly cropping from a fixed
-edge. A longer target repeats a repaired source cycle; it does not invoke TEXTURE.
+edge. A longer target repeats a prepared source cycle; it does not invoke TEXTURE.
 
 ### TEXTURE
 
@@ -35,16 +35,16 @@ is a separate optional character stage; Off and 0% are exact bypasses.
 
 ## Stable parameter mapping
 
-User-visible mode names are `REPAIR` and `TEXTURE`. Existing IDs and integer values remain
+User-visible mode names are `LOOP` and `TEXTURE`. Existing IDs and integer values remain
 unchanged so saved sessions and automation stay compatible.
 
 | Mode | UI control | Stable parameter/state |
 | --- | --- | --- |
-| REPAIR | Final Length | `repairDuration` |
-| REPAIR | Seam | `crossfadeMs` |
-| REPAIR | Audition | `mix` |
-| REPAIR | Loop Start / Join Position | `repairLoopStart` plus committed rotation point |
-| REPAIR | Options A-C | generated candidate selection |
+| LOOP | Final Length | `repairDuration` |
+| LOOP | Seam | `crossfadeMs` |
+| LOOP | Audition | `mix` |
+| LOOP | Loop Start / Join Position | `repairLoopStart` plus committed boundary point |
+| LOOP | Options A-C | generated candidate selection |
 | TEXTURE | Length | `textureDuration` |
 | TEXTURE | Stability | `flatten` |
 | TEXTURE | Crush | `textureCrush` |
@@ -52,7 +52,7 @@ unchanged so saved sessions and automation stay compatible.
 | TEXTURE | Motion | `textureStructure` |
 | TEXTURE | Patina / Bloom / Fray | `textureCharacter` |
 | TEXTURE | Extra Mix | `textureCharacterAmount` |
-| Both | Mode | `generationMode` (`0` remains REPAIR, `1` remains TEXTURE) |
+| Both | Mode | `generationMode` (`0` remains LOOP, `1` remains TEXTURE) |
 
 ## Real-time and state rules
 
@@ -79,7 +79,7 @@ cmake --build --preset build-debug --config Debug
 ctest --preset test-debug -C Debug --output-on-failure
 ```
 
-`LoopEngineTests` covers deterministic analysis, exact-length REPAIR output on both sides
+`LoopEngineTests` covers deterministic analysis, exact-length LOOP output on both sides
 of the source duration, manual-boundary state, TEXTURE determinism, bypass behavior and
 numeric safety.
 

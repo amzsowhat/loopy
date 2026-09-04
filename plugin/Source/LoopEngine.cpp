@@ -516,7 +516,7 @@ juce::String LoopEngine::getCandidateDescription(const int index) const
         ? candidate.targetOutputSamples
         : candidate.endSample - candidate.startSample - repairSamples;
     const auto seconds = static_cast<double>(outputSamples) / sampleRate;
-    return juce::String(candidate.rotationSample >= 0 ? "Repair " : "Candidate ")
+    return juce::String(candidate.rotationSample >= 0 ? "Loop " : "Candidate ")
            + juce::String(index + 1) + "  |  " + juce::String(seconds, 2) + " s";
 }
 

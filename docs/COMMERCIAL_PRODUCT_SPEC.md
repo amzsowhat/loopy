@@ -1,10 +1,10 @@
 # loopy commercial product contract
 
-## REPAIR
+## LOOP
 
-Automate the conventional rotate-and-repair workflow for an already suitable ambience or long-form
-source. Respect Source In/Out and any exact requested length. Short output selects a viable cycle;
-long output repeats a repaired cycle. Never hide the chosen range.
+Automate the conventional loop-authoring workflow for suitable ambience or long-form source.
+Respect Source In/Out and any exact requested length. Short output selects a viable cycle; long
+output repeats a prepared cycle. Never hide the chosen range.
 
 ## TEXTURE
 
