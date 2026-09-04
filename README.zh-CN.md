@@ -30,14 +30,14 @@ loopy 是一款面向声音设计师的 JUCE 音频插件，适用于环境声�
 
 ### LOOP
 
-![LOOP 将常规的切开、换位和淡化流程合并为一步](docs/images/loop-workflow.svg)
+![LOOP 将常规的切开、换位和淡化流程合并为一步](docs/images/loop-workflow-zh.svg)
 
 原始首尾接缝被移到结果中间并做淡化，新的循环边界因此更容易连续。loopy 会自动比较
 可用边界，并让结果符合设定时长。
 
 ### TEXTURE
 
-![TEXTURE 从不适合直接循环的素材中采集纹理并构造成循环](docs/images/texture-workflow.svg)
+![TEXTURE 从不适合直接循环的素材中采集纹理并构造成循环](docs/images/texture-workflow-zh.svg)
 
 loopy 保留素材中可用的声音细节，减弱明显的大起大落，再把能够平滑接续的部分组合成
 连续循环。所有声音仍然来自选定的原始录音。

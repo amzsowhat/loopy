@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="205" viewBox="0 0 960 205" role="img" aria-labelledby="title desc">
-  <title id="title">TEXTURE workflow</title>
-  <desc id="desc">Four aligned stages show non-loop-ready source material, texture sampling, smoothing and joining, and the finished loop.</desc>
+  <title id="title">TEXTURE 工作流程</title>
+  <desc id="desc">四个对齐步骤展示不适合直接循环的原素材、纹理采集、平滑组装，以及完成的循环。</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#6b7280"/>
     </marker>
   </defs>
   <rect width="960" height="205" fill="#ffffff"/>
-  <g font-family="Arial, sans-serif" fill="#111827">
+  <g font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#111827">
     <g font-size="13" font-weight="700" text-anchor="middle">
-      <text x="120" y="28">1. SOURCE</text>
-      <text x="360" y="28">2. TEXTURE SAMPLES</text>
-      <text x="600" y="28">3. SMOOTHED ASSEMBLY</text>
-      <text x="840" y="28">4. FINISHED LOOP</text>
+      <text x="120" y="28">1. 原素材</text>
+      <text x="360" y="28">2. 采集纹理</text>
+      <text x="600" y="28">3. 平滑组装</text>
+      <text x="840" y="28">4. 完成循环</text>
     </g>
     <g fill="#ffffff" stroke="#9ca3af" stroke-width="1.5">
       <rect x="30" y="58" width="180" height="92"/>
@@ -39,10 +39,10 @@
       <path d="M700 104 H735" stroke="#6b7280" stroke-width="1.8" marker-end="url(#arrow)"/>
     </g>
     <g fill="#4b5563" font-size="12" text-anchor="middle">
-      <text x="120" y="181">not ready to loop directly</text>
-      <text x="360" y="181">collect useful sound detail</text>
-      <text x="600" y="181">reduce large motion and connect</text>
-      <text x="840" y="181">continuous source-based texture</text>
+      <text x="120" y="181">原始形态不适合直接循环</text>
+      <text x="360" y="181">保留可用的声音细节</text>
+      <text x="600" y="181">减弱大起大落并平滑连接</text>
+      <text x="840" y="181">形成连续的源素材纹理</text>
     </g>
   </g>
 </svg>

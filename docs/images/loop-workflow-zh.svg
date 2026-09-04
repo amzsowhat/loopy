@@ -1,18 +1,18 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="960" height="205" viewBox="0 0 960 205" role="img" aria-labelledby="title desc">
-  <title id="title">LOOP workflow</title>
-  <desc id="desc">Four aligned stages show the source, an internal cut, the relocated crossfaded join, and the finished loop.</desc>
+  <title id="title">LOOP 工作流程</title>
+  <desc id="desc">四个对齐步骤展示原素材、内部切点、移到中间并淡化的原始首尾接缝，以及完成的循环。</desc>
   <defs>
     <marker id="arrow" viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto">
       <path d="M0 0 L8 4 L0 8 Z" fill="#6b7280"/>
     </marker>
   </defs>
   <rect width="960" height="205" fill="#ffffff"/>
-  <g font-family="Arial, sans-serif" fill="#111827">
+  <g font-family="Arial, 'Microsoft YaHei', sans-serif" fill="#111827">
     <g font-size="13" font-weight="700" text-anchor="middle">
-      <text x="120" y="28">1. SOURCE</text>
-      <text x="360" y="28">2. INTERNAL CUT</text>
-      <text x="600" y="28">3. CROSSFADED JOIN</text>
-      <text x="840" y="28">4. FINISHED LOOP</text>
+      <text x="120" y="28">1. 原素材</text>
+      <text x="360" y="28">2. 内部切开</text>
+      <text x="600" y="28">3. 接续与淡化</text>
+      <text x="840" y="28">4. 完成循环</text>
     </g>
     <g fill="#ffffff" stroke="#9ca3af" stroke-width="1.5">
       <rect x="30" y="58" width="180" height="92"/>
@@ -22,31 +22,27 @@
     </g>
     <g fill="none" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5">
       <path d="M42 105 C52 86 63 119 74 94 S97 79 108 110 S131 132 143 91 S166 80 178 112 S194 124 198 101" stroke="#1f2937"/>
-
       <path d="M282 105 C292 86 303 119 314 94 S337 79 348 110" stroke="#b7791f"/>
       <path d="M372 110 C383 132 395 91 407 82 S432 80 438 112" stroke="#c2412d"/>
       <path d="M360 49 V159" stroke="#c2412d" stroke-width="1.5" stroke-dasharray="4 4"/>
-
       <path d="M522 110 C533 132 545 91 557 82 S576 82 587 106" stroke="#c2412d"/>
       <path d="M613 105 C623 86 634 119 645 94 S668 79 678 110" stroke="#b7791f"/>
       <rect x="583" y="68" width="34" height="72" fill="#f5e6df" stroke="none"/>
       <path d="M584 120 C592 92 601 92 616 120" stroke="#1f2937"/>
       <path d="M584 89 C595 119 604 119 616 89" stroke="#6b7280"/>
-
       <path d="M762 105 C772 86 783 119 794 94 S817 79 828 110 S851 132 863 91 S886 80 898 112 S914 124 918 105" stroke="#1f2937"/>
       <path d="M762 67 V141 M918 67 V141" stroke="#c2412d" stroke-width="2"/>
       <circle cx="762" cy="105" r="3.5" fill="#c2412d" stroke="none"/>
       <circle cx="918" cy="105" r="3.5" fill="#c2412d" stroke="none"/>
-
       <path d="M220 104 H255" stroke="#6b7280" stroke-width="1.8" marker-end="url(#arrow)"/>
       <path d="M460 104 H495" stroke="#6b7280" stroke-width="1.8" marker-end="url(#arrow)"/>
       <path d="M700 104 H735" stroke="#6b7280" stroke-width="1.8" marker-end="url(#arrow)"/>
     </g>
     <g fill="#4b5563" font-size="12" text-anchor="middle">
-      <text x="120" y="181">choose usable material</text>
-      <text x="360" y="181">split and swap the two sections</text>
-      <text x="600" y="181">fade the relocated old boundary</text>
-      <text x="840" y="181">new start and end connect</text>
+      <text x="120" y="181">选择可用素材</text>
+      <text x="360" y="181">切开并交换前后两段</text>
+      <text x="600" y="181">淡化移到中间的原始首尾</text>
+      <text x="840" y="181">新的首尾连续接续</text>
     </g>
   </g>
 </svg>
