@@ -13,18 +13,24 @@ or drag-and-drop into a DAW.
 
 | | REPAIR | TEXTURE |
 | --- | --- | --- |
-| Intent | Automate the manual cut, rotate, crossfade and repeat workflow | Smooth macro dynamics and construct a steadier, evolving bed |
-| Source relationship | Keeps one continuous forward-moving cycle | Traverses and joins compatible regions from across the selection |
+| Intent | Automate the manual cut, rotate, crossfade and repeat workflow | Construct a continuous texture from the selected recording |
+| Source relationship | Keeps one continuous forward-moving cycle | Reorganises only source-derived, phase-compatible regions while preserving material identity |
 | Output length | Any exact duration: shorter, equal or longer than the source selection | Any exact duration |
 | Longer output | Repeats a repaired cycle on phase-aligned boundaries | Continues an evolving, deterministic traversal |
-| Best suited to | Material whose original identity and motion should remain intact | Material whose broad ADSR, level drift or pass-by motion should be softened |
+| Primary shaping | Seam placement and repair | Macro envelope, local dynamics, temporal traversal and optional character |
+| Best suited to | Material whose original timeline and motion should remain intact | Material that should become a steadier texture without turning into synthetic or generic noise |
 
 `REPAIR` does not define itself by shortening. For a shorter target it searches the
 selection for a strong exact-length cycle. For a longer target it first derives and
 repairs a viable cycle, then repeats complete cycles so the final boundary returns to the
-same phase. `TEXTURE` is a different treatment, not merely the long-output mode: its core
-purpose is to flatten conspicuous macro ADSR and level movement. Compatible-region
-traversal supports that transformation without replacing the identity of the recording.
+same phase.
+
+`TEXTURE` is a separate source-driven construction mode, not merely the long-output mode
+and not only an ADSR flattener. It can reduce macro envelope and pass-by motion, control
+smaller repeated dynamics, and depart from the literal source timeline by joining
+phase-compatible regions on a circular timeline. The selected recording remains the only
+sound material; no oscillator, synthetic-noise bed, pitch shift, stretch or reverse path
+replaces it.
 
 ## Features
 

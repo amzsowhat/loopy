@@ -22,10 +22,12 @@ edge. A longer target repeats a repaired source cycle; it does not invoke TEXTUR
 
 ### TEXTURE
 
-TEXTURE constructs a less literal bed from the selected waveform. It reduces a controllable
-amount of macro envelope, chooses phase-compatible regions across a circular source timeline,
-avoids recently used regions and joins the traversal with short overlap-aligned crossfades.
-Stereo channels always share the same traversal.
+TEXTURE is a source-driven continuous-material constructor. It combines four related forms
+of control: Stability reduces macro envelope and pass-by motion; Crush reduces shorter-scale
+repeated dynamics; Transform controls departure from the literal source timeline; and Motion
+changes the scale and continuity of region traversal. The engine chooses phase-compatible
+regions across a circular source timeline, avoids recent reuse and joins them with short
+overlap-aligned crossfades. Stereo channels always share the same traversal.
 
 TEXTURE uses no synthetic noise source, oscillator, pitch shift, reversal or named-material
 classifier. Crush applies linked circular RMS-envelope correction after construction. Extra
