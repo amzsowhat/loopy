@@ -1,0 +1,107 @@
+{
+  "version": 6,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 22,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "vs2022-base",
+      "hidden": true,
+      "generator": "Visual Studio 17 2022",
+      "architecture": "x64",
+      "binaryDir": "${sourceDir}/build/vs2022",
+      "cacheVariables": {
+        "SOUND_VST_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "vs2022-debug",
+      "inherits": "vs2022-base",
+      "displayName": "Visual Studio 2022 Debug"
+    },
+    {
+      "name": "vs2022-release",
+      "inherits": "vs2022-base",
+      "displayName": "Visual Studio 2022 Release"
+    },
+    {
+      "name": "macos-base",
+      "hidden": true,
+      "generator": "Xcode",
+      "binaryDir": "${sourceDir}/build/macos",
+      "cacheVariables": {
+        "CMAKE_OSX_ARCHITECTURES": "arm64",
+        "CMAKE_OSX_DEPLOYMENT_TARGET": "11.0",
+        "SOUND_VST_BUILD_TESTS": "ON"
+      }
+    },
+    {
+      "name": "macos-debug",
+      "inherits": "macos-base",
+      "displayName": "macOS Apple Silicon Debug"
+    },
+    {
+      "name": "macos-release",
+      "inherits": "macos-base",
+      "displayName": "macOS Apple Silicon Release"
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "build-debug",
+      "configurePreset": "vs2022-debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "build-release",
+      "configurePreset": "vs2022-release",
+      "configuration": "Release"
+    },
+    {
+      "name": "build-macos-debug",
+      "configurePreset": "macos-debug",
+      "configuration": "Debug"
+    },
+    {
+      "name": "build-macos-release",
+      "configurePreset": "macos-release",
+      "configuration": "Release"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "test-debug",
+      "configurePreset": "vs2022-debug",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "test-release",
+      "configurePreset": "vs2022-release",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "test-macos-debug",
+      "configurePreset": "macos-debug",
+      "configuration": "Debug",
+      "output": {
+        "outputOnFailure": true
+      }
+    },
+    {
+      "name": "test-macos-release",
+      "configurePreset": "macos-release",
+      "configuration": "Release",
+      "output": {
+        "outputOnFailure": true
+      }
+    }
+  ]
+}
