@@ -1,5 +1,7 @@
 # loopy
 
+[English](README.md) | [简体中文](README.zh-CN.md)
+
 **Build seamless, exact-length loops from recorded sound.**
 
 loopy is a JUCE audio plug-in for sound designers working with ambience, machinery,
@@ -11,17 +13,18 @@ or drag-and-drop into a DAW.
 
 | | REPAIR | TEXTURE |
 | --- | --- | --- |
-| Intent | Automate the manual cut, rotate, crossfade and repeat workflow | Reconstruct source material as a less literal, evolving bed |
+| Intent | Automate the manual cut, rotate, crossfade and repeat workflow | Smooth macro dynamics and construct a steadier, evolving bed |
 | Source relationship | Keeps one continuous forward-moving cycle | Traverses and joins compatible regions from across the selection |
 | Output length | Any exact duration: shorter, equal or longer than the source selection | Any exact duration |
 | Longer output | Repeats a repaired cycle on phase-aligned boundaries | Continues an evolving, deterministic traversal |
-| Best suited to | Material whose original identity and motion should remain intact | Material whose obvious event order or repetition should be reduced |
+| Best suited to | Material whose original identity and motion should remain intact | Material whose broad ADSR, level drift or pass-by motion should be softened |
 
 `REPAIR` does not define itself by shortening. For a shorter target it searches the
 selection for a strong exact-length cycle. For a longer target it first derives and
 repairs a viable cycle, then repeats complete cycles so the final boundary returns to the
-same phase. `TEXTURE` is a different treatment, not merely the long-output mode: it
-reorders compatible source regions and can reshape broad and local dynamics.
+same phase. `TEXTURE` is a different treatment, not merely the long-output mode: its core
+purpose is to flatten conspicuous macro ADSR and level movement. Compatible-region
+traversal supports that transformation without replacing the identity of the recording.
 
 ## Features
 
