@@ -1,0 +1,43 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="210" viewBox="0 0 960 210" role="img" aria-labelledby="title desc">
+  <title id="title">LOOP workflow</title>
+  <desc id="desc">The source is cut, its two sections are swapped, the middle join is crossfaded, and the result loops.</desc>
+  <rect width="960" height="210" rx="20" fill="#171717"/>
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <g fill="#f4eadb" font-size="15" font-weight="700">
+      <text x="120" y="42">1  SOURCE / 原素材</text>
+      <text x="360" y="42">2  CUT / 切开</text>
+      <text x="600" y="42">3  JOIN + FADE / 接续淡化</text>
+      <text x="840" y="42">4  LOOP / 循环</text>
+    </g>
+
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="36" y="92" width="168" height="72" rx="12" fill="#242321" stroke="#706b63" stroke-width="2"/>
+      <path d="M48 129 C58 94 68 160 78 122 S98 101 108 134 S128 158 138 119 S158 99 168 132 S188 151 194 126" stroke="#f4eadb" stroke-width="3"/>
+
+      <rect x="276" y="92" width="168" height="72" rx="12" fill="#242321" stroke="#706b63" stroke-width="2"/>
+      <path d="M288 129 C298 94 308 160 318 122 S338 101 348 134" stroke="#d8aa49" stroke-width="3"/>
+      <path d="M372 134 C382 158 392 119 402 106 S422 99 432 132" stroke="#e96b4c" stroke-width="3"/>
+      <path d="M360 79 V177" stroke="#f4eadb" stroke-width="2" stroke-dasharray="5 6"/>
+      <path d="M352 73 L368 85 M368 73 L352 85" stroke="#e96b4c" stroke-width="3"/>
+
+      <rect x="516" y="92" width="168" height="72" rx="12" fill="#242321" stroke="#706b63" stroke-width="2"/>
+      <path d="M528 134 C538 158 548 119 558 106 S578 99 588 132" stroke="#e96b4c" stroke-width="3"/>
+      <path d="M612 129 C622 94 632 160 642 122 S662 101 672 134" stroke="#d8aa49" stroke-width="3"/>
+      <path d="M574 145 C587 113 600 113 613 145" stroke="#f4eadb" stroke-width="3"/>
+      <path d="M574 113 C587 145 600 145 613 113" stroke="#f4eadb" stroke-width="3" opacity="0.65"/>
+
+      <circle cx="840" cy="128" r="48" fill="#242321" stroke="#d8aa49" stroke-width="3"/>
+      <path d="M808 132 C817 96 826 159 836 119 S855 103 865 137 S879 145 884 121" stroke="#f4eadb" stroke-width="3"/>
+      <path d="M810 91 A54 54 0 1 1 803 157" stroke="#e96b4c" stroke-width="4"/>
+      <path d="M802 157 L800 143 L814 151 Z" fill="#e96b4c" stroke="none"/>
+
+      <path d="M220 128 H252" stroke="#8d877d" stroke-width="3"/>
+      <path d="M246 121 L254 128 L246 135" stroke="#8d877d" stroke-width="3"/>
+      <path d="M460 128 H492" stroke="#8d877d" stroke-width="3"/>
+      <path d="M486 121 L494 128 L486 135" stroke="#8d877d" stroke-width="3"/>
+      <path d="M700 128 H732" stroke="#8d877d" stroke-width="3"/>
+      <path d="M726 121 L734 128 L726 135" stroke="#8d877d" stroke-width="3"/>
+    </g>
+
+  </g>
+</svg>

@@ -29,6 +29,22 @@ texture from the selected recording, reduces obstructive macro envelope and pass
 and assembles compatible source regions into a continuous circular result. The output keeps
 the character of the recording while turning its texture into a usable loop.
 
+## How it works
+
+### LOOP
+
+![LOOP turns the familiar cut, rearrange and crossfade process into one workflow](docs/images/loop-workflow.svg)
+
+The old end-to-start join is moved inside the result and faded there, leaving a cleaner
+repeating boundary. loopy checks possible boundaries and fits the result to the chosen length.
+
+### TEXTURE
+
+![TEXTURE collects useful detail from non-loop-ready material and builds a continuous loop](docs/images/texture-workflow.svg)
+
+loopy keeps useful sound detail, softens large rises and falls, then connects compatible
+pieces into a continuous loop. Every piece still comes from the selected recording.
+
 ## Features
 
 - Exact user-defined duration in both modes.

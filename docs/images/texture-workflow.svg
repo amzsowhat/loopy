@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="210" viewBox="0 0 960 210" role="img" aria-labelledby="title desc">
+  <title id="title">TEXTURE workflow</title>
+  <desc id="desc">Useful texture is picked from non-loop-ready source material, its large rises and falls are softened, compatible pieces are joined, and the result loops.</desc>
+  <rect width="960" height="210" rx="20" fill="#171717"/>
+  <g font-family="Arial, sans-serif" text-anchor="middle">
+    <g fill="#f4eadb" font-size="15" font-weight="700">
+      <text x="120" y="42">1  SOURCE / 原素材</text>
+      <text x="360" y="42">2  PICK TEXTURE / 采集纹理</text>
+      <text x="600" y="42">3  SMOOTH + JOIN / 平滑连接</text>
+      <text x="840" y="42">4  LOOP / 循环</text>
+    </g>
+
+    <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="36" y="82" width="168" height="92" rx="12" fill="#242321" stroke="#706b63" stroke-width="2"/>
+      <path d="M48 139 C61 137 69 130 78 114 S94 88 106 105 S120 163 134 151 S149 111 162 119 S181 143 194 139" stroke="#f4eadb" stroke-width="3"/>
+      <path d="M48 144 C61 142 69 135 78 119 S94 93 106 110 S120 168 134 156 S149 116 162 124 S181 148 194 144" stroke="#e96b4c" stroke-width="2" opacity="0.65"/>
+
+      <rect x="276" y="82" width="168" height="92" rx="12" fill="#242321" stroke="#706b63" stroke-width="2"/>
+      <rect x="291" y="94" width="34" height="68" rx="6" fill="#d8aa49" opacity="0.24"/>
+      <rect x="342" y="94" width="34" height="68" rx="6" fill="#e96b4c" opacity="0.24"/>
+      <rect x="393" y="94" width="34" height="68" rx="6" fill="#d8aa49" opacity="0.24"/>
+      <path d="M288 133 C297 105 306 155 315 125 S333 113 342 139 S360 102 369 128 S387 151 396 121 S414 112 432 134" stroke="#f4eadb" stroke-width="3"/>
+
+      <rect x="516" y="82" width="168" height="92" rx="12" fill="#242321" stroke="#706b63" stroke-width="2"/>
+      <path d="M528 131 C537 112 546 148 555 124 S573 116 582 136" stroke="#d8aa49" stroke-width="3"/>
+      <path d="M579 136 C588 111 597 146 606 125 S624 115 633 135" stroke="#e96b4c" stroke-width="3"/>
+      <path d="M630 135 C639 113 648 146 657 124 S672 117 672 130" stroke="#d8aa49" stroke-width="3"/>
+      <path d="M570 142 C578 120 585 120 593 142 M621 142 C629 120 636 120 644 142" stroke="#f4eadb" stroke-width="2" opacity="0.8"/>
+
+      <circle cx="840" cy="128" r="48" fill="#242321" stroke="#d8aa49" stroke-width="3"/>
+      <path d="M807 130 C816 111 825 147 834 124 S852 116 861 136 S877 139 884 124" stroke="#f4eadb" stroke-width="3"/>
+      <path d="M810 91 A54 54 0 1 1 803 157" stroke="#e96b4c" stroke-width="4"/>
+      <path d="M802 157 L800 143 L814 151 Z" fill="#e96b4c" stroke="none"/>
+
+      <path d="M220 128 H252" stroke="#8d877d" stroke-width="3"/>
+      <path d="M246 121 L254 128 L246 135" stroke="#8d877d" stroke-width="3"/>
+      <path d="M460 128 H492" stroke="#8d877d" stroke-width="3"/>
+      <path d="M486 121 L494 128 L486 135" stroke="#8d877d" stroke-width="3"/>
+      <path d="M700 128 H732" stroke="#8d877d" stroke-width="3"/>
+      <path d="M726 121 L734 128 L726 135" stroke="#8d877d" stroke-width="3"/>
+    </g>
+
+  </g>
+</svg>
