@@ -13,23 +13,21 @@ or drag-and-drop into a DAW.
 
 | | LOOP | TEXTURE |
 | --- | --- | --- |
-| Intent | Automate the conventional sound-designer loop-authoring workflow | Construct a continuous texture from the selected recording |
-| Source relationship | Keeps one continuous forward-moving cycle | Reorganises only source-derived, phase-compatible regions while preserving material identity |
-| Output length | Any exact duration: shorter, equal or longer than the source selection | Any exact duration |
-| Longer output | Repeats a prepared cycle on phase-aligned boundaries | Continues an evolving, deterministic traversal |
-| Primary shaping | Seam placement and repair | Macro envelope, local dynamics, temporal traversal and optional character |
-| Best suited to | Material whose original timeline and motion should remain intact | Continuous SFX that need steadier energy and a less literal temporal flow while retaining source identity |
+| Purpose | Turn the standard manual loop-editing process into a one-click workflow | Turn texture captured from non-loop-ready material into a continuous loop |
+| Starting material | Audio already suitable for conventional loop editing | Audio that contains useful texture but does not naturally form a loop |
+| Method | Cut and rearrange the source, crossfade the relocated head-to-tail join, then check the result automatically | Extract source-derived texture, control its envelope and assemble compatible regions into a circular result |
+| Output length | Any exact duration: shorter, equal or longer than the selected source | Any exact duration |
 
-`LOOP` automates the operations a sound designer normally performs when authoring a loop:
-choosing usable material, setting boundaries, creating a continuous join and fitting the
-result to the required duration. For a shorter target it searches the selection for a
-strong exact-length cycle. For a longer target it prepares a viable base loop and repeats
-complete cycles so the final boundary returns to the same phase.
+`LOOP` automates the familiar manual workflow: cut inside the material, swap the two
+sections so the original head-to-tail boundary moves into the middle, and build the fade-in
+and fade-out around that join. It adds automatic boundary checks, candidate selection and
+exact duration control. Shorter targets are selected from the source; longer targets repeat
+a completed base loop to the requested length.
 
-`TEXTURE` constructs a continuous texture directly from the selected recording. It can
-reduce macro envelope and pass-by motion, control smaller repeated dynamics, and reshape
-temporal flow by joining phase-compatible regions on a circular timeline. The result keeps
-the character of the source while becoming steadier and less tied to its original sequence.
+`TEXTURE` handles material that is not naturally suited to that workflow. It captures usable
+texture from the selected recording, reduces obstructive macro envelope and pass-by motion,
+and assembles compatible source regions into a continuous circular result. The output keeps
+the character of the recording while turning its texture into a usable loop.
 
 ## Features
 

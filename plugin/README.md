@@ -8,13 +8,14 @@ repository-level `build/` directory.
 
 ### LOOP
 
-LOOP automates the conventional sound-design loop-authoring workflow while keeping the selected
-material forward and in order.
+LOOP automates the conventional sound-design loop-authoring workflow.
 
-1. Analyse possible continuous source spans and boundary quality.
-2. Choose loop boundaries with low discontinuity risk.
-3. Create a continuous join using the overlap selected for that candidate.
-4. For a longer target, repeat the prepared cycle an integer number of times across the
+1. Analyse possible source spans and boundary quality.
+2. Choose an internal cut and circularly rearrange the two sections so the source's original
+   head-to-tail join moves inside the result.
+3. Crossfade that relocated join using the overlap selected for the candidate.
+4. Check alternative candidates and expose the boundary for manual adjustment.
+5. For a longer target, repeat the completed base loop an integer number of times across the
    exact output duration so the terminal boundary returns to the same phase.
 
 A shorter target searches for a suitable exact-length span. A longer target repeats a
@@ -22,7 +23,8 @@ prepared source cycle.
 
 ### TEXTURE
 
-TEXTURE is a source-driven continuous-material constructor. It combines four related forms
+TEXTURE handles recordings that contain useful texture but are not naturally suited to the
+conventional loop-editing workflow. It combines four related forms
 of control: Stability reduces macro envelope and pass-by motion; Crush reduces shorter-scale
 repeated dynamics; Transform controls departure from the literal source timeline; and Motion
 changes the scale and continuity of region traversal. The engine chooses phase-compatible
