@@ -1,4 +1,4 @@
-# Loopy——SFX design for loop
+# Loopy——A streamlined workflow for loop-type sound effects
 
 [English](README.md) | [简体中文](README.zh-CN.md)
 
