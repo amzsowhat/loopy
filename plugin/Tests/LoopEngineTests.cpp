@@ -3,6 +3,7 @@
 #include "TextureSynthesizer.h"
 
 #include <chrono>
+#include <algorithm>
 #include <array>
 #include <cmath>
 #include <iostream>
@@ -60,6 +61,35 @@ double localLevelVariation(const juce::AudioBuffer<float>& audio,
         variance += (level - mean) * (level - mean);
     return std::sqrt(variance / static_cast<double>(levels.size()))
            / juce::jmax(1.0e-9, mean);
+}
+
+double quietestWindowRatio(const juce::AudioBuffer<float>& audio,
+                           const int window,
+                           const int hop)
+{
+    std::vector<double> levels;
+    for (int start = 0; start + window <= audio.getNumSamples(); start += hop)
+    {
+        double energy = 0.0;
+        auto count = 0;
+        for (int channel = 0; channel < audio.getNumChannels(); ++channel)
+            for (int sample = 0; sample < window; ++sample)
+            {
+                const auto value = static_cast<double>(
+                    audio.getSample(channel, start + sample));
+                energy += value * value;
+                ++count;
+            }
+        levels.push_back(std::sqrt(energy / static_cast<double>(juce::jmax(1, count))));
+    }
+    if (levels.empty())
+        return 0.0;
+    const auto quietest = *std::min_element(levels.begin(), levels.end());
+    auto mean = 0.0;
+    for (const auto level : levels)
+        mean += level;
+    mean /= static_cast<double>(levels.size());
+    return quietest / juce::jmax(1.0e-9, mean);
 }
 
 bool buffersEqual(const juce::AudioBuffer<float>& first,
@@ -305,6 +335,34 @@ int main()
     passed &= expect(localLevelVariation(extractedTexture.audio, 320, 80)
                          < 0.55 * localLevelVariation(adsrProbe, 320, 80),
                      "Texture extraction should strongly reduce a source ADSR envelope");
+
+    juce::AudioBuffer<float> transientEvents(2, 32000);
+    for (int sample = 0; sample < transientEvents.getNumSamples(); ++sample)
+    {
+        const auto withinEvent = sample % 2000;
+        const auto attack = juce::jmin(1.0f, static_cast<float>(withinEvent) / 24.0f);
+        const auto decay = std::exp(-static_cast<float>(withinEvent) / 330.0f);
+        const auto envelope = attack * decay;
+        const auto time = static_cast<float>(sample) / static_cast<float>(sampleRate);
+        const auto body = 0.62f * std::sin(
+            juce::MathConstants<float>::twoPi * 117.0f * time)
+            + 0.28f * std::sin(juce::MathConstants<float>::twoPi * 313.0f * time);
+        transientEvents.setSample(0, sample, envelope * body);
+        transientEvents.setSample(1, sample, envelope * 0.91f * body);
+    }
+    auto transientSettings = extractionSettings;
+    transientSettings.variation = 0.85f;
+    transientSettings.seed = 0x13579bdu;
+    const auto transientTexture = TextureSynthesizer::synthesize(
+        transientEvents, sampleRate, transientSettings);
+    passed &= expect(transientTexture.containsOnlyFiniteSamples
+                         && transientTexture.audio.getNumSamples() == 16000,
+                     "Transient texture extraction must preserve length and numeric safety");
+    passed &= expect(localLevelVariation(transientTexture.audio, 240, 60)
+                         < 0.72 * localLevelVariation(transientEvents, 240, 60),
+                     "Texture extraction should suppress repeated transient envelopes");
+    passed &= expect(quietestWindowRatio(transientTexture.audio, 160, 40) > 0.12,
+                     "Transient texture output should remain continuous without silent holes");
 
     LoopEngine textureEngine;
     textureEngine.prepare(sampleRate, 64, 2);

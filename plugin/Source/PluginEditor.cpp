@@ -53,7 +53,16 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
 
     addAndMakeVisible(waveformView);
     resultWaveformView.setResultMode(true);
-    resultWaveformView.setTooltip("Generated loop waveform and playback position");
+    resultWaveformView.setTooltip(
+        "Click the result waveform to play or stop. Space remains assigned to the DAW transport.");
+    resultWaveformView.setMouseCursor(juce::MouseCursor::PointingHandCursor);
+    resultWaveformView.onPreviewToggle = [this]
+    {
+        processor.setPreviewMode(LoopEngine::PreviewMode::loop);
+        const auto shouldPlay = !processor.isPreviewPlaying();
+        processor.setPreviewPlaying(shouldPlay);
+        lastMessage = shouldPlay ? "Result preview started" : "Result preview stopped";
+    };
     addAndMakeVisible(resultWaveformView);
     resultWaveformView.setVisible(false);
     addAndMakeVisible(signalAnalysisView);
@@ -95,6 +104,22 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
             return;
         }
         const auto directMode = generationModeBox.getSelectedItemIndex() == 0;
+        if (!directMode
+            && processor.getLoopState() == LoopEngine::State::ready
+            && processor.getLastUsedGenerationMode()
+                   == LoopEngine::GenerationMode::textureLoop)
+        {
+            if (processor.regenerateTexture(waveformView.getSourceIn(),
+                                            waveformView.getSourceOut()))
+            {
+                autoPreviewAfterGeneration = true;
+                lastMessage = "Creating another continuous texture...";
+            }
+            else
+                lastMessage = "Load a source before creating a new texture";
+            updatePrimaryAction();
+            return;
+        }
         const auto selectedSeconds = processor.getSourceDurationSeconds()
             * static_cast<double>(waveformView.getSourceOut() - waveformView.getSourceIn());
         const auto requestedRepairSeconds = processor.getParameterState()
@@ -588,9 +613,8 @@ void LoopSurgeonAudioProcessorEditor::paint(juce::Graphics& graphics)
         graphics.setColour(juce::Colour(LoopSurgeonTheme::line).withAlpha(0.65f));
         graphics.drawRoundedRectangle(area.reduced(0.5f), 10.0f, 1.0f);
     };
-    panel({40, 124, 840, 300});
-    panel({40, 448, 840, 324});
-    panel({904, 124, 416, 648});
+    panel({40, 124, 1280, 340});
+    panel({40, 484, 1280, 288});
     graphics.setColour(juce::Colour(LoopSurgeonTheme::line));
     graphics.drawHorizontalLine(104, 40.0f, 1320.0f);
     graphics.setColour(juce::Colour(LoopSurgeonTheme::secondary));
@@ -600,10 +624,11 @@ void LoopSurgeonAudioProcessorEditor::paint(juce::Graphics& graphics)
     graphics.drawText(showingResult ? "RESULT WAVEFORM" : "SOURCE",
                       juce::Rectangle<float>(64, 144, 240, 28),
                       juce::Justification::centredLeft);
-    graphics.drawText("FINE TUNE", juce::Rectangle<float>(64, 466, 200, 24), juce::Justification::centredLeft);
-    graphics.drawText("OUTPUT", juce::Rectangle<float>(928, 144, 200, 28), juce::Justification::centredLeft);
-    graphics.drawText("PREVIEW",
-        juce::Rectangle<float>(928, 598, 240, 26), juce::Justification::centredLeft);
+    graphics.drawText("FINE TUNE", juce::Rectangle<float>(64, 502, 200, 24), juce::Justification::centredLeft);
+    graphics.setColour(juce::Colour(LoopSurgeonTheme::secondary).withAlpha(0.78f));
+    graphics.setFont(lookAndFeel.getHandFont(12.0f));
+    graphics.drawText("ONE CLICK FIRST. ADJUST ONLY IF NEEDED.",
+        juce::Rectangle<float>(844, 492, 452, 28), juce::Justification::centred);
 }
 
 void LoopSurgeonAudioProcessorEditor::resized()
@@ -620,16 +645,16 @@ void LoopSurgeonAudioProcessorEditor::resized()
 
     titleLabel.setBounds(box(40.0f, 28.0f, 416.0f, 52.0f));
     versionLabel.setBounds({});
-    sourceLabel.setBounds(box(64.0f, 181.0f, 792.0f, 26.0f));
+    sourceLabel.setBounds(box(64.0f, 178.0f, 850.0f, 26.0f));
     rotateModeButton.setBounds(box(904.0f, 34.0f, 202.0f, 44.0f));
     textureModeButton.setBounds(box(1114.0f, 34.0f, 206.0f, 44.0f));
-    importButton.setBounds(box(548.0f, 141.0f, 144.0f, 34.0f));
-    captureButton.setBounds(box(704.0f, 141.0f, 152.0f, 34.0f));
+    importButton.setBounds(box(988.0f, 142.0f, 144.0f, 34.0f));
+    captureButton.setBounds(box(1144.0f, 142.0f, 152.0f, 34.0f));
     clearButton.setBounds({});
     dropLabel.setBounds({});
 
-    waveformView.setBounds(box(64.0f, 219.0f, 792.0f, 180.0f));
-    resultWaveformView.setBounds(box(64.0f, 219.0f, 792.0f, 180.0f));
+    waveformView.setBounds(box(64.0f, 214.0f, 1232.0f, 190.0f));
+    resultWaveformView.setBounds(box(64.0f, 214.0f, 1232.0f, 190.0f));
     rangeLabel.setBounds({});
     resetRangeButton.setBounds({});
 
@@ -641,14 +666,14 @@ void LoopSurgeonAudioProcessorEditor::resized()
     characterBox.setBounds({});
     applyModeLayout();
 
-    statusLabel.setBounds(box(928.0f, 526.0f, 368.0f, 52.0f));
+    statusLabel.setBounds(box(844.0f, 742.0f, 452.0f, 24.0f));
     candidateBox.setBounds(box(68.0f, 327.0f, 180.0f, 30.0f));
-    originalPreviewButton.setBounds(box(64.0f, 400.0f, 112.0f, 24.0f));
-    loopPreviewButton.setBounds(box(184.0f, 400.0f, 112.0f, 24.0f));
-    regenerateButton.setBounds(box(928.0f, 696.0f, 368.0f, 48.0f));
-    signalAnalysisView.setBounds(box(64.0f, 219.0f, 792.0f, 180.0f));
+    originalPreviewButton.setBounds(box(64.0f, 414.0f, 132.0f, 34.0f));
+    loopPreviewButton.setBounds(box(204.0f, 414.0f, 132.0f, 34.0f));
+    regenerateButton.setBounds({});
+    signalAnalysisView.setBounds(box(64.0f, 214.0f, 1232.0f, 190.0f));
 
-    primaryActionArea = box(928.0f, 180.0f, 368.0f, 332.0f);
+    primaryActionArea = box(844.0f, 522.0f, 452.0f, 212.0f);
     analyzeRangeButton.setBounds(primaryActionArea);
     previewTransportButton.setBounds(box(40.0f, 808.0f, 164.0f, 48.0f));
     dragToDawButton.setBounds(box(224.0f, 808.0f, 656.0f, 48.0f));
@@ -660,8 +685,8 @@ void LoopSurgeonAudioProcessorEditor::resized()
     motionSelectorSlider.setBounds({});
     joinPositionSlider.setBounds({});
     extraOffButton.setBounds({});
-    originalPreviewButton.setBounds(box(928.0f, 640.0f, 176.0f, 44.0f));
-    loopPreviewButton.setBounds(box(1120.0f, 640.0f, 176.0f, 44.0f));
+    originalPreviewButton.setBounds(box(64.0f, 414.0f, 132.0f, 34.0f));
+    loopPreviewButton.setBounds(box(204.0f, 414.0f, 132.0f, 34.0f));
     extraPatinaButton.setBounds({});
     extraBloomButton.setBounds({});
     extraFrayButton.setBounds({});
@@ -705,11 +730,11 @@ void LoopSurgeonAudioProcessorEditor::applyModeLayout()
         mixSlider.setName("AUDITION");
         repairLoopStartSlider.setName("LOOP START");
         setKnob(repairDurationLabel, repairDurationSlider,
-                112.0f, 504.0f, 184.0f, 174.0f);
+                80.0f, 548.0f, 184.0f, 174.0f);
         setKnob(crossfadeLabel, crossfadeSlider,
-                348.0f, 504.0f, 184.0f, 174.0f);
+                316.0f, 548.0f, 184.0f, 174.0f);
         setKnob(repairLoopStartLabel, repairLoopStartSlider,
-                584.0f, 504.0f, 184.0f, 174.0f);
+                552.0f, 548.0f, 184.0f, 174.0f);
         mixSlider.setBounds({});
     }
     else
@@ -719,11 +744,11 @@ void LoopSurgeonAudioProcessorEditor::applyModeLayout()
         dynamicsCrushSlider.setName("CRUSH");
         sourceMatchSlider.setName("VARIATION");
         setKnob(durationLabel, durationSlider,
-                112.0f, 504.0f, 184.0f, 174.0f);
+                80.0f, 548.0f, 184.0f, 174.0f);
         setKnob(flattenLabel, flattenSlider,
-                348.0f, 504.0f, 184.0f, 174.0f);
+                316.0f, 548.0f, 184.0f, 174.0f);
         setKnob(sourceMatchLabel, sourceMatchSlider,
-                584.0f, 504.0f, 184.0f, 174.0f);
+                552.0f, 548.0f, 184.0f, 174.0f);
         dynamicsCrushSlider.setBounds({});
         repairLoopStartSlider.setBounds({});
         characterAmountSlider.setBounds({});
@@ -959,7 +984,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     resultWaveformView.setVisible(ready && previewMode == LoopEngine::PreviewMode::loop);
     originalPreviewButton.setVisible(ready);
     loopPreviewButton.setVisible(ready);
-    regenerateButton.setVisible(ready && textureResult);
+    regenerateButton.setVisible(false);
     originalPreviewButton.setToggleState(previewMode == LoopEngine::PreviewMode::original,
                                          juce::dontSendNotification);
     loopPreviewButton.setToggleState(previewMode == LoopEngine::PreviewMode::loop,
@@ -1065,7 +1090,12 @@ void LoopSurgeonAudioProcessorEditor::updatePrimaryAction()
         analyzeRangeButton.setButtonText("LOAD AUDIO");
         return;
     }
-    analyzeRangeButton.setButtonText("GENERATE & PLAY");
+    const auto canMakeAnother = generationModeBox.getSelectedItemIndex() == 1
+        && state == LoopEngine::State::ready
+        && processor.getLastUsedGenerationMode()
+               == LoopEngine::GenerationMode::textureLoop;
+    analyzeRangeButton.setButtonText(
+        canMakeAnother ? "MAKE ANOTHER & PLAY" : "GENERATE & PLAY");
 }
 
 void LoopSurgeonAudioProcessorEditor::updateArtworkStates()

@@ -70,6 +70,7 @@ public:
 
     std::function<void()> onSourceRangeEdited;
     std::function<void()> onRotationCommitted;
+    std::function<void()> onPreviewToggle;
 
 private:
     [[nodiscard]] juce::Path createAperturePath() const;

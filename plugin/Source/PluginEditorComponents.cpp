@@ -35,17 +35,25 @@ bool isSettled(const float current, const float target) noexcept
     return std::abs(current - target) < transitionEpsilon;
 }
 
-void paintMobiusGeometry(juce::Graphics& graphics, const juce::Rectangle<float> bounds)
+void paintMobiusGeometry(juce::Graphics& graphics, const juce::Rectangle<float> bounds,
+                         const float phase, const bool active)
 {
     struct Vertex { juce::Point<float> point; float depth; };
     struct Face { juce::Path path; float depth; float tone; };
-    std::array<Face, 144> faces;
+    std::array<Face, 112> faces;
+    const auto cycle = phase * juce::MathConstants<float>::twoPi;
+    const auto yaw = active ? 0.16f * std::sin(cycle) : 0.0f;
+    const auto pitch = active ? 0.055f * std::cos(cycle * 0.73f) : 0.0f;
     const auto project = [&] (const float u, const float v)
     {
         const auto radius = 1.0f + v * std::cos(u * 0.5f);
-        const auto x = radius * std::cos(u);
-        const auto y = radius * std::sin(u);
-        const auto z = v * std::sin(u * 0.5f);
+        const auto rawX = radius * std::cos(u);
+        const auto rawY = radius * std::sin(u);
+        const auto rawZ = v * std::sin(u * 0.5f);
+        const auto x = rawX * std::cos(yaw) + rawZ * std::sin(yaw);
+        const auto yawZ = -rawX * std::sin(yaw) + rawZ * std::cos(yaw);
+        const auto y = rawY * std::cos(pitch) - yawZ * std::sin(pitch);
+        const auto z = rawY * std::sin(pitch) + yawZ * std::cos(pitch);
         const auto scale = juce::jmin(bounds.getWidth() * 0.37f, bounds.getHeight() * 0.54f);
         return Vertex { { bounds.getCentreX() + x * scale,
                           bounds.getCentreY() + (y * 0.48f - z * 0.88f) * scale },
@@ -62,8 +70,10 @@ void paintMobiusGeometry(juce::Graphics& graphics, const juce::Rectangle<float> 
         face.path.lineTo(q.point); face.path.lineTo(r.point); face.path.lineTo(s.point);
         face.path.closeSubPath();
         face.depth = (p.depth + q.depth + r.depth + s.depth) * 0.25f;
+        const auto movingLight = active ? 0.12f * std::cos(u - cycle) : 0.0f;
         face.tone = juce::jlimit(0.0f, 1.0f,
-            0.46f + 0.28f * std::sin(u * 0.5f - 0.8f) + 0.20f * face.depth);
+            0.45f + 0.25f * std::sin(u * 0.5f - 0.8f)
+                  + 0.22f * face.depth + movingLight);
     }
     std::sort(faces.begin(), faces.end(), [] (const Face& a, const Face& b)
     {
@@ -77,40 +87,10 @@ void paintMobiusGeometry(juce::Graphics& graphics, const juce::Rectangle<float> 
     }
 }
 
-juce::Point<float> mobiusCentrePoint(const juce::Rectangle<float> bounds,
-                                     const float phase)
-{
-    const auto u = phase * juce::MathConstants<float>::twoPi;
-    const auto scale = juce::jmin(bounds.getWidth() * 0.37f, bounds.getHeight() * 0.54f);
-    return { bounds.getCentreX() + std::cos(u) * scale,
-             bounds.getCentreY() + std::sin(u) * 0.48f * scale };
-}
-
 void drawMobius(juce::Graphics& graphics, const juce::Rectangle<float> bounds,
                 const float phase, const bool active)
 {
-    // Supersample the static emblem once per size, not once per frame.
-    static juce::Image emblem;
-    const auto width = juce::jmax(1, juce::roundToInt(bounds.getWidth() * 3.0f));
-    const auto height = juce::jmax(1, juce::roundToInt(bounds.getHeight() * 3.0f));
-    if (emblem.getWidth() != width || emblem.getHeight() != height)
-    {
-        emblem = juce::Image(juce::Image::ARGB, width, height, true);
-        juce::Graphics layer(emblem);
-        paintMobiusGeometry(layer, emblem.getBounds().toFloat());
-    }
-    graphics.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
-    graphics.drawImage(emblem, bounds);
-    if (active)
-    {
-        const auto point = mobiusCentrePoint(bounds, phase);
-        graphics.setColour(juce::Colour(LoopSurgeonTheme::accent).withAlpha(0.16f));
-        graphics.fillEllipse(point.x - 18.0f, point.y - 18.0f, 36.0f, 36.0f);
-        graphics.setColour(juce::Colour(LoopSurgeonTheme::text).withAlpha(0.38f));
-        graphics.fillEllipse(point.x - 8.0f, point.y - 8.0f, 16.0f, 16.0f);
-        graphics.setColour(juce::Colour(LoopSurgeonTheme::text));
-        graphics.fillEllipse(point.x - 3.0f, point.y - 3.0f, 6.0f, 6.0f);
-    }
+    paintMobiusGeometry(graphics, bounds, phase, active);
 }
 }
 
@@ -468,7 +448,11 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
 void LoopWaveformView::mouseDown(const juce::MouseEvent& event)
 {
     if (resultMode)
+    {
+        if (onPreviewToggle)
+            onPreviewToggle();
         return;
+    }
     const auto bounds = getApertureBounds().reduced(10.0f, 8.0f);
     const auto position = juce::jlimit(0.0f, 1.0f,
         (event.position.x - bounds.getX()) / juce::jmax(1.0f, bounds.getWidth()));
@@ -884,9 +868,13 @@ void GenerateArtworkButton::paintButton(juce::Graphics& graphics, const bool hig
     const auto* skin = dynamic_cast<const LoopSurgeonLookAndFeel*>(&getLookAndFeel());
     if (skin == nullptr) return;
     const auto bounds = getLocalBounds().toFloat();
-    drawMobius(graphics, bounds.reduced(42.0f, 8.0f).withHeight(210.0f),
+    graphics.setColour(juce::Colour(LoopSurgeonTheme::inset));
+    graphics.fillRoundedRectangle(bounds.reduced(1.0f), 10.0f);
+    graphics.setColour(juce::Colour(LoopSurgeonTheme::line));
+    graphics.drawRoundedRectangle(bounds.reduced(1.0f), 10.0f, 1.0f);
+    drawMobius(graphics, bounds.reduced(72.0f, 8.0f).withHeight(bounds.getHeight() - 68.0f),
                animationPhase, working);
-    const auto action = bounds.withY(bounds.getBottom() - 56.0f).withHeight(52.0f).reduced(1.0f);
+    const auto action = bounds.withY(bounds.getBottom() - 58.0f).withHeight(54.0f).reduced(5.0f, 1.0f);
     graphics.setColour(juce::Colour(sulfur).withMultipliedBrightness(down ? 0.82f : highlighted ? 1.08f : 1.0f));
     graphics.fillRoundedRectangle(action, 6.0f);
     graphics.setColour(juce::Colour(black));

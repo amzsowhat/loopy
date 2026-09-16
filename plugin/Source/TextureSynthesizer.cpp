@@ -15,6 +15,7 @@ namespace
 struct SourceRegion
 {
     int start = 0;
+    float level = 0.0f;
     float activityPenalty = 0.0f;
     float stationarityPenalty = 0.0f;
     float textureMotionPenalty = 0.0f;
@@ -253,18 +254,74 @@ float alignedOverlapPenalty(const juce::AudioBuffer<float>& audio,
            + 0.10f * juce::jmin(2.0f, slopePenalty);
 }
 
-float styleGrainSeconds(const TextureStructure structure, const float variation)
+float sourceTransientness(const juce::AudioBuffer<float>& source, const double sampleRate)
 {
+    const auto window = juce::jlimit(16, source.getNumSamples(),
+                                     juce::roundToInt(sampleRate * 0.04));
+    const auto hop = juce::jmax(8, window / 2);
+    std::vector<float> levels;
+    for (int start = 0; start + window <= source.getNumSamples(); start += hop)
+        levels.push_back(regionRms(source, start, window));
+    if (levels.size() < 4u)
+        return 0.0f;
+
+    const auto maximum = *std::max_element(levels.begin(), levels.end());
+    std::vector<float> active;
+    active.reserve(levels.size());
+    for (const auto level : levels)
+        if (level >= maximum * 0.035f)
+            active.push_back(level);
+    if (active.size() < 3u)
+        return 1.0f;
+
+    const auto low = juce::jmax(1.0e-7f, percentile(active, 0.20f));
+    const auto high = juce::jmax(low, percentile(active, 0.85f));
+    const auto dynamicDb = 20.0f * std::log10(high / low);
+    const auto activeDuty = static_cast<float>(active.size())
+                            / static_cast<float>(levels.size());
+    return juce::jlimit(0.0f, 1.0f,
+        (dynamicDb - 5.0f) / 18.0f + 0.42f * (1.0f - activeDuty));
+}
+
+float textureReferenceLevel(const juce::AudioBuffer<float>& source,
+                            const double sampleRate)
+{
+    const auto window = juce::jlimit(16, source.getNumSamples(),
+                                     juce::roundToInt(sampleRate * 0.05));
+    const auto hop = juce::jmax(8, window / 2);
+    std::vector<float> levels;
+    for (int start = 0; start + window <= source.getNumSamples(); start += hop)
+        levels.push_back(regionRms(source, start, window));
+    if (levels.empty())
+        return regionRms(source, 0, source.getNumSamples());
+    const auto maximum = *std::max_element(levels.begin(), levels.end());
+    std::vector<float> active;
+    for (const auto level : levels)
+        if (level >= maximum * 0.04f)
+            active.push_back(level);
+    return juce::jmax(1.0e-7f,
+        active.empty() ? median(levels) : percentile(active, 0.55f));
+}
+
+float styleGrainSeconds(const TextureStructure structure, const float variation,
+                        const float transientness)
+{
+    auto continuousSeconds = 0.95f - 0.42f * variation;
     switch (structure)
     {
         case TextureStructure::automatic:
-            return 0.95f - 0.42f * variation;
+            break;
         case TextureStructure::continuous:
-            return 0.74f - 0.30f * variation;
+            continuousSeconds = 0.74f - 0.30f * variation;
+            break;
         case TextureStructure::particles:
-            return 0.46f - 0.20f * variation;
+            continuousSeconds = 0.46f - 0.20f * variation;
+            break;
     }
-    return 0.45f;
+    // Short enough to lose the source event envelope, but long enough to retain
+    // pitch/noise continuity once adjacent grains are overlap-matched.
+    const auto microTextureSeconds = 0.18f + 0.12f * (1.0f - variation);
+    return juce::jmap(transientness, continuousSeconds, microTextureSeconds);
 }
 
 void balanceChannelEnergy(juce::AudioBuffer<float>& audio, const float amount)
@@ -415,15 +472,17 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     const auto variation = juce::jlimit(0.0f, 1.0f, settings.variation);
     const auto envelopeAmount = stability;
     auto conditioned = removeMacroEnvelope(source, sampleRate, envelopeAmount);
+    const auto transientness = sourceTransientness(source, sampleRate);
 
     const auto maximumGrain = juce::jmax(32,
         juce::jmin(conditioned.getNumSamples(), juce::jmax(32, targetSamples / 2)));
     const auto requestedGrain = juce::roundToInt(
-        sampleRate * styleGrainSeconds(settings.structure, variation));
+        sampleRate * styleGrainSeconds(settings.structure, variation, transientness));
     const auto grainSamples = juce::jlimit(32, maximumGrain, requestedGrain);
-    const auto requestedOverlap = juce::jlimit(8, grainSamples / 3,
-        juce::roundToInt(static_cast<float>(grainSamples)
-                         * (0.12f + 0.10f * stability)));
+    const auto overlapRatio = juce::jlimit(
+        0.24f, 0.74f, 0.24f + 0.14f * stability + 0.36f * transientness);
+    const auto requestedOverlap = juce::jlimit(8, grainSamples * 3 / 4,
+        juce::roundToInt(static_cast<float>(grainSamples) * overlapRatio));
     const auto requestedAdvance = juce::jmax(8, grainSamples - requestedOverlap);
     const auto segmentCount = juce::jmax(2,
         (targetSamples + requestedAdvance - 1) / requestedAdvance);
@@ -435,8 +494,7 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     const auto maximumStart = conditioned.getNumSamples() - grainSamples;
     const auto sourceStep = juce::jmax(
         1, juce::jmax(grainSamples / 12, maximumStart / 383));
-    const auto referenceRms = juce::jmax(1.0e-7f,
-        regionRms(conditioned, 0, conditioned.getNumSamples()));
+    const auto referenceRms = textureReferenceLevel(conditioned, sampleRate);
 
     std::vector<SourceRegion> regions;
     for (int start = 0;; start = juce::jmin(maximumStart, start + sourceStep))
@@ -449,7 +507,7 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
                                   / juce::jmax(1.0e-7f, 0.5f * (firstRms + secondRms));
         const auto activity = std::abs(std::log(juce::jmax(1.0e-7f, localRms)
                                                 / referenceRms));
-        regions.push_back({ start, activity, stationarity,
+        regions.push_back({ start, localRms, activity, stationarity,
                             textureMotionPenalty(conditioned, start, grainSamples) });
         if (start == maximumStart)
             break;
@@ -498,7 +556,12 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
                 / regionSpan;
             const auto unstableExcess = juce::jmax(
                 0.0f, region.textureMotionPenalty - stableMotionThreshold);
-            const auto basePenalty = 0.20f * region.activityPenalty
+            const auto quietPenalty = region.level < referenceRms * 0.30f
+                ? std::log(referenceRms * 0.30f
+                           / juce::jmax(1.0e-7f, region.level))
+                : 0.0f;
+            const auto basePenalty = 0.34f * region.activityPenalty
+                                     + 1.8f * quietPenalty
                                      + (0.55f + 1.25f * stability)
                                            * region.textureMotionPenalty
                                      + 3.2f * stability * unstableExcess
@@ -518,7 +581,8 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
             const auto jitter = (randomUnit(randomState) - 0.5f)
                                 * variation * 0.10f;
             const auto penalty = basePenalty
-                + (0.82f + 0.24f * transform) * continuityPenalty
+                + (1.55f + 0.65f * transientness + 0.30f * transform)
+                      * continuityPenalty
                 + 0.88f * closurePenalty
                 + (stepIndex == 0 ? 0.0f
                                   : (1.0f - transform) * 0.42f * sourceDistance)
