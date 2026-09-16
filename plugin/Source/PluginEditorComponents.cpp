@@ -35,7 +35,6 @@ bool isSettled(const float current, const float target) noexcept
     return std::abs(current - target) < transitionEpsilon;
 }
 
-// A static projection of the mathematical Mobius surface. No bitmap or animation.
 void paintMobiusGeometry(juce::Graphics& graphics, const juce::Rectangle<float> bounds)
 {
     struct Vertex { juce::Point<float> point; float depth; };
@@ -63,7 +62,8 @@ void paintMobiusGeometry(juce::Graphics& graphics, const juce::Rectangle<float> 
         face.path.lineTo(q.point); face.path.lineTo(r.point); face.path.lineTo(s.point);
         face.path.closeSubPath();
         face.depth = (p.depth + q.depth + r.depth + s.depth) * 0.25f;
-        face.tone = 0.5f + 0.5f * std::sin(u * 0.5f - 0.8f);
+        face.tone = juce::jlimit(0.0f, 1.0f,
+            0.46f + 0.28f * std::sin(u * 0.5f - 0.8f) + 0.20f * face.depth);
     }
     std::sort(faces.begin(), faces.end(), [] (const Face& a, const Face& b)
     {
@@ -71,14 +71,23 @@ void paintMobiusGeometry(juce::Graphics& graphics, const juce::Rectangle<float> 
     });
     for (const auto& face : faces)
     {
-        graphics.setColour(juce::Colour(0xff6f5546).interpolatedWith(
+        graphics.setColour(juce::Colour(0xff503b32).interpolatedWith(
             juce::Colour(LoopSurgeonTheme::accent), face.tone));
         graphics.fillPath(face.path);
-        graphics.strokePath(face.path, juce::PathStrokeType(1.0f));
     }
 }
 
-void drawMobius(juce::Graphics& graphics, const juce::Rectangle<float> bounds)
+juce::Point<float> mobiusCentrePoint(const juce::Rectangle<float> bounds,
+                                     const float phase)
+{
+    const auto u = phase * juce::MathConstants<float>::twoPi;
+    const auto scale = juce::jmin(bounds.getWidth() * 0.37f, bounds.getHeight() * 0.54f);
+    return { bounds.getCentreX() + std::cos(u) * scale,
+             bounds.getCentreY() + std::sin(u) * 0.48f * scale };
+}
+
+void drawMobius(juce::Graphics& graphics, const juce::Rectangle<float> bounds,
+                const float phase, const bool active)
 {
     // Supersample the static emblem once per size, not once per frame.
     static juce::Image emblem;
@@ -92,6 +101,16 @@ void drawMobius(juce::Graphics& graphics, const juce::Rectangle<float> bounds)
     }
     graphics.setImageResamplingQuality(juce::Graphics::highResamplingQuality);
     graphics.drawImage(emblem, bounds);
+    if (active)
+    {
+        const auto point = mobiusCentrePoint(bounds, phase);
+        graphics.setColour(juce::Colour(LoopSurgeonTheme::accent).withAlpha(0.16f));
+        graphics.fillEllipse(point.x - 18.0f, point.y - 18.0f, 36.0f, 36.0f);
+        graphics.setColour(juce::Colour(LoopSurgeonTheme::text).withAlpha(0.38f));
+        graphics.fillEllipse(point.x - 8.0f, point.y - 8.0f, 16.0f, 16.0f);
+        graphics.setColour(juce::Colour(LoopSurgeonTheme::text));
+        graphics.fillEllipse(point.x - 3.0f, point.y - 3.0f, 6.0f, 6.0f);
+    }
 }
 }
 
@@ -321,6 +340,15 @@ void LoopWaveformView::setDurationSeconds(const double seconds)
     repaint();
 }
 
+void LoopWaveformView::setPlayhead(const float proportion) noexcept
+{
+    const auto next = proportion < 0.0f ? -1.0f : juce::jlimit(0.0f, 1.0f, proportion);
+    if (std::abs(playhead - next) < 0.0005f)
+        return;
+    playhead = next;
+    repaint();
+}
+
 bool LoopWaveformView::isEditingRotation() const noexcept
 {
     return dragTarget == DragTarget::rotation;
@@ -378,21 +406,25 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
         graphics.setColour(juce::Colour(ivory).withAlpha(0.88f));
         if (const auto* skin = dynamic_cast<const LoopSurgeonLookAndFeel*>(&getLookAndFeel()))
             graphics.setFont(skin->getHandFont(19.0f));
-        graphics.drawText("Drop audio here", getLocalBounds().reduced(36),
+        graphics.drawText(resultMode ? "Generate to see the result" : "Drop audio here",
+                          getLocalBounds().reduced(36),
                           juce::Justification::centred);
         return;
     }
 
-    const auto sourceX = bounds.getX() + bounds.getWidth() * sourceIn;
-    const auto sourceRight = bounds.getX() + bounds.getWidth() * sourceOut;
-    graphics.setColour(juce::Colour(mint).withAlpha(0.15f));
-    graphics.fillRect(juce::Rectangle<float>(sourceX, bounds.getY(),
-                                              sourceRight - sourceX,
-                                              bounds.getHeight()));
-    graphics.setColour(juce::Colour(black).withAlpha(0.46f));
-    graphics.fillRect(bounds.withWidth(juce::jmax(0.0f, sourceX - bounds.getX())));
-    graphics.fillRect(bounds.withX(sourceRight)
-                          .withWidth(juce::jmax(0.0f, bounds.getRight() - sourceRight)));
+    if (!resultMode)
+    {
+        const auto sourceX = bounds.getX() + bounds.getWidth() * sourceIn;
+        const auto sourceRight = bounds.getX() + bounds.getWidth() * sourceOut;
+        graphics.setColour(juce::Colour(mint).withAlpha(0.15f));
+        graphics.fillRect(juce::Rectangle<float>(sourceX, bounds.getY(),
+                                                  sourceRight - sourceX,
+                                                  bounds.getHeight()));
+        graphics.setColour(juce::Colour(black).withAlpha(0.46f));
+        graphics.fillRect(bounds.withWidth(juce::jmax(0.0f, sourceX - bounds.getX())));
+        graphics.fillRect(bounds.withX(sourceRight)
+                              .withWidth(juce::jmax(0.0f, bounds.getRight() - sourceRight)));
+    }
 
     juce::Path waveform;
     const auto centre = bounds.getCentreY();
@@ -405,7 +437,7 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
         waveform.startNewSubPath(x, centre - amplitude);
         waveform.lineTo(x, centre + amplitude);
     }
-    graphics.setColour(juce::Colour(sulfur).withAlpha(0.96f));
+    graphics.setColour(juce::Colour(resultMode ? mint : sulfur).withAlpha(0.96f));
     graphics.strokePath(waveform, juce::PathStrokeType(1.35f));
 
     const auto drawMarker = [&] (const float proportion, const juce::Colour colour)
@@ -417,14 +449,26 @@ void LoopWaveformView::paint(juce::Graphics& graphics)
 
     };
 
-    drawMarker(sourceIn, juce::Colour(mint));
-    drawMarker(sourceOut, juce::Colour(mint));
-    if (rotation >= 0.0f)
-        drawMarker(rotation, juce::Colour(coral));
+    if (!resultMode)
+    {
+        drawMarker(sourceIn, juce::Colour(mint));
+        drawMarker(sourceOut, juce::Colour(mint));
+        if (rotation >= 0.0f)
+            drawMarker(rotation, juce::Colour(coral));
+    }
+    if (playhead >= 0.0f)
+    {
+        const auto x = bounds.getX() + bounds.getWidth() * playhead;
+        graphics.setColour(juce::Colour(ivory).withAlpha(0.92f));
+        graphics.drawLine(x, bounds.getY(), x, bounds.getBottom(), 1.5f);
+        graphics.fillEllipse(x - 3.0f, bounds.getY() + 2.0f, 6.0f, 6.0f);
+    }
 }
 
 void LoopWaveformView::mouseDown(const juce::MouseEvent& event)
 {
+    if (resultMode)
+        return;
     const auto bounds = getApertureBounds().reduced(10.0f, 8.0f);
     const auto position = juce::jlimit(0.0f, 1.0f,
         (event.position.x - bounds.getX()) / juce::jmax(1.0f, bounds.getWidth()));
@@ -454,6 +498,8 @@ void LoopWaveformView::mouseDown(const juce::MouseEvent& event)
 
 void LoopWaveformView::mouseDrag(const juce::MouseEvent& event)
 {
+    if (resultMode)
+        return;
     const auto bounds = getApertureBounds().reduced(10.0f, 8.0f);
     auto position = juce::jlimit(0.0f, 1.0f,
         (event.position.x - bounds.getX()) / juce::jmax(1.0f, bounds.getWidth()));
@@ -490,6 +536,8 @@ void LoopWaveformView::mouseDrag(const juce::MouseEvent& event)
 
 void LoopWaveformView::mouseUp(const juce::MouseEvent&)
 {
+    if (resultMode)
+        return;
     const auto committedRotation = isEditingRotation();
     dragTarget = DragTarget::none;
     hideMarkerPopup();
@@ -499,6 +547,8 @@ void LoopWaveformView::mouseUp(const juce::MouseEvent&)
 
 void LoopWaveformView::mouseDoubleClick(const juce::MouseEvent&)
 {
+    if (resultMode)
+        return;
     setSourceRange(0.0f, 1.0f);
     hideMarkerPopup();
 }
@@ -769,6 +819,7 @@ juce::String IllustratedRotaryControl::getFixedValueText()
         return juce::String(getValue(), 1) + " ms";
     if (getName() == "LOOP START" || getName() == "STABILITY"
         || getName() == "CRUSH" || getName() == "TRANSFORM"
+        || getName() == "VARIATION"
         || getName() == "AUDITION")
         return juce::String(getValue() * 100.0, 1) + "%";
     return getTextFromValue(getValue());
@@ -801,6 +852,22 @@ void IllustratedRotaryControl::paint(juce::Graphics& graphics)
     graphics.setFont(skin->getHandFont(23.0f));
     graphics.drawText(getFixedValueText(), bounds.withY(116.0f).withHeight(30.0f),
                       juce::Justification::centred);
+    juce::String guidance;
+    if (getName() == "STABILITY")
+        guidance = "SOURCE MOTION   -   STEADY TEXTURE";
+    else if (getName() == "VARIATION")
+        guidance = "FAMILIAR   -   MORE RECOMBINED";
+    else if (getName() == "SEAM")
+        guidance = "TIGHT   -   SMOOTHER";
+    else if (getName() == "LOOP START")
+        guidance = "EARLIER   -   LATER";
+    if (guidance.isNotEmpty())
+    {
+        graphics.setColour(juce::Colour(dimIvory).withAlpha(alpha * 0.82f));
+        graphics.setFont(skin->getHandFont(9.5f));
+        graphics.drawFittedText(guidance, bounds.withY(145.0f).withHeight(18.0f).toNearestInt(),
+                                juce::Justification::centred, 1);
+    }
 }
 
 juce::String IllustratedRotaryControl::getTextFromValue(const double value) const
@@ -817,7 +884,8 @@ void GenerateArtworkButton::paintButton(juce::Graphics& graphics, const bool hig
     const auto* skin = dynamic_cast<const LoopSurgeonLookAndFeel*>(&getLookAndFeel());
     if (skin == nullptr) return;
     const auto bounds = getLocalBounds().toFloat();
-    drawMobius(graphics, bounds.reduced(28.0f, 0.0f).withHeight(230.0f));
+    drawMobius(graphics, bounds.reduced(42.0f, 8.0f).withHeight(210.0f),
+               animationPhase, working);
     const auto action = bounds.withY(bounds.getBottom() - 56.0f).withHeight(52.0f).reduced(1.0f);
     graphics.setColour(juce::Colour(sulfur).withMultipliedBrightness(down ? 0.82f : highlighted ? 1.08f : 1.0f));
     graphics.fillRoundedRectangle(action, 6.0f);
@@ -825,6 +893,26 @@ void GenerateArtworkButton::paintButton(juce::Graphics& graphics, const bool hig
     graphics.setFont(skin->getDisplayFont(18.0f));
     graphics.drawText(working ? "GENERATING..." : getButtonText().toUpperCase(),
                       action.translated(0.0f, down ? 1.0f : 0.0f), juce::Justification::centred);
+}
+
+void GenerateArtworkButton::setWorking(const bool next)
+{
+    if (working == next)
+        return;
+    working = next;
+    if (working)
+        startTimerHz(30);
+    else
+        stopTimer();
+    repaint();
+}
+
+void GenerateArtworkButton::timerCallback()
+{
+    animationPhase += 0.012f;
+    if (animationPhase >= 1.0f)
+        animationPhase -= 1.0f;
+    repaint();
 }
 
 void ArtworkChoiceButton::ensureAnimationRunning()

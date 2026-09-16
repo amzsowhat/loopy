@@ -39,6 +39,10 @@ public:
     [[nodiscard]] LoopEngine::PreviewMode getPreviewMode() const noexcept { return loopEngine.getPreviewMode(); }
     void setPreviewPlaying(bool shouldPlay) noexcept { loopEngine.setPreviewPlaying(shouldPlay); }
     [[nodiscard]] bool isPreviewPlaying() const noexcept { return loopEngine.isPreviewPlaying(); }
+    [[nodiscard]] float getPreviewProgress() const noexcept
+    {
+        return loopEngine.getPreviewProgress();
+    }
     juce::String importAudioFile(const juce::File& file);
     juce::String exportLoopFile(const juce::File& file) const;
     void clearLoop() { loopEngine.clear(); }
@@ -66,6 +70,10 @@ public:
     [[nodiscard]] juce::String getCandidateDescription(int index) const { return loopEngine.getCandidateDescription(index); }
     void selectCandidate(int index) { loopEngine.selectCandidate(index); }
     [[nodiscard]] std::vector<float> getWaveformPreview() const { return loopEngine.getWaveformPreview(); }
+    [[nodiscard]] std::vector<float> getRenderedWaveformPreview() const
+    {
+        return loopEngine.getRenderedWaveformPreview();
+    }
     [[nodiscard]] float getRotationProportion() const noexcept
     {
         return loopEngine.getRotationProportion();

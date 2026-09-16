@@ -52,6 +52,12 @@ public:
     void setRotation(float proportion);
     void setSourceRange(float newStart, float newEnd);
     void setDurationSeconds(double seconds);
+    void setResultMode(bool shouldDisplayResult) noexcept
+    {
+        resultMode = shouldDisplayResult;
+        repaint();
+    }
+    void setPlayhead(float proportion) noexcept;
     [[nodiscard]] float getSourceIn() const noexcept { return sourceIn; }
     [[nodiscard]] float getSourceOut() const noexcept { return sourceOut; }
     [[nodiscard]] float getRotation() const noexcept { return rotation; }
@@ -87,6 +93,8 @@ private:
     float dragStartIn = 0.0f;
     float dragStartOut = 1.0f;
     double durationSeconds = 0.0;
+    float playhead = -1.0f;
+    bool resultMode = false;
     DragTarget dragTarget = DragTarget::none;
     juce::Label markerPopup;
 };
@@ -175,15 +183,18 @@ private:
     double lastFrameMs = 0.0;
 };
 
-class GenerateArtworkButton final : public juce::TextButton
+class GenerateArtworkButton final : public juce::TextButton,
+                                    private juce::Timer
 {
 public:
     explicit GenerateArtworkButton(const juce::String& text) : juce::TextButton(text) {}
     void paintButton(juce::Graphics&, bool highlighted, bool down) override;
-    void setWorking(bool next) { if (working != next) { working = next; repaint(); } }
+    void setWorking(bool next);
 
 private:
+    void timerCallback() override;
     bool working = false;
+    float animationPhase = 0.0f;
 };
 
 class ArtworkChoiceButton final : public juce::TextButton,
@@ -281,12 +292,13 @@ private:
     juce::Label sourceLabel;
     juce::Label statusLabel;
     LoopWaveformView waveformView;
+    LoopWaveformView resultWaveformView;
     SignalAnalysisView signalAnalysisView;
     juce::ComboBox candidateBox;
     juce::Label rangeLabel;
     GenerateArtworkButton analyzeRangeButton { "Generate" };
     juce::TextButton resetRangeButton { "FULL SOURCE" };
-    juce::TextButton regenerateButton { "NEW VARIATION" };
+    juce::TextButton regenerateButton { "MAKE ANOTHER" };
     TailActionButton previewTransportButton { "PREVIEW" };
     juce::TextButton originalPreviewButton { "SOURCE" };
     juce::TextButton loopPreviewButton { "RESULT" };
@@ -352,6 +364,7 @@ private:
     uint64_t displayedSourceRevision = 0;
     bool displayedResultReady = false;
     bool displayedSourceReady = false;
+    bool autoPreviewAfterGeneration = false;
     int displayedRepairCandidate = 0;
 
     juce::Rectangle<int> primaryActionArea;

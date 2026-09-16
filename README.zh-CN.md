@@ -69,18 +69,18 @@ Crush 和 Character 处理。
 | --- | --- |
 | Final Length | 使用完整选区，或输入任意精确输出时长 |
 | Seam | 设置循环边界的最大交叉淡化长度 |
-| Audition | 混合监听源素材与生成结果 |
-| Loop Start / Join Position | 调整循环边界位置 |
-| Options A-C | 选择不同的分析候选周期 |
+| Loop Start | 调整修复后的循环边界位置 |
+| Source / Result | 对比选定源素材与生成结果波形 |
 
 | TEXTURE | 作用 |
 | --- | --- |
 | Length | 设置精确输出时长 |
-| Stability | 减少源素材的宏观包络运动 |
-| Crush | 减少较短尺度上反复出现的振幅起伏 |
-| Transform | 控制结果偏离原始时间线的程度 |
-| Flow / Drift / Fracture | 选择素材遍历的尺度与连续性 |
-| Patina / Bloom / Fray | 应用可选的后级声音性格处理 |
+| Stability | 优先提取稳定纹理并抑制 Attack / Release 运动 |
+| Variation | 控制结果偏离原始时间线的程度 |
+| Make Another | 自动分析并生成另一个结果 |
+
+颗粒尺度、局部包络修整、遍历方式和源区域选择均由算法自动完成。主界面只保留试听时
+仍有明确价值的操作。
 
 ## 安装
 

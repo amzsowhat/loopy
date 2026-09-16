@@ -272,6 +272,40 @@ int main()
                          < localLevelVariation(uncrushed.audio, 320, 80),
                      "Dynamic Crush should reduce linked local-envelope variation");
 
+    juce::AudioBuffer<float> adsrProbe(2, 32000);
+    for (int sample = 0; sample < adsrProbe.getNumSamples(); ++sample)
+    {
+        const auto time = static_cast<float>(sample) / static_cast<float>(sampleRate);
+        const auto envelope = sample < 4000
+            ? 0.02f + 0.98f * static_cast<float>(sample) / 4000.0f
+            : sample < 24000
+                ? 1.0f
+                : 0.02f + 0.98f * static_cast<float>(32000 - sample) / 8000.0f;
+        const auto texture = 0.52f * std::sin(
+            juce::MathConstants<float>::twoPi * 137.0f * time)
+            + 0.21f * std::sin(juce::MathConstants<float>::twoPi * 293.0f * time);
+        adsrProbe.setSample(0, sample, envelope * texture);
+        adsrProbe.setSample(1, sample, envelope * 0.93f * texture);
+    }
+    auto extractionSettings = textureSettings;
+    extractionSettings.flatten = 1.0f;
+    extractionSettings.dynamicsCrush = 0.0f;
+    extractionSettings.sourceMatch = 0.8f;
+    extractionSettings.character = TextureCharacter::off;
+    const auto extractedTexture = TextureSynthesizer::synthesize(
+        adsrProbe, sampleRate, extractionSettings);
+    auto steadySelections = 0;
+    for (const auto start : extractedTexture.analysisFrameStarts)
+        if (start >= 3200 && start <= 23200)
+            ++steadySelections;
+    passed &= expect(!extractedTexture.analysisFrameStarts.empty()
+                         && steadySelections * 4
+                                >= static_cast<int>(extractedTexture.analysisFrameStarts.size()) * 3,
+                     "Texture extraction should prefer sustain over attack and release regions");
+    passed &= expect(localLevelVariation(extractedTexture.audio, 320, 80)
+                         < 0.55 * localLevelVariation(adsrProbe, 320, 80),
+                     "Texture extraction should strongly reduce a source ADSR envelope");
+
     LoopEngine textureEngine;
     textureEngine.prepare(sampleRate, 64, 2);
     textureEngine.setGenerationMode(LoopEngine::GenerationMode::textureLoop);

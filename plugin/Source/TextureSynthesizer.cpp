@@ -4,6 +4,7 @@
 #include "TextureCharacter.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <limits>
 #include <numeric>
@@ -16,6 +17,7 @@ struct SourceRegion
     int start = 0;
     float activityPenalty = 0.0f;
     float stationarityPenalty = 0.0f;
+    float textureMotionPenalty = 0.0f;
     int lastUsedStep = std::numeric_limits<int>::min() / 2;
 };
 
@@ -78,6 +80,54 @@ float median(std::vector<float> values)
     return *middle;
 }
 
+float percentile(std::vector<float> values, const float proportion)
+{
+    if (values.empty())
+        return 0.0f;
+    const auto index = static_cast<size_t>(juce::jlimit(
+        0, static_cast<int>(values.size()) - 1,
+        juce::roundToInt(proportion * static_cast<float>(values.size() - 1u))));
+    std::nth_element(values.begin(), values.begin() + static_cast<std::ptrdiff_t>(index),
+                     values.end());
+    return values[index];
+}
+
+float textureMotionPenalty(const juce::AudioBuffer<float>& audio,
+                           const int start, const int length)
+{
+    constexpr int slices = 12;
+    std::array<float, slices> logLevels {};
+    for (int slice = 0; slice < slices; ++slice)
+    {
+        const auto first = start + slice * length / slices;
+        const auto last = start + (slice + 1) * length / slices;
+        logLevels[static_cast<size_t>(slice)] = std::log(
+            juce::jmax(1.0e-7f, regionRms(audio, first, juce::jmax(1, last - first))));
+    }
+
+    const auto [minimum, maximum] = std::minmax_element(logLevels.begin(), logLevels.end());
+    auto movement = 0.0f;
+    auto curvature = 0.0f;
+    for (int slice = 1; slice < slices; ++slice)
+        movement += std::abs(logLevels[static_cast<size_t>(slice)]
+                             - logLevels[static_cast<size_t>(slice - 1)]);
+    for (int slice = 2; slice < slices; ++slice)
+    {
+        const auto currentSlope = logLevels[static_cast<size_t>(slice)]
+                                  - logLevels[static_cast<size_t>(slice - 1)];
+        const auto previousSlope = logLevels[static_cast<size_t>(slice - 1)]
+                                   - logLevels[static_cast<size_t>(slice - 2)];
+        curvature += std::abs(currentSlope - previousSlope);
+    }
+
+    const auto range = *maximum - *minimum;
+    const auto direction = std::abs(logLevels.back() - logLevels.front());
+    return 0.38f * range
+           + 0.34f * direction
+           + 0.18f * movement / static_cast<float>(slices - 1)
+           + 0.10f * curvature / static_cast<float>(slices - 2);
+}
+
 juce::AudioBuffer<float> removeMacroEnvelope(const juce::AudioBuffer<float>& source,
                                               const double sampleRate,
                                               const float amount)
@@ -88,7 +138,7 @@ juce::AudioBuffer<float> removeMacroEnvelope(const juce::AudioBuffer<float>& sou
         return conditioned;
 
     const auto sourceSeconds = static_cast<double>(samples) / sampleRate;
-    const auto windowSeconds = juce::jlimit(0.14, 0.65, sourceSeconds * 0.22);
+    const auto windowSeconds = juce::jlimit(0.06, 0.45, sourceSeconds * 0.12);
     const auto window = juce::jlimit(32, samples,
         juce::roundToInt(sampleRate * windowSeconds));
     const auto hop = juce::jmax(16, window / 6);
@@ -110,27 +160,28 @@ juce::AudioBuffer<float> removeMacroEnvelope(const juce::AudioBuffer<float>& sou
         if (level >= maximumLevel * 0.04f)
             activeLevels.push_back(level);
     const auto target = juce::jmax(1.0e-7f,
-        activeLevels.empty() ? median(levels) : median(activeLevels));
+        activeLevels.empty() ? percentile(levels, 0.6f)
+                             : percentile(activeLevels, 0.6f));
 
     std::vector<float> gains(levels.size(), 1.0f);
     for (size_t frame = 0; frame < levels.size(); ++frame)
     {
         const auto protectedLevel = juce::jmax(levels[frame], target * 0.12f);
         const auto requested = std::pow(target / protectedLevel, amount);
-        gains[frame] = juce::jlimit(0.55f, 2.2f, requested);
+        gains[frame] = juce::jlimit(0.30f, 3.2f, requested);
     }
-    for (int pass = 0; pass < 4; ++pass)
+    for (int pass = 0; pass < 2; ++pass)
     {
         auto previous = gains.front();
         for (size_t frame = 1; frame < gains.size(); ++frame)
         {
-            gains[frame] = 0.82f * previous + 0.18f * gains[frame];
+            gains[frame] = 0.55f * previous + 0.45f * gains[frame];
             previous = gains[frame];
         }
         previous = gains.back();
         for (size_t frame = gains.size() - 1; frame-- > 0;)
         {
-            gains[frame] = 0.82f * previous + 0.18f * gains[frame];
+            gains[frame] = 0.55f * previous + 0.45f * gains[frame];
             previous = gains[frame];
         }
     }
@@ -362,7 +413,7 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
     const auto stability = juce::jlimit(0.0f, 1.0f, settings.flatten);
     const auto transform = juce::jlimit(0.0f, 1.0f, settings.sourceMatch);
     const auto variation = juce::jlimit(0.0f, 1.0f, settings.variation);
-    const auto envelopeAmount = stability * (0.30f + 0.70f * transform);
+    const auto envelopeAmount = stability;
     auto conditioned = removeMacroEnvelope(source, sampleRate, envelopeAmount);
 
     const auto maximumGrain = juce::jmax(32,
@@ -398,12 +449,19 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
                                   / juce::jmax(1.0e-7f, 0.5f * (firstRms + secondRms));
         const auto activity = std::abs(std::log(juce::jmax(1.0e-7f, localRms)
                                                 / referenceRms));
-        regions.push_back({ start, activity, stationarity });
+        regions.push_back({ start, activity, stationarity,
+                            textureMotionPenalty(conditioned, start, grainSamples) });
         if (start == maximumStart)
             break;
     }
     if (regions.empty())
         return result;
+
+    std::vector<float> motionPenalties;
+    motionPenalties.reserve(regions.size());
+    for (const auto& region : regions)
+        motionPenalties.push_back(region.textureMotionPenalty);
+    const auto stableMotionThreshold = percentile(std::move(motionPenalties), 0.35f) + 0.12f;
 
     result.audio.setSize(channels, targetSamples, false, true, false);
     std::vector<float> normalization(static_cast<size_t>(targetSamples), 0.0f);
@@ -438,8 +496,13 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
             const auto sourceDistance = static_cast<float>(juce::jmin(
                 directDistance, juce::jmax(0, maximumStart + 1 - directDistance)))
                 / regionSpan;
-            const auto basePenalty = 0.34f * region.activityPenalty
-                                     + 0.38f * stability * region.stationarityPenalty;
+            const auto unstableExcess = juce::jmax(
+                0.0f, region.textureMotionPenalty - stableMotionThreshold);
+            const auto basePenalty = 0.20f * region.activityPenalty
+                                     + (0.55f + 1.25f * stability)
+                                           * region.textureMotionPenalty
+                                     + 3.2f * stability * unstableExcess
+                                     + 0.34f * stability * region.stationarityPenalty;
             const auto continuityPenalty = stepIndex == 0 ? 0.0f
                 : alignedOverlapPenalty(conditioned, previousStart, region.start,
                                         previousAdvance, overlapFromPrevious);
@@ -535,7 +598,10 @@ TextureSynthesisResult TextureSynthesizer::synthesize(
                 result.audio.getSample(channel, sample) / normalizer);
     }
 
-    applyDynamicsCrush(result.audio, sampleRate, settings.dynamicsCrush);
+    const auto automaticEnvelopeFinish = juce::jlimit(
+        0.0f, 0.68f, (stability - 0.28f) * 0.82f);
+    applyDynamicsCrush(result.audio, sampleRate,
+                       juce::jmax(settings.dynamicsCrush, automaticEnvelopeFinish));
     TextureCharacterProcessor::apply(result.audio, sampleRate,
                                      settings.character, settings.characterAmount,
                                      settings.seed ^ 0xa53c9e1du);

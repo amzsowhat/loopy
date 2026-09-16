@@ -73,18 +73,18 @@ then wraps the overlaps through the output end; optional Crush and Character pro
 | --- | --- |
 | Final Length | Use the selection or enter any exact output duration |
 | Seam | Set the maximum boundary crossfade |
-| Audition | Blend source and generated monitoring |
-| Loop Start / Join Position | Move the loop boundary |
-| Options A-C | Choose among analysed cycle candidates |
+| Loop Start | Move the repaired loop boundary |
+| Source / Result | Compare the selected source with the generated waveform |
 
 | TEXTURE | Purpose |
 | --- | --- |
 | Length | Set the exact output duration |
-| Stability | Reduce broad source-envelope movement |
-| Crush | Reduce smaller repeated amplitude pulses |
-| Transform | Control departure from the original timeline |
-| Flow / Drift / Fracture | Choose traversal scale and continuity |
-| Patina / Bloom / Fray | Apply optional downstream character |
+| Stability | Prefer steady texture and suppress attack/release movement |
+| Variation | Control departure from the original timeline |
+| Make Another | Generate a different automatically analysed result |
+
+Grain scale, local-envelope finishing, traversal and source-region selection are automatic. The
+main interface exposes only decisions that remain useful during audition.
 
 ## Installation
 

@@ -70,6 +70,10 @@ public:
     [[nodiscard]] PreviewMode getPreviewMode() const noexcept { return previewMode.load(); }
     void setPreviewPlaying(bool shouldPlay) noexcept;
     [[nodiscard]] bool isPreviewPlaying() const noexcept { return previewPlaying.load(); }
+    [[nodiscard]] float getPreviewProgress() const noexcept
+    {
+        return previewProgress.load(std::memory_order_relaxed);
+    }
 
     void beginCapture(int startDelaySamples = 0) noexcept;
     void submitSource(juce::AudioBuffer<float> source, juce::String sourceName);
@@ -97,6 +101,7 @@ public:
     [[nodiscard]] juce::String getCandidateDescription(int index) const;
     void selectCandidate(int index);
     [[nodiscard]] std::vector<float> getWaveformPreview() const;
+    [[nodiscard]] std::vector<float> getRenderedWaveformPreview() const;
     [[nodiscard]] float getRotationProportion() const noexcept;
     [[nodiscard]] float getAnalysisRangeStartProportion() const noexcept;
     [[nodiscard]] float getAnalysisRangeEndProportion() const noexcept;
@@ -191,6 +196,7 @@ private:
     std::atomic<GenerationMode> lastUsedGenerationMode { GenerationMode::rotateRepair };
     std::atomic<bool> previewPlaying { false };
     std::atomic<bool> previewRestartRequested { false };
+    std::atomic<float> previewProgress { 0.0f };
     std::atomic<uint64_t> candidateRevision { 0 };
     std::atomic<uint64_t> sourceRevision { 0 };
     std::atomic<int> activeTextureVariant { -1 };

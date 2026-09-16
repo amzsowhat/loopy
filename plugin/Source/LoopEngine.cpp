@@ -451,6 +451,32 @@ void LoopEngine::process(juce::AudioBuffer<float>& buffer, const float wetMix) n
 
     if (hasReadLease)
         activeAudioReaders.fetch_sub(1, std::memory_order_release);
+
+    if (previewPlaying.load(std::memory_order_relaxed))
+    {
+        if (previewMode.load(std::memory_order_relaxed) == PreviewMode::original)
+        {
+            const auto start = analysisRangeStartSample.load(std::memory_order_relaxed);
+            const auto length = juce::jmax(
+                1, analysisRangeEndSample.load(std::memory_order_relaxed) - start);
+            previewProgress.store(juce::jlimit(
+                0.0f, 1.0f,
+                static_cast<float>(sourcePlaybackPosition - start)
+                    / static_cast<float>(length)),
+                std::memory_order_relaxed);
+        }
+        else
+        {
+            const auto start = effectiveCrossfadeSamples.load(std::memory_order_relaxed);
+            const auto length = juce::jmax(
+                1, capturedSampleCount.load(std::memory_order_relaxed) - start);
+            previewProgress.store(juce::jlimit(
+                0.0f, 1.0f,
+                static_cast<float>(playbackPosition - start)
+                    / static_cast<float>(length)),
+                std::memory_order_relaxed);
+        }
+    }
 }
 
 LoopEngine::State LoopEngine::getState() const noexcept
@@ -652,6 +678,27 @@ std::vector<float> LoopEngine::getWaveformPreview() const
 {
     const std::scoped_lock lock(sourceDataMutex);
     return waveformPreview;
+}
+
+std::vector<float> LoopEngine::getRenderedWaveformPreview() const
+{
+    const std::scoped_lock lock(loopDataMutex);
+    constexpr int previewBins = 640;
+    const auto samples = loopBuffer.getNumSamples();
+    if (samples <= 0 || loopBuffer.getNumChannels() <= 0)
+        return {};
+    std::vector<float> preview(static_cast<size_t>(previewBins), 0.0f);
+
+    for (int bin = 0; bin < previewBins; ++bin)
+    {
+        const auto first = bin * samples / previewBins;
+        const auto last = juce::jmax(first + 1, (bin + 1) * samples / previewBins);
+        for (int channel = 0; channel < loopBuffer.getNumChannels(); ++channel)
+            preview[static_cast<size_t>(bin)] = juce::jmax(
+                preview[static_cast<size_t>(bin)],
+                loopBuffer.getMagnitude(channel, first, last - first));
+    }
+    return preview;
 }
 
 float LoopEngine::getRotationProportion() const noexcept

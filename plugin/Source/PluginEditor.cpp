@@ -52,6 +52,10 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     addAndMakeVisible(statusLabel);
 
     addAndMakeVisible(waveformView);
+    resultWaveformView.setResultMode(true);
+    resultWaveformView.setTooltip("Generated loop waveform and playback position");
+    addAndMakeVisible(resultWaveformView);
+    resultWaveformView.setVisible(false);
     addAndMakeVisible(signalAnalysisView);
     waveformView.onSourceRangeEdited = [this]
     {
@@ -104,7 +108,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         if (processor.analyzeSourceRange(waveformView.getSourceIn(),
                                          waveformView.getSourceOut()))
         {
-            lastMessage = "Generating from the selected source range...";
+            autoPreviewAfterGeneration = true;
+            lastMessage = "Extracting texture from the selected source range...";
         }
         else
         {
@@ -148,12 +153,14 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         processor.setPreviewMode(LoopEngine::PreviewMode::original);
         processor.setPreviewPlaying(true);
         lastMessage = "Auditioning source selection";
+        repaint();
     };
     loopPreviewButton.onClick = [this]
     {
         processor.setPreviewMode(LoopEngine::PreviewMode::loop);
         processor.setPreviewPlaying(true);
         lastMessage = "Auditioning generated result";
+        repaint();
     };
     loopPreviewButton.setToggleState(true, juce::dontSendNotification);
     originalPreviewButton.setComponentID("artChip");
@@ -180,7 +187,10 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     {
         if (processor.regenerateTexture(waveformView.getSourceIn(),
                                         waveformView.getSourceOut()))
-            lastMessage = "Generating two new variations...";
+        {
+            autoPreviewAfterGeneration = true;
+            lastMessage = "Creating another result...";
+        }
         else
             lastMessage = "Load a source before creating a new variation";
     };
@@ -233,7 +243,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     configureSlider(repairDurationSlider, repairDurationLabel, "LENGTH");
     configureSlider(flattenSlider, flattenLabel, "STABILITY");
     configureSlider(dynamicsCrushSlider, dynamicsCrushLabel, "CRUSH");
-    configureSlider(sourceMatchSlider, sourceMatchLabel, "TRANSFORM");
+    configureSlider(sourceMatchSlider, sourceMatchLabel, "VARIATION");
     configureSlider(repairLoopStartSlider, repairLoopStartLabel, "LOOP START");
     configureSlider(characterAmountSlider, characterAmountLabel, "EXTRA MIX");
     durationSlider.setMechanism(IllustratedRotaryControl::Mechanism::length);
@@ -279,7 +289,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     dynamicsCrushSlider.setTooltip(
         "Flattens smaller local ADSR rises and dips after the texture is built; 0% preserves the current result exactly");
     sourceMatchSlider.setTooltip(
-        "Transformation depth: increases non-linear source traversal while retaining the selected material's waveform identity");
+        "How far the result may move away from the original timeline: low stays familiar, high recombines more");
     repairLoopStartSlider.setTooltip(
         "Coarse LOOP boundary inside Source In/Out; Join Position below adjusts the same boundary");
     repairLoopStartSlider.onValueChange = [this]
@@ -336,16 +346,16 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         parameters, "generationMode", generationModeBox);
 
     rotateModeButton.setComponentID("artHeader");
-    rotateModeButton.setButtonText("LOOP");
-    rotateModeButton.setTooltip("LOOP: automate selection, boundary joining and exact-length loop delivery");
+    rotateModeButton.setButtonText("REPAIR LOOP");
+    rotateModeButton.setTooltip("Repair material that is already close to a usable loop");
     rotateModeButton.onClick = [this]
     {
         generationModeBox.setSelectedItemIndex(0, juce::sendNotificationSync);
     };
     addAndMakeVisible(rotateModeButton);
     textureModeButton.setComponentID("artHeader");
-    textureModeButton.setButtonText("TEXTURE");
-    textureModeButton.setTooltip("TEXTURE: construct an evolving loop by traversing compatible source regions");
+    textureModeButton.setButtonText("EXTRACT TEXTURE");
+    textureModeButton.setTooltip("Extract stable texture and turn it into a continuous loop");
     textureModeButton.onClick = [this]
     {
         generationModeBox.setSelectedItemIndex(1, juce::sendNotificationSync);
@@ -455,8 +465,8 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     repairDurationSlider.setVisible(directModeSelected);
     flattenLabel.setVisible(!directModeSelected);
     flattenSlider.setVisible(!directModeSelected);
-    dynamicsCrushLabel.setVisible(!directModeSelected);
-    dynamicsCrushSlider.setVisible(!directModeSelected);
+    dynamicsCrushLabel.setVisible(false);
+    dynamicsCrushSlider.setVisible(false);
     sourceMatchLabel.setVisible(!directModeSelected);
     sourceMatchSlider.setVisible(!directModeSelected);
     repairLoopStartLabel.setVisible(false);
@@ -466,9 +476,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
     characterLabel.setVisible(!directModeSelected);
     characterBox.setVisible(!directModeSelected);
     characterAmountLabel.setVisible(!directModeSelected);
-    characterAmountSlider.setVisible(!directModeSelected);
-    characterAmountSlider.setEnabled(!directModeSelected
-        && characterBox.getSelectedItemIndex() > 0);
+    characterAmountSlider.setVisible(false);
     crossfadeLabel.setVisible(directModeSelected);
     crossfadeSlider.setVisible(directModeSelected);
     candidateBox.setVisible(false);
@@ -503,7 +511,7 @@ LoopSurgeonAudioProcessorEditor::LoopSurgeonAudioProcessorEditor(
         editorConstrainer->setFixedAspectRatio(17.0 / 11.0);
     setSize(1360, 880);
     updatePrimaryAction();
-    startTimerHz(12);
+    startTimerHz(24);
 
 #if JUCE_DEBUG
     // Developer-only, opt-in visual regression capture. It is inert in normal
@@ -581,26 +589,21 @@ void LoopSurgeonAudioProcessorEditor::paint(juce::Graphics& graphics)
         graphics.drawRoundedRectangle(area.reduced(0.5f), 10.0f, 1.0f);
     };
     panel({40, 124, 840, 300});
-    panel({40, 448, 840, 220});
-    panel({40, 692, 840, 80});
+    panel({40, 448, 840, 324});
     panel({904, 124, 416, 648});
     graphics.setColour(juce::Colour(LoopSurgeonTheme::line));
     graphics.drawHorizontalLine(104, 40.0f, 1320.0f);
     graphics.setColour(juce::Colour(LoopSurgeonTheme::secondary));
     graphics.setFont(lookAndFeel.getDisplayFont(14.0f));
-    graphics.drawText("SOURCE", juce::Rectangle<float>(64, 144, 200, 28), juce::Justification::centredLeft);
-    graphics.drawText("PARAMETERS", juce::Rectangle<float>(64, 466, 200, 24), juce::Justification::centredLeft);
+    const auto showingResult = processor.getLoopState() == LoopEngine::State::ready
+        && processor.getPreviewMode() == LoopEngine::PreviewMode::loop;
+    graphics.drawText(showingResult ? "RESULT WAVEFORM" : "SOURCE",
+                      juce::Rectangle<float>(64, 144, 240, 28),
+                      juce::Justification::centredLeft);
+    graphics.drawText("FINE TUNE", juce::Rectangle<float>(64, 466, 200, 24), juce::Justification::centredLeft);
     graphics.drawText("OUTPUT", juce::Rectangle<float>(928, 144, 200, 28), juce::Justification::centredLeft);
-    const auto repair = generationModeBox.getSelectedItemIndex() == 0;
-    graphics.drawText(repair ? "LOOP OPTIONS" : "CHARACTER",
+    graphics.drawText("PREVIEW",
         juce::Rectangle<float>(928, 598, 240, 26), juce::Justification::centredLeft);
-    if (!repair)
-    {
-        graphics.setColour(juce::Colour(LoopSurgeonTheme::accent));
-        graphics.setFont(lookAndFeel.getHandFont(14.0f));
-        graphics.drawText(characterBox.getSelectedItemIndex() > 0 ? characterBox.getText().toUpperCase() : "OFF",
-            juce::Rectangle<float>(1174, 598, 122, 26), juce::Justification::centredRight);
-    }
 }
 
 void LoopSurgeonAudioProcessorEditor::resized()
@@ -626,6 +629,7 @@ void LoopSurgeonAudioProcessorEditor::resized()
     dropLabel.setBounds({});
 
     waveformView.setBounds(box(64.0f, 219.0f, 792.0f, 180.0f));
+    resultWaveformView.setBounds(box(64.0f, 219.0f, 792.0f, 180.0f));
     rangeLabel.setBounds({});
     resetRangeButton.setBounds({});
 
@@ -639,9 +643,9 @@ void LoopSurgeonAudioProcessorEditor::resized()
 
     statusLabel.setBounds(box(928.0f, 526.0f, 368.0f, 52.0f));
     candidateBox.setBounds(box(68.0f, 327.0f, 180.0f, 30.0f));
-    originalPreviewButton.setBounds(box(252.0f, 327.0f, 72.0f, 30.0f));
-    loopPreviewButton.setBounds(box(326.0f, 327.0f, 72.0f, 30.0f));
-    regenerateButton.setBounds(box(402.0f, 327.0f, 96.0f, 30.0f));
+    originalPreviewButton.setBounds(box(64.0f, 400.0f, 112.0f, 24.0f));
+    loopPreviewButton.setBounds(box(184.0f, 400.0f, 112.0f, 24.0f));
+    regenerateButton.setBounds(box(928.0f, 696.0f, 368.0f, 48.0f));
     signalAnalysisView.setBounds(box(64.0f, 219.0f, 792.0f, 180.0f));
 
     primaryActionArea = box(928.0f, 180.0f, 368.0f, 332.0f);
@@ -653,12 +657,14 @@ void LoopSurgeonAudioProcessorEditor::resized()
     motionFlowButton.setBounds({});
     motionDriftButton.setBounds({});
     motionFractureButton.setBounds({});
-    motionSelectorSlider.setBounds(box(64.0f, 705.0f, 792.0f, 54.0f));
-    joinPositionSlider.setBounds(box(64.0f, 705.0f, 792.0f, 54.0f));
+    motionSelectorSlider.setBounds({});
+    joinPositionSlider.setBounds({});
     extraOffButton.setBounds({});
-    extraPatinaButton.setBounds(box(928.0f, 640.0f, 114.0f, 44.0f));
-    extraBloomButton.setBounds(box(1055.0f, 640.0f, 114.0f, 44.0f));
-    extraFrayButton.setBounds(box(1182.0f, 640.0f, 114.0f, 44.0f));
+    originalPreviewButton.setBounds(box(928.0f, 640.0f, 176.0f, 44.0f));
+    loopPreviewButton.setBounds(box(1120.0f, 640.0f, 176.0f, 44.0f));
+    extraPatinaButton.setBounds({});
+    extraBloomButton.setBounds({});
+    extraFrayButton.setBounds({});
 }
 
 void LoopSurgeonAudioProcessorEditor::applyModeLayout()
@@ -670,9 +676,11 @@ void LoopSurgeonAudioProcessorEditor::applyModeLayout()
     for (auto* control : std::array<juce::Slider*, 4> {
              &durationSlider, &flattenSlider, &dynamicsCrushSlider, &sourceMatchSlider })
         control->setVisible(!repair);
-    joinPositionSlider.setVisible(repair);
-    motionSelectorSlider.setVisible(!repair);
-    characterAmountSlider.setVisible(!repair);
+    mixSlider.setVisible(false);
+    dynamicsCrushSlider.setVisible(false);
+    joinPositionSlider.setVisible(false);
+    motionSelectorSlider.setVisible(false);
+    characterAmountSlider.setVisible(false);
     const auto sx = static_cast<float>(getWidth()) / LoopSurgeonTheme::width;
     const auto sy = static_cast<float>(getHeight()) / LoopSurgeonTheme::height;
     const auto box = [sx, sy] (const float x, const float y,
@@ -697,31 +705,28 @@ void LoopSurgeonAudioProcessorEditor::applyModeLayout()
         mixSlider.setName("AUDITION");
         repairLoopStartSlider.setName("LOOP START");
         setKnob(repairDurationLabel, repairDurationSlider,
-                64.0f, 504.0f, 184.0f, 150.0f);
+                112.0f, 504.0f, 184.0f, 174.0f);
         setKnob(crossfadeLabel, crossfadeSlider,
-                264.0f, 504.0f, 184.0f, 150.0f);
-        setKnob(mixLabel, mixSlider,
-                464.0f, 504.0f, 184.0f, 150.0f);
+                348.0f, 504.0f, 184.0f, 174.0f);
         setKnob(repairLoopStartLabel, repairLoopStartSlider,
-                664.0f, 504.0f, 184.0f, 150.0f);
-        joinPositionSlider.setVisible(true);
+                584.0f, 504.0f, 184.0f, 174.0f);
+        mixSlider.setBounds({});
     }
     else
     {
         durationSlider.setName("LENGTH");
         flattenSlider.setName("STABILITY");
         dynamicsCrushSlider.setName("CRUSH");
-        sourceMatchSlider.setName("TRANSFORM");
+        sourceMatchSlider.setName("VARIATION");
         setKnob(durationLabel, durationSlider,
-                64.0f, 504.0f, 184.0f, 150.0f);
+                112.0f, 504.0f, 184.0f, 174.0f);
         setKnob(flattenLabel, flattenSlider,
-                264.0f, 504.0f, 184.0f, 150.0f);
-        setKnob(dynamicsCrushLabel, dynamicsCrushSlider,
-                464.0f, 504.0f, 184.0f, 150.0f);
+                348.0f, 504.0f, 184.0f, 174.0f);
         setKnob(sourceMatchLabel, sourceMatchSlider,
-                664.0f, 504.0f, 184.0f, 150.0f);
+                584.0f, 504.0f, 184.0f, 174.0f);
+        dynamicsCrushSlider.setBounds({});
         repairLoopStartSlider.setBounds({});
-        characterAmountSlider.setBounds(box(928.0f, 705.0f, 368.0f, 48.0f));
+        characterAmountSlider.setBounds({});
         mixSlider.setBounds({});
         joinPositionSlider.setVisible(false);
     }
@@ -844,14 +849,22 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
             candidateBox.addItem(processor.getCandidateDescription(index), index + 1);
         if (candidateCount > 0)
             candidateBox.setSelectedItemIndex(0, juce::dontSendNotification);
+        resultWaveformView.setWaveform(processor.getRenderedWaveformPreview());
     }
 
     updateRangeLabel();
     updatePrimaryAction();
     waveformView.setDurationSeconds(processor.getSourceDurationSeconds());
+    resultWaveformView.setDurationSeconds(processor.getRenderedDurationSeconds());
 
     const auto state = processor.getLoopState();
     const auto ready = state == LoopEngine::State::ready;
+    if (ready && autoPreviewAfterGeneration)
+    {
+        processor.setPreviewMode(LoopEngine::PreviewMode::loop);
+        processor.setPreviewPlaying(true);
+        autoPreviewAfterGeneration = false;
+    }
     if (displayedResultReady != ready)
     {
         displayedResultReady = ready;
@@ -898,7 +911,6 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     loopPreviewButton.setVisible(false);
     regenerateButton.setVisible(false);
     signalAnalysisView.setVisible(false);
-    waveformView.setVisible(true);
     rangeLabel.setVisible(false);
     resetRangeButton.setVisible(false);
     statusLabel.setVisible(true);
@@ -915,7 +927,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     flattenLabel.setVisible(false);
     flattenSlider.setVisible(!directModeSelected);
     dynamicsCrushLabel.setVisible(false);
-    dynamicsCrushSlider.setVisible(!directModeSelected);
+    dynamicsCrushSlider.setVisible(false);
     sourceMatchLabel.setVisible(false);
     sourceMatchSlider.setVisible(!directModeSelected);
     repairLoopStartSlider.setVisible(directModeSelected);
@@ -925,32 +937,38 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
     characterLabel.setVisible(false);
     characterBox.setVisible(false);
     characterAmountLabel.setVisible(false);
-    characterAmountSlider.setVisible(!directModeSelected);
-    characterAmountSlider.setEnabled(characterBox.getSelectedItemIndex() > 0);
+    characterAmountSlider.setVisible(false);
     crossfadeLabel.setVisible(false);
     crossfadeSlider.setVisible(directModeSelected);
     mixLabel.setVisible(false);
-    mixSlider.setVisible(directModeSelected);
-    joinPositionSlider.setVisible(directModeSelected);
-    joinPositionSlider.setEnabled(directModeSelected && ready);
-    motionSelectorSlider.setVisible(!directModeSelected);
+    mixSlider.setVisible(false);
+    joinPositionSlider.setVisible(false);
+    motionSelectorSlider.setVisible(false);
     motionFlowButton.setVisible(false);
     motionDriftButton.setVisible(false);
     motionFractureButton.setVisible(false);
-    extraPatinaButton.setVisible(true);
-    extraBloomButton.setVisible(true);
-    extraFrayButton.setVisible(true);
+    extraPatinaButton.setVisible(false);
+    extraBloomButton.setVisible(false);
+    extraFrayButton.setVisible(false);
     extraPatinaButton.setEnabled(!directModeSelected || candidateCount > 0);
     extraBloomButton.setEnabled(!directModeSelected || candidateCount > 1);
     extraFrayButton.setEnabled(!directModeSelected || candidateCount > 2);
 
     const auto previewMode = processor.getPreviewMode();
+    waveformView.setVisible(!ready || previewMode == LoopEngine::PreviewMode::original);
+    resultWaveformView.setVisible(ready && previewMode == LoopEngine::PreviewMode::loop);
+    originalPreviewButton.setVisible(ready);
+    loopPreviewButton.setVisible(ready);
+    regenerateButton.setVisible(ready && textureResult);
     originalPreviewButton.setToggleState(previewMode == LoopEngine::PreviewMode::original,
                                          juce::dontSendNotification);
     loopPreviewButton.setToggleState(previewMode == LoopEngine::PreviewMode::loop,
                                      juce::dontSendNotification);
     const auto previewing = processor.isPreviewPlaying();
-    previewTransportButton.setButtonText(previewing ? "STOP" : "PREVIEW");
+    const auto playhead = previewing ? processor.getPreviewProgress() : -1.0f;
+    waveformView.setPlayhead(previewMode == LoopEngine::PreviewMode::original ? playhead : -1.0f);
+    resultWaveformView.setPlayhead(previewMode == LoopEngine::PreviewMode::loop ? playhead : -1.0f);
+    previewTransportButton.setButtonText(previewing ? "STOP" : "PLAY");
     previewTransportButton.setColour(
         juce::TextButton::buttonColourId,
         juce::Colour(previewing ? fadedCoral : acidYellow));
@@ -985,7 +1003,7 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
                 statusText = "No source";
                 break;
             case LoopEngine::State::sourceReady:
-                statusText = "Source ready - set range and mode, then Generate";
+                statusText = "Ready - choose a mode and Generate";
                 break;
             case LoopEngine::State::armed:
                 statusText = "Waiting for DAW capture";
@@ -1001,8 +1019,8 @@ void LoopSurgeonAudioProcessorEditor::timerCallback()
                 break;
             case LoopEngine::State::ready:
                 statusText = textureResult
-                    ? "TEXTURE ready - audition Generated"
-                    : "LOOP ready - audition the join";
+                    ? "Texture ready - compare Source and Result"
+                    : "Loop ready - compare Source and Result";
                 break;
             case LoopEngine::State::failed:
                 statusText = "No reliable loop found - widen the blue range or try different material";
@@ -1047,7 +1065,7 @@ void LoopSurgeonAudioProcessorEditor::updatePrimaryAction()
         analyzeRangeButton.setButtonText("LOAD AUDIO");
         return;
     }
-    analyzeRangeButton.setButtonText("GENERATE");
+    analyzeRangeButton.setButtonText("GENERATE & PLAY");
 }
 
 void LoopSurgeonAudioProcessorEditor::updateArtworkStates()
